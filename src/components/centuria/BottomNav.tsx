@@ -1,4 +1,3 @@
-import { motion } from "framer-motion";
 import { Home, Dumbbell, Utensils, Swords, User } from "lucide-react";
 
 const tabs = [
@@ -16,15 +15,14 @@ export default function BottomNav({ active, setActive }: { active: string; setAc
         const Icon = t.icon;
         const on = active === t.id;
         return (
-          <motion.button
+          <button
             key={t.id}
-            whileTap={{ scale: 0.9 }}
             onClick={() => setActive(t.id)}
-            className="flex flex-col items-center justify-center gap-1"
+            className="flex flex-col items-center justify-center gap-1 active:scale-90 transition-transform"
           >
             <Icon size={20} className={on ? "text-arena" : "text-arena-muted"} />
             <span className={`text-[10px] font-bold ${on ? "text-arena" : "text-arena-muted"}`}>{t.label}</span>
-          </motion.button>
+          </button>
         );
       })}
     </nav>

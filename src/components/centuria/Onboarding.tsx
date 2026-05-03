@@ -1,6 +1,5 @@
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Swords, Apple, Mail, Lock, ChevronRight, Target, Sparkles } from "lucide-react";
+import { Swords, Apple, Mail, Lock, ChevronRight, Sparkles } from "lucide-react";
 
 export default function Onboarding({ onDone }: { onDone: () => void }) {
   const [step, setStep] = useState(0);
@@ -23,34 +22,23 @@ export default function Onboarding({ onDone }: { onDone: () => void }) {
       </div>
 
       <div className="flex-1 overflow-hidden px-5 pt-8">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={step}
-            initial={{ opacity: 0, x: 40 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -40 }}
-            transition={{ duration: 0.3 }}
-          >
-            <h1 className="mb-6 text-2xl font-black uppercase leading-tight tracking-tight text-foreground">
-              {titles[step]}
-            </h1>
-            {step === 0 && <HeroCard />}
-            {step === 1 && <AuthStep />}
-            {step === 2 && <LeagueStep />}
-            {step === 3 && <StatsStep />}
-            {step === 4 && <GoalStep />}
-          </motion.div>
-        </AnimatePresence>
+        <h1 className="mb-6 text-2xl font-black uppercase leading-tight tracking-tight text-foreground">
+          {titles[step]}
+        </h1>
+        {step === 0 && <HeroCard />}
+        {step === 1 && <AuthStep />}
+        {step === 2 && <LeagueStep />}
+        {step === 3 && <StatsStep />}
+        {step === 4 && <GoalStep />}
       </div>
 
       <div className="px-5 pb-6">
-        <motion.button
-          whileTap={{ scale: 0.96 }}
+        <button
           onClick={() => (step === 4 ? onDone() : setStep(step + 1))}
-          className="h-14 w-full rounded-2xl bg-arena font-black uppercase tracking-wide text-arena-foreground shadow-[0_0_35px_var(--arena-glow)]"
+          className="h-14 w-full rounded-2xl bg-arena font-black uppercase tracking-wide text-arena-foreground shadow-[0_0_35px_var(--arena-glow)] active:scale-95 transition-transform"
         >
           {step === 4 ? "Entrer dans l'arène" : "Continuer"}
-        </motion.button>
+        </button>
         {step === 0 && (
           <p className="mt-3 text-center text-xs text-arena-sub">J'ai déjà un compte</p>
         )}

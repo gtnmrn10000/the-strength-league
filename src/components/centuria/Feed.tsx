@@ -1,5 +1,4 @@
-import { motion } from "framer-motion";
-import { Flame, ShieldCheck, Camera, NotebookPen, Save, Plus, Crown, Zap, Trophy } from "lucide-react";
+import { Flame, ShieldCheck, Save, Plus, Crown, Zap } from "lucide-react";
 
 const posts = [
   {
@@ -34,7 +33,7 @@ const posts = [
 
 export default function Feed({ onCreate }: { onCreate: () => void }) {
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="px-4 pt-2 pb-4">
+    <div className="px-4 pt-2 pb-4">
       <WarBanner />
       <FounderBanner />
       <div className="mt-4 flex flex-col gap-4">
@@ -42,8 +41,13 @@ export default function Feed({ onCreate }: { onCreate: () => void }) {
           <PostCard key={i} post={p} />
         ))}
       </div>
-      <Fab onClick={onCreate} />
-    </motion.div>
+      <button
+        onClick={onCreate}
+        className="fixed bottom-20 right-6 z-20 flex h-14 w-14 items-center justify-center rounded-full bg-arena text-arena-foreground shadow-[0_0_25px_var(--arena-glow)] active:scale-90 transition-transform"
+      >
+        <Plus size={24} />
+      </button>
+    </div>
   );
 }
 
@@ -89,7 +93,7 @@ function PRPost({ post }: { post: any }) {
   return (
     <>
       <div className="flex items-center gap-3">
-        <Avatar src={post.avatar} />
+        <img src={post.avatar} alt="" className="h-9 w-9 rounded-full object-cover ring-2 ring-arena-border" />
         <div className="flex-1">
           <div className="flex items-center gap-2">
             <span className="font-bold text-foreground">{post.user}</span>
@@ -97,7 +101,7 @@ function PRPost({ post }: { post: any }) {
           </div>
           <span className="text-xs text-arena-sub">{post.time}</span>
         </div>
-        <Badge color="text-arena-green">NATURELLE</Badge>
+        <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-bold text-arena-green">NATURELLE</span>
       </div>
       <div className="mt-3 rounded-xl bg-secondary p-3">
         <p className="text-xs font-bold text-arena-sub">{post.exercise}</p>
@@ -116,7 +120,7 @@ function MealPost({ post }: { post: any }) {
   return (
     <>
       <div className="flex items-center gap-3">
-        <Avatar src={post.avatar} />
+        <img src={post.avatar} alt="" className="h-9 w-9 rounded-full object-cover ring-2 ring-arena-border" />
         <div>
           <span className="font-bold text-foreground">{post.user}</span>
           <p className="text-xs text-arena-sub">Grade nutrition · Athlète</p>
@@ -127,7 +131,7 @@ function MealPost({ post }: { post: any }) {
       <p className="text-xs text-arena-sub">{post.kcal}</p>
       <div className="mt-2 flex gap-2">
         {["Prise de masse", "Budget", "Express"].map((t) => (
-          <Tag key={t}>{t}</Tag>
+          <span key={t} className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-bold text-arena-sub">{t}</span>
         ))}
       </div>
     </>
@@ -158,29 +162,5 @@ function Actions({ hype, save }: { hype: number; save?: boolean }) {
         </button>
       )}
     </div>
-  );
-}
-
-function Avatar({ src }: { src: string }) {
-  return <img src={src} alt="" className="h-9 w-9 rounded-full object-cover ring-2 ring-arena-border" />;
-}
-
-function Badge({ children, color }: { children: React.ReactNode; color: string }) {
-  return <span className={`rounded-full bg-secondary px-2 py-0.5 text-[10px] font-bold ${color}`}>{children}</span>;
-}
-
-function Tag({ children }: { children: React.ReactNode }) {
-  return <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-bold text-arena-sub">{children}</span>;
-}
-
-function Fab({ onClick }: { onClick: () => void }) {
-  return (
-    <motion.button
-      whileTap={{ scale: 0.9 }}
-      onClick={onClick}
-      className="fixed bottom-20 right-6 z-20 flex h-14 w-14 items-center justify-center rounded-full bg-arena text-arena-foreground shadow-[0_0_25px_var(--arena-glow)]"
-    >
-      <Plus size={24} />
-    </motion.button>
   );
 }

@@ -1,9 +1,8 @@
-import { motion } from "framer-motion";
 import { Camera, NotebookPen, Target, Sparkles, ChevronRight } from "lucide-react";
 
 export default function Training({ onPR }: { onPR: () => void }) {
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="px-4 pt-2 pb-4">
+    <div className="px-4 pt-2 pb-4">
       <div className="mb-4 grid grid-cols-2 gap-3">
         <ActionCard icon={Camera} title="Log un PR" glow onClick={onPR} />
         <ActionCard icon={NotebookPen} title="Log séance" />
@@ -34,20 +33,19 @@ export default function Training({ onPR }: { onPR: () => void }) {
           Démarrer <ChevronRight size={16} />
         </button>
       </div>
-    </motion.div>
+    </div>
   );
 }
 
 function ActionCard({ icon: Icon, title, glow, onClick }: { icon: React.ElementType; title: string; glow?: boolean; onClick?: () => void }) {
   return (
-    <motion.button
-      whileTap={{ scale: 0.95 }}
+    <button
       onClick={onClick}
-      className={`flex flex-col items-center gap-2 rounded-2xl border border-arena-border bg-arena-surface p-4 ${glow ? "shadow-[0_0_20px_var(--arena-glow)]" : ""}`}
+      className={`flex flex-col items-center gap-2 rounded-2xl border border-arena-border bg-arena-surface p-4 active:scale-95 transition-transform ${glow ? "shadow-[0_0_20px_var(--arena-glow)]" : ""}`}
     >
       <Icon size={22} className={glow ? "text-arena" : "text-arena-sub"} />
       <span className="text-xs font-bold text-foreground">{title}</span>
-    </motion.button>
+    </button>
   );
 }
 
