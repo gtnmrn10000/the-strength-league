@@ -94,8 +94,7 @@ function QuickStats() {
     </div>
   );
 }
-
-
+function WarBanner() {
   return (
     <div className="mb-3 rounded-2xl border border-arena-border bg-arena-surface p-4">
       <div className="flex items-center justify-between">
