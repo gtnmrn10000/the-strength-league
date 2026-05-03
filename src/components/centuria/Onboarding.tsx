@@ -3,6 +3,7 @@ import { Apple, Mail, Lock, ChevronLeft, Sparkles, ShieldCheck, Trophy, Check, D
 import Logo from "./Logo";
 import { saveUserProfile } from "./userProfile";
 import { track } from "./analytics";
+import { leagueNaturelle, leagueOlympien } from "./LeagueIcon";
 
 /* ── Validation helpers ── */
 
@@ -298,14 +299,14 @@ function LeagueStep({ selected, onSelect }: { selected: string | null; onSelect:
   return (
     <div className="flex flex-col gap-3">
       <LeagueCard
-        title="NATURELLE" emoji="🛡️"
+        title="NATURELLE" icon={leagueNaturelle}
         desc="Drug-free. Tous tes PR sont vérifiés par IA vidéo. Triche = ban définitif."
         features={["Vérification IA", "Badge drug-free", "Classement protégé"]}
         color="text-arena-green" selected={selected === "naturelle"}
         onSelect={() => onSelect("naturelle")}
       />
       <LeagueCard
-        title="OLYMPIEN" emoji="⚡"
+        title="OLYMPIEN" icon={leagueOlympien}
         desc="Aucune limite. Force brute, performances extrêmes. Seul le total compte."
         features={["Sans restriction", "Force maximale", "Classement absolu"]}
         color="text-arena-purple" selected={selected === "olympien"}
@@ -321,8 +322,8 @@ function LeagueStep({ selected, onSelect }: { selected: string | null; onSelect:
   );
 }
 
-function LeagueCard({ title, emoji, desc, features, color, selected, onSelect }: {
-  title: string; emoji: string; desc: string; features: string[]; color: string; selected: boolean; onSelect: () => void;
+function LeagueCard({ title, icon, desc, features, color, selected, onSelect }: {
+  title: string; icon: string; desc: string; features: string[]; color: string; selected: boolean; onSelect: () => void;
 }) {
   return (
     <button
@@ -334,8 +335,8 @@ function LeagueCard({ title, emoji, desc, features, color, selected, onSelect }:
         }`}
     >
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="text-xl">{emoji}</span>
+        <div className="flex items-center gap-3">
+          <img src={icon} alt={title} className="h-10 w-10 rounded-lg object-contain" />
           <span className={`font-black ${color}`}>{title}</span>
         </div>
         {selected && (
