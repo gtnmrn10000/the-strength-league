@@ -1,5 +1,6 @@
 import { MapPin, ShieldCheck, Settings, Trophy, Flame, Dumbbell, Target } from "lucide-react";
 import { loadUserProfile, goalLabel, goalEmoji, leagueLabel, leagueColor } from "./userProfile";
+import LeagueIcon from "./LeagueIcon";
 
 export default function Profile() {
   const profile = loadUserProfile();
@@ -76,8 +77,8 @@ function CombatCard({ profile, lc }: { profile: ReturnType<typeof loadUserProfil
 
       <div className="mt-3 flex flex-wrap gap-2">
         {profile?.league && (
-          <span className={`rounded-full ${lc.bg} px-2 py-0.5 text-[10px] font-bold ${lc.text}`}>
-            Ligue {leagueLabel(profile.league)}
+          <span className={`flex items-center gap-1.5 rounded-full ${lc.bg} px-2 py-0.5 text-[10px] font-bold ${lc.text}`}>
+            <LeagueIcon league={profile.league} size="xs" /> Ligue {leagueLabel(profile.league)}
           </span>
         )}
         <span className="rounded-full bg-arena/10 px-2 py-0.5 text-[10px] font-bold text-arena">RECRUE</span>
