@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState, useEffect } from "react";
 import { AnimatePresence } from "framer-motion";
 import Onboarding from "./Onboarding";
 import Feed from "./Feed";
@@ -11,9 +11,22 @@ import BottomNav from "./BottomNav";
 import HeaderLogo from "./HeaderLogo";
 
 export default function Shell() {
+  const [mounted, setMounted] = useState(false);
   const [onboarded, setOnboarded] = useState(false);
   const [tab, setTab] = useState("feed");
   const [showPR, setShowPR] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return (
+      <div className="flex min-h-dvh items-center justify-center bg-background">
+        <span className="text-sm text-muted-foreground">Chargement...</span>
+      </div>
+    );
+  }
 
   if (!onboarded) return <Onboarding onDone={() => setOnboarded(true)} />;
 

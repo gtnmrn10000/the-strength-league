@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, useEffect } from "react";
+import Shell from "@/components/centuria/Shell";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -12,21 +12,5 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
-  const [Shell, setShell] = useState<React.ComponentType | null>(null);
-
-  useEffect(() => {
-    import("@/components/centuria/Shell").then((mod) => {
-      setShell(() => mod.default);
-    });
-  }, []);
-
-  if (!Shell) {
-    return (
-      <div className="flex min-h-dvh items-center justify-center bg-background">
-        <span className="text-sm text-muted-foreground">Chargement...</span>
-      </div>
-    );
-  }
-
   return <Shell />;
 }
