@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Flame, ShieldCheck, Save, Plus, Crown, Zap, X, Swords, Trophy, Target } from "lucide-react";
+import { Flame, ShieldCheck, Save, Plus, Crown, Zap, X, Trophy, Target } from "lucide-react";
+import centuriaLogo from "@/assets/centuria-logo.png";
 
 const posts = [
   {
@@ -63,7 +64,7 @@ function WelcomeBanner({ onClose }: { onClose: () => void }) {
         <X size={16} />
       </button>
       <div className="flex items-center gap-2 mb-2">
-        <Swords size={18} className="text-arena" />
+        <img src={centuriaLogo} alt="Centuria" className="h-6 w-6 rounded" />
         <span className="text-sm font-black text-foreground">Bienvenue, Gladiateur.</span>
       </div>
       <p className="text-xs text-arena-sub leading-relaxed">
