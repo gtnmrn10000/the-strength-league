@@ -89,6 +89,12 @@ function CombatCard({ profile, lc }: { profile: ReturnType<typeof loadUserProfil
           <span>Drug-free — En attente de vérification</span>
         </div>
       )}
+      {profile?.league === "olympien" && (
+        <div className="mt-2 flex items-center gap-1 text-xs text-arena-purple">
+          <Flame size={14} />
+          <span>Olympien — Aucune limite, force absolue</span>
+        </div>
+      )}
 
       <h4 className="mb-2 mt-4 text-xs font-black text-arena-muted">PR vérifiés</h4>
       <div className="rounded-xl bg-secondary p-4 text-center">
