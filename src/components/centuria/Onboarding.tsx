@@ -120,6 +120,8 @@ export default function Onboarding({ onDone }: { onDone: () => void }) {
     saveDraft({ step, league: selectedLeague, goal: selectedGoal, pseudo, age, taille, poids, ...overrides });
   };
 
+  const stepNames = ["hero", "auth", "league", "profile", "goal"];
+
   const handleContinue = () => {
     if (step === 3) {
       setTriedContinue(true);
@@ -129,9 +131,16 @@ export default function Onboarding({ onDone }: { onDone: () => void }) {
     if (step === 4) {
       localStorage.removeItem(OB_KEY);
       saveUserProfile({ pseudo, age, taille, poids, league: selectedLeague, goal: selectedGoal });
+      track("onboarding_completed", { league: selectedLeague, goal: selectedGoal, pseudo });
       onDone();
     } else {
       const next = step + 1;
+      // Track step completion with relevant data
+      const props: Record<string, string | number | boolean | null> = { from_step: stepNames[step], to_step: stepNames[next] };
+      if (step === 2) props.league = selectedLeague;
+      if (step === 3) props.pseudo = pseudo;
+      track("onboarding_step_completed", props);
+
       setTriedContinue(false);
       setTouched({});
       setStep(next);
