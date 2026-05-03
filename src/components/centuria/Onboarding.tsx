@@ -98,6 +98,10 @@ export default function Onboarding({ onDone }: { onDone: () => void }) {
     return true;
   }, [step, selectedLeague, selectedGoal, statsErrors, pseudo]);
 
+  const persist = (overrides: Partial<OnboardingData> = {}) => {
+    saveDraft({ step, league: selectedLeague, goal: selectedGoal, pseudo, age, taille, poids, ...overrides });
+  };
+
   const handleContinue = () => {
     if (step === 3) {
       setTriedContinue(true);
@@ -105,11 +109,14 @@ export default function Onboarding({ onDone }: { onDone: () => void }) {
     }
     if (!canContinue()) return;
     if (step === 4) {
+      localStorage.removeItem(OB_KEY);
       onDone();
     } else {
+      const next = step + 1;
       setTriedContinue(false);
       setTouched({});
-      setStep(step + 1);
+      setStep(next);
+      persist({ step: next });
     }
   };
 
