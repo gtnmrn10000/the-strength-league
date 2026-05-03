@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Flame, ShieldCheck, Save, Plus, Crown, Zap, X, Trophy, Target } from "lucide-react";
-import centuriaLogo from "@/assets/centuria-logo.png";
+import Logo from "./Logo";
 import { loadUserProfile, goalLabel, goalEmoji, leagueLabel, leagueColor } from "./userProfile";
 
 const posts = [
@@ -68,7 +68,7 @@ function WelcomeBanner({ pseudo, league, onClose }: { pseudo?: string; league?: 
         <X size={16} />
       </button>
       <div className="flex items-center gap-2 mb-2">
-        <img src={centuriaLogo} alt="Centuria" className="h-6 w-6 rounded" />
+        <Logo />
         <span className="text-sm font-black text-foreground">
           Bienvenue, {pseudo || "Gladiateur"}.
         </span>
