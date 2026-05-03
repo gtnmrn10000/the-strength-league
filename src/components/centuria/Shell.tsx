@@ -12,17 +12,25 @@ import HeaderLogo from "./HeaderLogo";
 const ONBOARDED_KEY = "centuria_onboarded";
 
 export default function Shell() {
-  const [onboarded, setOnboarded] = useState(() => {
-    if (typeof window === "undefined") return false;
-    return localStorage.getItem(ONBOARDED_KEY) === "true";
-  });
+  const [hydrated, setHydrated] = useState(false);
+  const [onboarded, setOnboarded] = useState(false);
   const [tab, setTab] = useState("feed");
   const [showPR, setShowPR] = useState(false);
+
+  useEffect(() => {
+    setOnboarded(localStorage.getItem(ONBOARDED_KEY) === "true");
+    setHydrated(true);
+  }, []);
 
   const handleOnboardingDone = () => {
     localStorage.setItem(ONBOARDED_KEY, "true");
     setOnboarded(true);
   };
+
+  // Render nothing until hydrated to avoid mismatch
+  if (!hydrated) {
+    return <div className="mx-auto flex h-dvh max-w-md items-center justify-center bg-background" />;
+  }
 
   if (!onboarded) return <Onboarding onDone={handleOnboardingDone} />;
 
