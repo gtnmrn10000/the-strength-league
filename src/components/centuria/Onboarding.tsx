@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from "react";
 import { Apple, Mail, Lock, ChevronLeft, Sparkles, ShieldCheck, Trophy, Check, Dumbbell, Target, TrendingUp, AlertCircle } from "lucide-react";
 import Logo from "./Logo";
 import { saveUserProfile } from "./userProfile";
+import { track } from "./analytics";
 
 /* ── Validation helpers ── */
 
