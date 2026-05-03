@@ -1,4 +1,5 @@
-import { Flame, ShieldCheck, Save, Plus, Crown, Zap } from "lucide-react";
+import { useState } from "react";
+import { Flame, ShieldCheck, Save, Plus, Crown, Zap, X, Swords, Trophy, Target } from "lucide-react";
 
 const posts = [
   {
