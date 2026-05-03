@@ -306,7 +306,7 @@ function LeagueStep({ selected, onSelect }: { selected: string | null; onSelect:
         onSelect={() => onSelect("naturelle")}
       />
       <LeagueCard
-        title="OLYMPIEN" icon={leagueOlympien}
+        title="OLYMPIEN" subtitle="DOPÉ" icon={leagueOlympien}
         desc="Aucune limite. Force brute, performances extrêmes. Seul le total compte."
         features={["Sans restriction", "Force maximale", "Classement absolu"]}
         color="text-arena-purple" selected={selected === "olympien"}
