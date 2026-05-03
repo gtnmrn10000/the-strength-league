@@ -1,4 +1,5 @@
-import { Flame, ShieldCheck, Save, Plus, Crown, Zap } from "lucide-react";
+import { useState } from "react";
+import { Flame, ShieldCheck, Save, Plus, Crown, Zap, X, Swords, Trophy, Target } from "lucide-react";
 
 const posts = [
   {
@@ -32,11 +33,16 @@ const posts = [
 ];
 
 export default function Feed({ onCreate }: { onCreate: () => void }) {
+  const [showWelcome, setShowWelcome] = useState(true);
+
   return (
     <div className="px-4 pt-2 pb-4">
+      {showWelcome && <WelcomeBanner onClose={() => setShowWelcome(false)} />}
+      <QuickStats />
       <WarBanner />
       <FounderBanner />
-      <div className="mt-4 flex flex-col gap-4">
+      <h3 className="mb-3 mt-5 text-xs font-black tracking-widest text-arena-muted">FEED</h3>
+      <div className="flex flex-col gap-4">
         {posts.map((p, i) => (
           <PostCard key={i} post={p} />
         ))}
@@ -50,7 +56,44 @@ export default function Feed({ onCreate }: { onCreate: () => void }) {
     </div>
   );
 }
+function WelcomeBanner({ onClose }: { onClose: () => void }) {
+  return (
+    <div className="mb-3 rounded-2xl border border-arena/30 bg-gradient-to-br from-arena/10 to-arena-gold/5 p-4 relative">
+      <button onClick={onClose} className="absolute top-3 right-3 text-arena-muted hover:text-foreground transition-colors">
+        <X size={16} />
+      </button>
+      <div className="flex items-center gap-2 mb-2">
+        <Swords size={18} className="text-arena" />
+        <span className="text-sm font-black text-foreground">Bienvenue, Gladiateur.</span>
+      </div>
+      <p className="text-xs text-arena-sub leading-relaxed">
+        Ton arène est prête. Log ton premier PR pour débloquer ton grade et entrer dans le classement.
+      </p>
+      <div className="mt-3 flex gap-2">
+        <span className="rounded-full bg-arena/20 px-2.5 py-1 text-[10px] font-bold text-arena">🎯 Log un PR</span>
+        <span className="rounded-full bg-arena-gold/20 px-2.5 py-1 text-[10px] font-bold text-arena-gold">⚡ +100 XP offerts</span>
+      </div>
+    </div>
+  );
+}
 
+function QuickStats() {
+  return (
+    <div className="mb-3 grid grid-cols-3 gap-2">
+      {[
+        { icon: Trophy, label: "Rank", value: "#—", color: "text-arena-gold" },
+        { icon: Target, label: "Grade", value: "RECRUE", color: "text-arena" },
+        { icon: Flame, label: "Streak", value: "1j", color: "text-arena" },
+      ].map(({ icon: Icon, label, value, color }) => (
+        <div key={label} className="flex flex-col items-center gap-1 rounded-2xl border border-arena-border bg-arena-surface p-3">
+          <Icon size={16} className={color} />
+          <span className="text-sm font-black text-foreground">{value}</span>
+          <span className="text-[10px] text-arena-muted">{label}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
 function WarBanner() {
   return (
     <div className="mb-3 rounded-2xl border border-arena-border bg-arena-surface p-4">
