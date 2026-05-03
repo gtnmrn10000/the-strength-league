@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
-import { Swords, Apple, Mail, Lock, ChevronLeft, Sparkles, ShieldCheck, Trophy, Check, Dumbbell, Target, TrendingUp, AlertCircle } from "lucide-react";
+import { Apple, Mail, Lock, ChevronLeft, Sparkles, ShieldCheck, Trophy, Check, Dumbbell, Target, TrendingUp, AlertCircle } from "lucide-react";
+import centuriaLogo from "@/assets/centuria-logo.png";
 
 /* ── Validation helpers ── */
 
@@ -107,7 +108,7 @@ export default function Onboarding({ onDone }: { onDone: () => void }) {
               <ChevronLeft size={20} />
             </button>
           ) : (
-            <Swords className="text-arena" size={20} />
+            <img src={centuriaLogo} alt="Centuria" className="h-6 w-6 rounded" />
           )}
           <span className="text-sm font-black tracking-[0.2em] text-foreground">CENTURIA</span>
         </div>
@@ -192,7 +193,7 @@ function HeroCard() {
         {[
           { icon: ShieldCheck, label: "PR vérifiés par IA", color: "text-arena-green" },
           { icon: Trophy, label: "Classement national", color: "text-arena-gold" },
-          { icon: Swords, label: "Guerre de factions", color: "text-arena" },
+          { icon: Trophy, label: "Guerre de factions", color: "text-arena" },
         ].map(({ icon: Icon, label, color }) => (
           <div key={label} className="flex flex-col items-center gap-2 rounded-2xl border border-arena-border bg-arena-surface p-3 text-center">
             <Icon size={20} className={color} />
