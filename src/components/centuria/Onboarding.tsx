@@ -322,8 +322,8 @@ function LeagueStep({ selected, onSelect }: { selected: string | null; onSelect:
   );
 }
 
-function LeagueCard({ title, icon, desc, features, color, selected, onSelect }: {
-  title: string; icon: string; desc: string; features: string[]; color: string; selected: boolean; onSelect: () => void;
+function LeagueCard({ title, subtitle, icon, desc, features, color, selected, onSelect }: {
+  title: string; subtitle?: string; icon: string; desc: string; features: string[]; color: string; selected: boolean; onSelect: () => void;
 }) {
   return (
     <button
@@ -337,7 +337,10 @@ function LeagueCard({ title, icon, desc, features, color, selected, onSelect }: 
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <img src={icon} alt={title} className="h-10 w-10 rounded-lg object-contain" />
-          <span className={`font-black ${color}`}>{title}</span>
+          <div className="flex flex-col">
+            <span className={`font-black ${color}`}>{title}</span>
+            {subtitle && <span className="text-[10px] font-bold text-arena-muted uppercase tracking-wider">{subtitle}</span>}
+          </div>
         </div>
         {selected && (
           <div className="flex h-6 w-6 items-center justify-center rounded-full bg-arena">
