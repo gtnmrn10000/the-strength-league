@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Onboarding from "./Onboarding";
 import Feed from "./Feed";
 import Training from "./Training";
@@ -9,12 +9,22 @@ import PRModal from "./PRModal";
 import BottomNav from "./BottomNav";
 import HeaderLogo from "./HeaderLogo";
 
+const ONBOARDED_KEY = "centuria_onboarded";
+
 export default function Shell() {
-  const [onboarded, setOnboarded] = useState(false);
+  const [onboarded, setOnboarded] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem(ONBOARDED_KEY) === "true";
+  });
   const [tab, setTab] = useState("feed");
   const [showPR, setShowPR] = useState(false);
 
-  if (!onboarded) return <Onboarding onDone={() => setOnboarded(true)} />;
+  const handleOnboardingDone = () => {
+    localStorage.setItem(ONBOARDED_KEY, "true");
+    setOnboarded(true);
+  };
+
+  if (!onboarded) return <Onboarding onDone={handleOnboardingDone} />;
 
   return (
     <div className="relative mx-auto flex h-dvh max-w-md flex-col overflow-hidden bg-background">

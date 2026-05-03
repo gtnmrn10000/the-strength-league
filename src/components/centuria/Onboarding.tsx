@@ -44,14 +44,40 @@ function hasErrors(errors: StatsErrors): boolean {
 
 /* ── Main component ── */
 
+const OB_KEY = "centuria_onboarding";
+
+interface OnboardingData {
+  step: number;
+  league: string | null;
+  goal: string | null;
+  pseudo: string;
+  age: string;
+  taille: string;
+  poids: string;
+}
+
+function loadSaved(): OnboardingData {
+  if (typeof window === "undefined") return { step: 0, league: null, goal: null, pseudo: "", age: "", taille: "", poids: "" };
+  try {
+    const raw = localStorage.getItem(OB_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch {}
+  return { step: 0, league: null, goal: null, pseudo: "", age: "", taille: "", poids: "" };
+}
+
+function saveDraft(data: OnboardingData) {
+  localStorage.setItem(OB_KEY, JSON.stringify(data));
+}
+
 export default function Onboarding({ onDone }: { onDone: () => void }) {
-  const [step, setStep] = useState(0);
-  const [selectedLeague, setSelectedLeague] = useState<string | null>(null);
-  const [selectedGoal, setSelectedGoal] = useState<string | null>(null);
-  const [pseudo, setPseudo] = useState("");
-  const [age, setAge] = useState("");
-  const [taille, setTaille] = useState("");
-  const [poids, setPoids] = useState("");
+  const saved = loadSaved();
+  const [step, setStep] = useState(saved.step);
+  const [selectedLeague, setSelectedLeague] = useState<string | null>(saved.league);
+  const [selectedGoal, setSelectedGoal] = useState<string | null>(saved.goal);
+  const [pseudo, setPseudo] = useState(saved.pseudo);
+  const [age, setAge] = useState(saved.age);
+  const [taille, setTaille] = useState(saved.taille);
+  const [poids, setPoids] = useState(saved.poids);
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [triedContinue, setTriedContinue] = useState(false);
 
@@ -72,6 +98,10 @@ export default function Onboarding({ onDone }: { onDone: () => void }) {
     return true;
   }, [step, selectedLeague, selectedGoal, statsErrors, pseudo]);
 
+  const persist = (overrides: Partial<OnboardingData> = {}) => {
+    saveDraft({ step, league: selectedLeague, goal: selectedGoal, pseudo, age, taille, poids, ...overrides });
+  };
+
   const handleContinue = () => {
     if (step === 3) {
       setTriedContinue(true);
@@ -79,11 +109,14 @@ export default function Onboarding({ onDone }: { onDone: () => void }) {
     }
     if (!canContinue()) return;
     if (step === 4) {
+      localStorage.removeItem(OB_KEY);
       onDone();
     } else {
+      const next = step + 1;
       setTriedContinue(false);
       setTouched({});
-      setStep(step + 1);
+      setStep(next);
+      persist({ step: next });
     }
   };
 
@@ -130,13 +163,13 @@ export default function Onboarding({ onDone }: { onDone: () => void }) {
         </h1>
         {step === 0 && <HeroCard />}
         {step === 1 && <AuthStep />}
-        {step === 2 && <LeagueStep selected={selectedLeague} onSelect={setSelectedLeague} />}
+        {step === 2 && <LeagueStep selected={selectedLeague} onSelect={(v) => { setSelectedLeague(v); persist({ league: v }); }} />}
         {step === 3 && (
           <StatsStep
-            pseudo={pseudo} setPseudo={(v) => { setPseudo(v); markTouched("pseudo"); }}
-            age={age} setAge={(v) => { setAge(v); markTouched("age"); }}
-            taille={taille} setTaille={(v) => { setTaille(v); markTouched("taille"); }}
-            poids={poids} setPoids={(v) => { setPoids(v); markTouched("poids"); }}
+            pseudo={pseudo} setPseudo={(v) => { setPseudo(v); markTouched("pseudo"); persist({ pseudo: v }); }}
+            age={age} setAge={(v) => { setAge(v); markTouched("age"); persist({ age: v }); }}
+            taille={taille} setTaille={(v) => { setTaille(v); markTouched("taille"); persist({ taille: v }); }}
+            poids={poids} setPoids={(v) => { setPoids(v); markTouched("poids"); persist({ poids: v }); }}
             errors={{
               pseudo: showError("pseudo"),
               age: showError("age"),
@@ -145,7 +178,7 @@ export default function Onboarding({ onDone }: { onDone: () => void }) {
             }}
           />
         )}
-        {step === 4 && <GoalStep selected={selectedGoal} onSelect={setSelectedGoal} />}
+        {step === 4 && <GoalStep selected={selectedGoal} onSelect={(v) => { setSelectedGoal(v); persist({ goal: v }); }} />}
       </div>
 
       {/* Footer */}
