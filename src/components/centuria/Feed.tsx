@@ -125,23 +125,26 @@ function QuickStats({ goal, league }: { goal: string | null; league: string | nu
 
 function WarBanner({ league }: { league: string | null }) {
   const isNat = league === "naturelle";
+  const lc = leagueColor(league);
   return (
     <div className="mb-3 rounded-2xl border border-arena-border bg-arena-surface p-4">
       <div className="flex items-center justify-between">
         <span className="text-xs font-bold text-arena">Guerre — Saison 1</span>
         <span className="text-xs font-bold text-arena">J-47</span>
       </div>
-      <div className="mt-2 flex items-center justify-center gap-4">
-        <span className="text-sm font-black text-foreground">⚔️ VS ⚔️</span>
+      <div className="mt-2 flex items-center justify-center gap-3">
+        <span className="text-xs font-black text-arena-green">🛡️ NATURELLE</span>
+        <span className="text-sm font-black text-foreground">VS</span>
+        <span className="text-xs font-black text-arena-purple">⚡ OLYMPIEN</span>
       </div>
       <p className="mt-2 text-center text-xs text-arena-sub">
         {isNat
-          ? "Naturels en tête : +142k"
-          : "Olympiens en tête : +277k"}
+          ? "Naturels en tête : +142k XP"
+          : "Olympiens en tête : +277k XP"}
       </p>
       {league && (
-        <p className="mt-1 text-center text-[10px] text-arena-muted">
-          Tu combats pour la ligue <span className="font-bold text-foreground">{leagueLabel(league)}</span>
+        <p className={`mt-1 text-center text-[10px] font-bold ${lc.text}`}>
+          Tu combats pour les {isNat ? "🛡️ Naturels" : "⚡ Olympiens"}
         </p>
       )}
     </div>
