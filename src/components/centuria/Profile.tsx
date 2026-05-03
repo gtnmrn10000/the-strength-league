@@ -1,9 +1,8 @@
-import { motion } from "framer-motion";
 import { MapPin, ShieldCheck, Settings, Trophy, Flame, Dumbbell } from "lucide-react";
 
 export default function Profile() {
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="px-4 pt-2 pb-4">
+    <div className="px-4 pt-2 pb-4">
       <CombatCard />
 
       <h3 className="mb-3 mt-6 text-xs font-black tracking-widest text-arena-muted">PROGRESSION</h3>
@@ -26,7 +25,7 @@ export default function Profile() {
           </div>
         ))}
       </div>
-    </motion.div>
+    </div>
   );
 }
 

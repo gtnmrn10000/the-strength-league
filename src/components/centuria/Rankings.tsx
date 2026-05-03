@@ -1,6 +1,5 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
-import { Trophy, Flag, Swords } from "lucide-react";
+import { Flag } from "lucide-react";
 
 const ranking: [number, string, string, string][] = [
   [1, "Marius", "TITAN", "690 kg"],
@@ -13,7 +12,7 @@ export default function Rankings() {
   const [sub, setSub] = useState("Classements");
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="px-4 pt-2 pb-4">
+    <div className="px-4 pt-2 pb-4">
       <div className="mb-4 flex gap-2">
         {["Classements", "Guerre", "Duels"].map((x) => (
           <button
@@ -68,6 +67,6 @@ export default function Rankings() {
           </button>
         </div>
       )}
-    </motion.div>
+    </div>
   );
 }

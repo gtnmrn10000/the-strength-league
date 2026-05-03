@@ -1,9 +1,8 @@
-import { motion } from "framer-motion";
 import { Plus } from "lucide-react";
 
 export default function Meals() {
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="px-4 pt-2 pb-4">
+    <div className="px-4 pt-2 pb-4">
       <div className="mb-4 grid grid-cols-3 gap-3 text-center">
         <Ring label="Kcal" value="2 140" max="2 800" pct={76} />
         <Ring label="Prot" value="145g" max="180g" pct={80} />
@@ -24,7 +23,7 @@ export default function Meals() {
           </div>
         ))}
       </div>
-    </motion.div>
+    </div>
   );
 }
 
