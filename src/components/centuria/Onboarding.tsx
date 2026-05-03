@@ -244,11 +244,11 @@ function LeagueStep({ selected, onSelect }: { selected: string | null; onSelect:
         onSelect={() => onSelect("naturelle")}
       />
       <LeagueCard
-        title="OPEN" emoji="⚔️"
+       title="OLYMPIEN" emoji="🏛️"
         desc="Tout le monde. Aucune restriction, aucun jugement. Seule la force compte."
         features={["Sans restriction", "Tous niveaux", "Classement libre"]}
-        color="text-arena-purple" selected={selected === "open"}
-        onSelect={() => onSelect("open")}
+        color="text-arena-purple" selected={selected === "olympien"}
+        onSelect={() => onSelect("olympien")}
       />
       <div className="mt-2 flex items-start gap-2 rounded-xl bg-arena/5 p-3">
         <ShieldCheck size={16} className="mt-0.5 shrink-0 text-arena" />
