@@ -176,10 +176,8 @@ function HeroCard() {
   return (
     <div className="flex flex-col gap-4">
       <div className="rounded-2xl border border-arena-border bg-arena-surface p-5">
-        <div className="mb-4 flex gap-2">
-          {["🏛️", "⚔️", "🔥"].map((e, i) => (
-            <span key={i} className="flex h-10 w-10 items-center justify-center rounded-xl bg-secondary text-lg">{e}</span>
-          ))}
+        <div className="mb-4 flex items-center justify-center">
+          <img src={centuriaLogo} alt="Centuria" className="h-20 w-20 rounded-2xl" />
         </div>
         <p className="mb-4 text-sm leading-relaxed text-arena-sub">
           La première plateforme française qui classe, vérifie et récompense officiellement les pratiquants de muscu.
