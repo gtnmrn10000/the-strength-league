@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { Apple, Mail, Lock, ChevronLeft, Sparkles, ShieldCheck, Trophy, Check, Dumbbell, Target, TrendingUp, AlertCircle } from "lucide-react";
-import centuriaLogo from "@/assets/centuria-logo.png";
+import Logo from "./Logo";
 import { saveUserProfile } from "./userProfile";
 
 /* ── Validation helpers ── */
@@ -143,7 +143,7 @@ export default function Onboarding({ onDone }: { onDone: () => void }) {
               <ChevronLeft size={20} />
             </button>
           ) : (
-            <img src={centuriaLogo} alt="Centuria" className="h-6 w-6 rounded" />
+            <Logo />
           )}
           <span className="text-sm font-black tracking-[0.2em] text-foreground">CENTURIA</span>
         </div>
@@ -212,7 +212,7 @@ function HeroCard() {
     <div className="flex flex-col gap-4">
       <div className="rounded-2xl border border-arena-border bg-arena-surface p-5">
         <div className="mb-4 flex items-center justify-center">
-          <img src={centuriaLogo} alt="Centuria" className="h-20 w-20 rounded-2xl" />
+          <Logo size="lg" />
         </div>
         <p className="mb-4 text-sm leading-relaxed text-arena-sub">
           La première plateforme française qui classe, vérifie et récompense officiellement les pratiquants de muscu.
