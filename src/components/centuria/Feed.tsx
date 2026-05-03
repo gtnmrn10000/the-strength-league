@@ -33,11 +33,16 @@ const posts = [
 ];
 
 export default function Feed({ onCreate }: { onCreate: () => void }) {
+  const [showWelcome, setShowWelcome] = useState(true);
+
   return (
     <div className="px-4 pt-2 pb-4">
+      {showWelcome && <WelcomeBanner onClose={() => setShowWelcome(false)} />}
+      <QuickStats />
       <WarBanner />
       <FounderBanner />
-      <div className="mt-4 flex flex-col gap-4">
+      <h3 className="mb-3 mt-5 text-xs font-black tracking-widest text-arena-muted">FEED</h3>
+      <div className="flex flex-col gap-4">
         {posts.map((p, i) => (
           <PostCard key={i} post={p} />
         ))}
