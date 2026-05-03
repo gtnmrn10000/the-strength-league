@@ -14,7 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      profiles: {
+        Row: {
+          age: number | null
+          created_at: string
+          goal: Database["public"]["Enums"]["goal_type"] | null
+          id: string
+          league: Database["public"]["Enums"]["league_type"]
+          onboarded: boolean
+          poids: number | null
+          pseudo: string
+          taille: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          age?: number | null
+          created_at?: string
+          goal?: Database["public"]["Enums"]["goal_type"] | null
+          id?: string
+          league: Database["public"]["Enums"]["league_type"]
+          onboarded?: boolean
+          poids?: number | null
+          pseudo: string
+          taille?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          age?: number | null
+          created_at?: string
+          goal?: Database["public"]["Enums"]["goal_type"] | null
+          id?: string
+          league?: Database["public"]["Enums"]["league_type"]
+          onboarded?: boolean
+          poids?: number | null
+          pseudo?: string
+          taille?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +64,8 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      goal_type: "masse" | "seche" | "performance"
+      league_type: "naturelle" | "olympien"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +192,9 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      goal_type: ["masse", "seche", "performance"],
+      league_type: ["naturelle", "olympien"],
+    },
   },
 } as const
