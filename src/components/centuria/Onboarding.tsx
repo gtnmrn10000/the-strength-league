@@ -163,13 +163,13 @@ export default function Onboarding({ onDone }: { onDone: () => void }) {
         </h1>
         {step === 0 && <HeroCard />}
         {step === 1 && <AuthStep />}
-        {step === 2 && <LeagueStep selected={selectedLeague} onSelect={setSelectedLeague} />}
+        {step === 2 && <LeagueStep selected={selectedLeague} onSelect={(v) => { setSelectedLeague(v); persist({ league: v }); }} />}
         {step === 3 && (
           <StatsStep
-            pseudo={pseudo} setPseudo={(v) => { setPseudo(v); markTouched("pseudo"); }}
-            age={age} setAge={(v) => { setAge(v); markTouched("age"); }}
-            taille={taille} setTaille={(v) => { setTaille(v); markTouched("taille"); }}
-            poids={poids} setPoids={(v) => { setPoids(v); markTouched("poids"); }}
+            pseudo={pseudo} setPseudo={(v) => { setPseudo(v); markTouched("pseudo"); persist({ pseudo: v }); }}
+            age={age} setAge={(v) => { setAge(v); markTouched("age"); persist({ age: v }); }}
+            taille={taille} setTaille={(v) => { setTaille(v); markTouched("taille"); persist({ taille: v }); }}
+            poids={poids} setPoids={(v) => { setPoids(v); markTouched("poids"); persist({ poids: v }); }}
             errors={{
               pseudo: showError("pseudo"),
               age: showError("age"),
@@ -178,7 +178,7 @@ export default function Onboarding({ onDone }: { onDone: () => void }) {
             }}
           />
         )}
-        {step === 4 && <GoalStep selected={selectedGoal} onSelect={setSelectedGoal} />}
+        {step === 4 && <GoalStep selected={selectedGoal} onSelect={(v) => { setSelectedGoal(v); persist({ goal: v }); }} />}
       </div>
 
       {/* Footer */}
