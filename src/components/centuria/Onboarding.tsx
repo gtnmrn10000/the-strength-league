@@ -1,7 +1,8 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Apple, Mail, Lock, ChevronLeft, Sparkles, ShieldCheck, Trophy, Check, Dumbbell, Target, TrendingUp, AlertCircle } from "lucide-react";
 import Logo from "./Logo";
 import { saveUserProfile } from "./userProfile";
+import { track } from "./analytics";
 
 /* ── Validation helpers ── */
 
@@ -57,13 +58,15 @@ interface OnboardingData {
   poids: string;
 }
 
+const DEFAULT_DATA: OnboardingData = { step: 0, league: null, goal: null, pseudo: "", age: "", taille: "", poids: "" };
+
 function loadSaved(): OnboardingData {
-  if (typeof window === "undefined") return { step: 0, league: null, goal: null, pseudo: "", age: "", taille: "", poids: "" };
+  if (typeof window === "undefined") return DEFAULT_DATA;
   try {
     const raw = localStorage.getItem(OB_KEY);
     if (raw) return JSON.parse(raw);
   } catch {}
-  return { step: 0, league: null, goal: null, pseudo: "", age: "", taille: "", poids: "" };
+  return DEFAULT_DATA;
 }
 
 function saveDraft(data: OnboardingData) {
@@ -71,16 +74,30 @@ function saveDraft(data: OnboardingData) {
 }
 
 export default function Onboarding({ onDone }: { onDone: () => void }) {
-  const saved = loadSaved();
-  const [step, setStep] = useState(saved.step);
-  const [selectedLeague, setSelectedLeague] = useState<string | null>(saved.league);
-  const [selectedGoal, setSelectedGoal] = useState<string | null>(saved.goal);
-  const [pseudo, setPseudo] = useState(saved.pseudo);
-  const [age, setAge] = useState(saved.age);
-  const [taille, setTaille] = useState(saved.taille);
-  const [poids, setPoids] = useState(saved.poids);
+  // Always start at step 0 for SSR, then restore from localStorage
+  const [step, setStep] = useState(0);
+  const [selectedLeague, setSelectedLeague] = useState<string | null>(null);
+  const [selectedGoal, setSelectedGoal] = useState<string | null>(null);
+  const [pseudo, setPseudo] = useState("");
+  const [age, setAge] = useState("");
+  const [taille, setTaille] = useState("");
+  const [poids, setPoids] = useState("");
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [triedContinue, setTriedContinue] = useState(false);
+
+  // Restore saved draft after hydration
+  useEffect(() => {
+    const saved = loadSaved();
+    if (saved.step > 0 || saved.pseudo) {
+      setStep(saved.step);
+      setSelectedLeague(saved.league);
+      setSelectedGoal(saved.goal);
+      setPseudo(saved.pseudo);
+      setAge(saved.age);
+      setTaille(saved.taille);
+      setPoids(saved.poids);
+    }
+  }, []);
 
   const titles = [
     "REJOINS LA LIGUE. PROUVE TA FORCE.",
@@ -103,6 +120,8 @@ export default function Onboarding({ onDone }: { onDone: () => void }) {
     saveDraft({ step, league: selectedLeague, goal: selectedGoal, pseudo, age, taille, poids, ...overrides });
   };
 
+  const stepNames = ["hero", "auth", "league", "profile", "goal"];
+
   const handleContinue = () => {
     if (step === 3) {
       setTriedContinue(true);
@@ -112,9 +131,16 @@ export default function Onboarding({ onDone }: { onDone: () => void }) {
     if (step === 4) {
       localStorage.removeItem(OB_KEY);
       saveUserProfile({ pseudo, age, taille, poids, league: selectedLeague, goal: selectedGoal });
+      track("onboarding_completed", { league: selectedLeague, goal: selectedGoal, pseudo });
       onDone();
     } else {
       const next = step + 1;
+      // Track step completion with relevant data
+      const props: Record<string, string | number | boolean | null> = { from_step: stepNames[step], to_step: stepNames[next] };
+      if (step === 2) props.league = selectedLeague;
+      if (step === 3) props.pseudo = pseudo;
+      track("onboarding_step_completed", props);
+
       setTriedContinue(false);
       setTouched({});
       setStep(next);
@@ -165,7 +191,7 @@ export default function Onboarding({ onDone }: { onDone: () => void }) {
         </h1>
         {step === 0 && <HeroCard />}
         {step === 1 && <AuthStep />}
-        {step === 2 && <LeagueStep selected={selectedLeague} onSelect={(v) => { setSelectedLeague(v); persist({ league: v }); }} />}
+        {step === 2 && <LeagueStep selected={selectedLeague} onSelect={(v) => { setSelectedLeague(v); persist({ league: v }); track("league_selected", { league: v }); }} />}
         {step === 3 && (
           <StatsStep
             pseudo={pseudo} setPseudo={(v) => { setPseudo(v); markTouched("pseudo"); persist({ pseudo: v }); }}
@@ -180,7 +206,7 @@ export default function Onboarding({ onDone }: { onDone: () => void }) {
             }}
           />
         )}
-        {step === 4 && <GoalStep selected={selectedGoal} onSelect={(v) => { setSelectedGoal(v); persist({ goal: v }); }} />}
+        {step === 4 && <GoalStep selected={selectedGoal} onSelect={(v) => { setSelectedGoal(v); persist({ goal: v }); track("goal_selected", { goal: v }); }} />}
       </div>
 
       {/* Footer */}
