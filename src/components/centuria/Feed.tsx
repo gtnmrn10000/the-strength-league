@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Flame, ShieldCheck, Save, Plus, Crown, Zap, X, Trophy, Target } from "lucide-react";
 import centuriaLogo from "@/assets/centuria-logo.png";
+import { loadUserProfile, goalLabel, goalEmoji, leagueLabel, leagueColor } from "./userProfile";
 
 const posts = [
   {
@@ -35,12 +36,13 @@ const posts = [
 
 export default function Feed({ onCreate }: { onCreate: () => void }) {
   const [showWelcome, setShowWelcome] = useState(true);
+  const profile = loadUserProfile();
 
   return (
     <div className="px-4 pt-2 pb-4">
-      {showWelcome && <WelcomeBanner onClose={() => setShowWelcome(false)} />}
-      <QuickStats />
-      <WarBanner />
+      {showWelcome && <WelcomeBanner pseudo={profile?.pseudo} league={profile?.league} onClose={() => setShowWelcome(false)} />}
+      <QuickStats goal={profile?.goal ?? null} league={profile?.league ?? null} />
+      <WarBanner league={profile?.league ?? null} />
       <FounderBanner />
       <h3 className="mb-3 mt-5 text-xs font-black tracking-widest text-arena-muted">FEED</h3>
       <div className="flex flex-col gap-4">
@@ -57,7 +59,9 @@ export default function Feed({ onCreate }: { onCreate: () => void }) {
     </div>
   );
 }
-function WelcomeBanner({ onClose }: { onClose: () => void }) {
+
+function WelcomeBanner({ pseudo, league, onClose }: { pseudo?: string; league?: string | null; onClose: () => void }) {
+  const lc = leagueColor(league ?? null);
   return (
     <div className="mb-3 rounded-2xl border border-arena/30 bg-gradient-to-br from-arena/10 to-arena-gold/5 p-4 relative">
       <button onClick={onClose} className="absolute top-3 right-3 text-arena-muted hover:text-foreground transition-colors">
@@ -65,38 +69,62 @@ function WelcomeBanner({ onClose }: { onClose: () => void }) {
       </button>
       <div className="flex items-center gap-2 mb-2">
         <img src={centuriaLogo} alt="Centuria" className="h-6 w-6 rounded" />
-        <span className="text-sm font-black text-foreground">Bienvenue, Gladiateur.</span>
+        <span className="text-sm font-black text-foreground">
+          Bienvenue, {pseudo || "Gladiateur"}.
+        </span>
       </div>
       <p className="text-xs text-arena-sub leading-relaxed">
         Ton arène est prête. Log ton premier PR pour débloquer ton grade et entrer dans le classement.
       </p>
-      <div className="mt-3 flex gap-2">
+      <div className="mt-3 flex flex-wrap gap-2">
         <span className="rounded-full bg-arena/20 px-2.5 py-1 text-[10px] font-bold text-arena">🎯 Log un PR</span>
         <span className="rounded-full bg-arena-gold/20 px-2.5 py-1 text-[10px] font-bold text-arena-gold">⚡ +100 XP offerts</span>
+        {league && (
+          <span className={`rounded-full ${lc.bg} px-2.5 py-1 text-[10px] font-bold ${lc.text}`}>
+            🏛️ Ligue {leagueLabel(league)}
+          </span>
+        )}
       </div>
     </div>
   );
 }
 
-function QuickStats() {
+function QuickStats({ goal, league }: { goal: string | null; league: string | null }) {
+  const lc = leagueColor(league);
   return (
-    <div className="mb-3 grid grid-cols-3 gap-2">
-      {[
-        { icon: Trophy, label: "Rank", value: "#—", color: "text-arena-gold" },
-        { icon: Target, label: "Grade", value: "RECRUE", color: "text-arena" },
-        { icon: Flame, label: "Streak", value: "1j", color: "text-arena" },
-      ].map(({ icon: Icon, label, value, color }) => (
-        <div key={label} className="flex flex-col items-center gap-1 rounded-2xl border border-arena-border bg-arena-surface p-3">
-          <Icon size={16} className={color} />
-          <span className="text-sm font-black text-foreground">{value}</span>
-          <span className="text-[10px] text-arena-muted">{label}</span>
-        </div>
-      ))}
+    <div className="mb-3">
+      <div className="grid grid-cols-3 gap-2">
+        {[
+          { icon: Trophy, label: "Rank", value: "#—", color: "text-arena-gold" },
+          { icon: Target, label: "Grade", value: "RECRUE", color: "text-arena" },
+          { icon: Flame, label: "Streak", value: "1j", color: "text-arena" },
+        ].map(({ icon: Icon, label, value, color }) => (
+          <div key={label} className="flex flex-col items-center gap-1 rounded-2xl border border-arena-border bg-arena-surface p-3">
+            <Icon size={16} className={color} />
+            <span className="text-sm font-black text-foreground">{value}</span>
+            <span className="text-[10px] text-arena-muted">{label}</span>
+          </div>
+        ))}
+      </div>
+      {/* Objective & league badges */}
+      <div className="mt-2 flex flex-wrap gap-2">
+        {goal && (
+          <span className="rounded-full bg-arena/10 px-2.5 py-1 text-[10px] font-bold text-arena">
+            {goalEmoji(goal)} {goalLabel(goal)}
+          </span>
+        )}
+        {league && (
+          <span className={`rounded-full ${lc.bg} px-2.5 py-1 text-[10px] font-bold ${lc.text}`}>
+            {leagueLabel(league)}
+          </span>
+        )}
+      </div>
     </div>
   );
 }
 
-function WarBanner() {
+function WarBanner({ league }: { league: string | null }) {
+  const isNat = league === "naturelle";
   return (
     <div className="mb-3 rounded-2xl border border-arena-border bg-arena-surface p-4">
       <div className="flex items-center justify-between">
@@ -106,7 +134,16 @@ function WarBanner() {
       <div className="mt-2 flex items-center justify-center gap-4">
         <span className="text-sm font-black text-foreground">⚔️ VS ⚔️</span>
       </div>
-      <p className="mt-2 text-center text-xs text-arena-sub">Olympiens en tête : +277k</p>
+      <p className="mt-2 text-center text-xs text-arena-sub">
+        {isNat
+          ? "Naturels en tête : +142k"
+          : "Olympiens en tête : +277k"}
+      </p>
+      {league && (
+        <p className="mt-1 text-center text-[10px] text-arena-muted">
+          Tu combats pour la ligue <span className="font-bold text-foreground">{leagueLabel(league)}</span>
+        </p>
+      )}
     </div>
   );
 }

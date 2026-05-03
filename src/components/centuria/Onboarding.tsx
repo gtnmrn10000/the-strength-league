@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import { Apple, Mail, Lock, ChevronLeft, Sparkles, ShieldCheck, Trophy, Check, Dumbbell, Target, TrendingUp, AlertCircle } from "lucide-react";
 import centuriaLogo from "@/assets/centuria-logo.png";
+import { saveUserProfile } from "./userProfile";
 
 /* ── Validation helpers ── */
 
@@ -110,6 +111,7 @@ export default function Onboarding({ onDone }: { onDone: () => void }) {
     if (!canContinue()) return;
     if (step === 4) {
       localStorage.removeItem(OB_KEY);
+      saveUserProfile({ pseudo, age, taille, poids, league: selectedLeague, goal: selectedGoal });
       onDone();
     } else {
       const next = step + 1;

@@ -1,27 +1,45 @@
-import { MapPin, ShieldCheck, Settings, Trophy, Flame, Dumbbell } from "lucide-react";
+import { MapPin, ShieldCheck, Settings, Trophy, Flame, Dumbbell, Target } from "lucide-react";
+import { loadUserProfile, goalLabel, goalEmoji, leagueLabel, leagueColor } from "./userProfile";
 
 export default function Profile() {
+  const profile = loadUserProfile();
+  const lc = leagueColor(profile?.league ?? null);
+
   return (
     <div className="px-4 pt-2 pb-4">
-      <CombatCard />
+      <CombatCard profile={profile} lc={lc} />
 
       <h3 className="mb-3 mt-6 text-xs font-black tracking-widest text-arena-muted">PROGRESSION</h3>
       <div className="rounded-2xl border border-arena-border bg-arena-surface p-4">
         <div className="flex items-center justify-between">
           <span className="text-sm font-bold text-foreground">Vers Gladiateur</span>
-          <span className="text-sm font-black text-arena">78%</span>
+          <span className="text-sm font-black text-arena">0%</span>
         </div>
         <div className="mt-2 h-2 overflow-hidden rounded-full bg-secondary">
-          <div className="h-full rounded-full bg-arena" style={{ width: "78%" }} />
+          <div className="h-full rounded-full bg-arena" style={{ width: "0%" }} />
         </div>
+        <p className="mt-2 text-[10px] text-arena-muted">Log ton premier PR pour progresser vers le grade suivant.</p>
       </div>
+
+      {profile?.goal && (
+        <>
+          <h3 className="mb-3 mt-6 text-xs font-black tracking-widest text-arena-muted">OBJECTIF ACTUEL</h3>
+          <div className="rounded-2xl border border-arena-border bg-arena-surface p-4 flex items-center gap-3">
+            <span className="text-2xl">{goalEmoji(profile.goal)}</span>
+            <div>
+              <p className="font-black text-foreground">{goalLabel(profile.goal)}</p>
+              <p className="text-xs text-arena-sub">Défini à l'inscription · Modifiable dans les réglages</p>
+            </div>
+          </div>
+        </>
+      )}
 
       <h3 className="mb-3 mt-6 text-xs font-black tracking-widest text-arena-muted">BADGES</h3>
       <div className="flex gap-2">
-        {["Streak 87", "PR IA", "Top 2%"].map((x) => (
-          <div key={x} className="flex items-center gap-1 rounded-full bg-arena-gold/10 px-3 py-1.5">
-            <Trophy size={12} className="text-arena-gold" />
-            <span className="text-[10px] font-bold text-arena-gold">{x}</span>
+        {["Recrue", "Nouveau"].map((x) => (
+          <div key={x} className="flex items-center gap-1 rounded-full bg-arena/10 px-3 py-1.5">
+            <Target size={12} className="text-arena" />
+            <span className="text-[10px] font-bold text-arena">{x}</span>
           </div>
         ))}
       </div>
@@ -29,44 +47,53 @@ export default function Profile() {
   );
 }
 
-function CombatCard() {
+function CombatCard({ profile, lc }: { profile: ReturnType<typeof loadUserProfile>; lc: { text: string; bg: string } }) {
+  const pseudo = profile?.pseudo || "Gladiateur";
+  const age = profile?.age ? `${profile.age} ans` : "";
+  const poids = profile?.poids ? `${profile.poids}kg` : "";
+  const meta = [age, poids].filter(Boolean).join(" · ");
+
   return (
     <div className="rounded-2xl border border-arena-border bg-arena-surface p-5">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-black text-foreground">Maxime D.</h2>
-          <p className="text-xs text-arena-sub">@maxime_lifts</p>
-          <p className="mt-1 flex items-center gap-1 text-xs text-arena-sub">
-            <MapPin size={12} /> Lyon · 22 ans · 84kg
-          </p>
+          <h2 className="text-lg font-black text-foreground">{pseudo}</h2>
+          <p className="text-xs text-arena-sub">@{pseudo.toLowerCase().replace(/\s/g, "_")}</p>
+          {meta && (
+            <p className="mt-1 flex items-center gap-1 text-xs text-arena-sub">
+              <MapPin size={12} /> {meta}
+            </p>
+          )}
         </div>
         <Settings size={20} className="text-arena-muted" />
       </div>
 
       <div className="mt-3 flex gap-4">
-        <Mini icon={Flame} label="Streak" value="87j" />
-        <Mini icon={Dumbbell} label="PRs" value="12" />
-        <Mini icon={Trophy} label="Rank" value="#847" />
+        <Mini icon={Flame} label="Streak" value="0j" />
+        <Mini icon={Dumbbell} label="PRs" value="0" />
+        <Mini icon={Trophy} label="Rank" value="#—" />
       </div>
 
-      <div className="mt-3 flex gap-2">
-        <span className="rounded-full bg-arena-green/10 px-2 py-0.5 text-[10px] font-bold text-arena-green">Ligue naturelle</span>
-        <span className="rounded-full bg-arena-gold/10 px-2 py-0.5 text-[10px] font-bold text-arena-gold">Spartiate</span>
+      <div className="mt-3 flex flex-wrap gap-2">
+        {profile?.league && (
+          <span className={`rounded-full ${lc.bg} px-2 py-0.5 text-[10px] font-bold ${lc.text}`}>
+            Ligue {leagueLabel(profile.league)}
+          </span>
+        )}
+        <span className="rounded-full bg-arena/10 px-2 py-0.5 text-[10px] font-bold text-arena">RECRUE</span>
       </div>
 
-      <div className="mt-2 flex items-center gap-1 text-xs text-arena-green">
-        <ShieldCheck size={14} />
-        <span>Testé naturel — Juin 2026</span>
-      </div>
+      {profile?.league === "naturelle" && (
+        <div className="mt-2 flex items-center gap-1 text-xs text-arena-green">
+          <ShieldCheck size={14} />
+          <span>Drug-free — En attente de vérification</span>
+        </div>
+      )}
 
       <h4 className="mb-2 mt-4 text-xs font-black text-arena-muted">PR vérifiés</h4>
-      <div className="grid grid-cols-3 gap-2">
-        {([["Squat", "180kg"], ["Bench", "130kg"], ["Deadlift", "220kg"], ["Total", "530kg"], ["Wilks", "372"]] as const).map(([a, b]) => (
-          <div key={a} className="rounded-xl bg-secondary p-2 text-center">
-            <p className="text-[10px] text-arena-sub">{a}</p>
-            <p className="text-sm font-black text-foreground">{b} ✅</p>
-          </div>
-        ))}
+      <div className="rounded-xl bg-secondary p-4 text-center">
+        <p className="text-xs text-arena-muted">Aucun PR enregistré pour le moment.</p>
+        <p className="mt-1 text-[10px] text-arena-sub">Log ton premier PR pour commencer 💪</p>
       </div>
 
       <button className="mt-4 w-full rounded-xl border border-arena-border py-2 text-xs font-bold text-arena-sub">
