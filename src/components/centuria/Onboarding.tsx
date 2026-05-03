@@ -272,16 +272,16 @@ function LeagueStep({ selected, onSelect }: { selected: string | null; onSelect:
   return (
     <div className="flex flex-col gap-3">
       <LeagueCard
-        title="NATURELLE" emoji="🏛️"
+        title="NATURELLE" emoji="🛡️"
         desc="Drug-free. Tous tes PR sont vérifiés par IA vidéo. Triche = ban définitif."
         features={["Vérification IA", "Badge drug-free", "Classement protégé"]}
         color="text-arena-green" selected={selected === "naturelle"}
         onSelect={() => onSelect("naturelle")}
       />
       <LeagueCard
-       title="OLYMPIEN" emoji="🏛️"
-        desc="Tout le monde. Aucune restriction, aucun jugement. Seule la force compte."
-        features={["Sans restriction", "Tous niveaux", "Classement libre"]}
+        title="OLYMPIEN" emoji="⚡"
+        desc="Aucune limite. Force brute, performances extrêmes. Seul le total compte."
+        features={["Sans restriction", "Force maximale", "Classement absolu"]}
         color="text-arena-purple" selected={selected === "olympien"}
         onSelect={() => onSelect("olympien")}
       />

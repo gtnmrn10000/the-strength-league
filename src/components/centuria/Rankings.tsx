@@ -28,7 +28,7 @@ export default function Rankings() {
       {sub === "Classements" && (
         <>
           <div className="mb-3 flex gap-2 overflow-x-auto scrollbar-hide">
-            {["Naturelle", "National", "Total", "-93kg"].map((x) => (
+            {["Naturelle", "Olympien", "National", "Total", "-93kg"].map((x) => (
               <span key={x} className="whitespace-nowrap rounded-full bg-secondary px-3 py-1 text-[10px] font-bold text-arena-sub">{x}</span>
             ))}
           </div>
