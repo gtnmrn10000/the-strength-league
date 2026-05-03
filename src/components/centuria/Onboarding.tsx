@@ -1,5 +1,47 @@
-import { useState } from "react";
-import { Swords, Apple, Mail, Lock, ChevronRight, ChevronLeft, Sparkles, ShieldCheck, Trophy, Check, Dumbbell, Target, TrendingUp } from "lucide-react";
+import { useState, useCallback } from "react";
+import { Swords, Apple, Mail, Lock, ChevronLeft, Sparkles, ShieldCheck, Trophy, Check, Dumbbell, Target, TrendingUp, AlertCircle } from "lucide-react";
+
+/* ── Validation helpers ── */
+
+interface StatsErrors {
+  pseudo?: string;
+  age?: string;
+  taille?: string;
+  poids?: string;
+}
+
+function validatePseudo(v: string): string | undefined {
+  const trimmed = v.trim();
+  if (trimmed.length === 0) return "Le pseudo est obligatoire.";
+  if (trimmed.length < 3) return "3 caractères minimum.";
+  if (trimmed.length > 24) return "24 caractères maximum.";
+  if (!/^@?[a-zA-Z0-9_]+$/.test(trimmed)) return "Lettres, chiffres et _ uniquement.";
+  return undefined;
+}
+
+function validateNumericField(v: string, label: string, min: number, max: number): string | undefined {
+  if (v.trim().length === 0) return undefined; // optional field
+  const n = Number(v.replace(",", "."));
+  if (isNaN(n) || !isFinite(n)) return `${label} doit être un nombre.`;
+  if (n < min || n > max) return `Entre ${min} et ${max}.`;
+  if (!/^\d+([.,]\d{0,1})?$/.test(v.trim())) return "1 décimale max.";
+  return undefined;
+}
+
+function validateStats(pseudo: string, age: string, taille: string, poids: string): StatsErrors {
+  return {
+    pseudo: validatePseudo(pseudo),
+    age: validateNumericField(age, "L'âge", 13, 99),
+    taille: validateNumericField(taille, "La taille", 100, 230),
+    poids: validateNumericField(poids, "Le poids", 30, 250),
+  };
+}
+
+function hasErrors(errors: StatsErrors): boolean {
+  return Object.values(errors).some((e) => e !== undefined);
+}
+
+/* ── Main component ── */
 
 export default function Onboarding({ onDone }: { onDone: () => void }) {
   const [step, setStep] = useState(0);
@@ -9,6 +51,8 @@ export default function Onboarding({ onDone }: { onDone: () => void }) {
   const [age, setAge] = useState("");
   const [taille, setTaille] = useState("");
   const [poids, setPoids] = useState("");
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+  const [triedContinue, setTriedContinue] = useState(false);
 
   const titles = [
     "REJOINS LA LIGUE. PROUVE TA FORCE.",
@@ -18,11 +62,36 @@ export default function Onboarding({ onDone }: { onDone: () => void }) {
     "FIXE TON PREMIER OBJECTIF",
   ];
 
-  const canContinue = () => {
+  const statsErrors = validateStats(pseudo, age, taille, poids);
+
+  const canContinue = useCallback(() => {
     if (step === 2) return selectedLeague !== null;
-    if (step === 3) return pseudo.length > 0;
+    if (step === 3) return !hasErrors(statsErrors) && pseudo.trim().length >= 3;
     if (step === 4) return selectedGoal !== null;
     return true;
+  }, [step, selectedLeague, selectedGoal, statsErrors, pseudo]);
+
+  const handleContinue = () => {
+    if (step === 3) {
+      setTriedContinue(true);
+      if (!canContinue()) return;
+    }
+    if (!canContinue()) return;
+    if (step === 4) {
+      onDone();
+    } else {
+      setTriedContinue(false);
+      setTouched({});
+      setStep(step + 1);
+    }
+  };
+
+  const markTouched = (field: string) => {
+    setTouched((prev) => ({ ...prev, [field]: true }));
+  };
+
+  const showError = (field: keyof StatsErrors) => {
+    return (touched[field] || triedContinue) ? statsErrors[field] : undefined;
   };
 
   return (
@@ -31,7 +100,10 @@ export default function Onboarding({ onDone }: { onDone: () => void }) {
       <div className="flex items-center justify-between px-5 pt-5">
         <div className="flex items-center gap-2">
           {step > 0 ? (
-            <button onClick={() => setStep(step - 1)} className="flex items-center gap-1 text-arena-sub active:scale-95 transition-transform">
+            <button
+              onClick={() => { setStep(step - 1); setTriedContinue(false); }}
+              className="flex items-center gap-1 text-arena-sub active:scale-95 transition-transform"
+            >
               <ChevronLeft size={20} />
             </button>
           ) : (
@@ -60,10 +132,16 @@ export default function Onboarding({ onDone }: { onDone: () => void }) {
         {step === 2 && <LeagueStep selected={selectedLeague} onSelect={setSelectedLeague} />}
         {step === 3 && (
           <StatsStep
-            pseudo={pseudo} setPseudo={setPseudo}
-            age={age} setAge={setAge}
-            taille={taille} setTaille={setTaille}
-            poids={poids} setPoids={setPoids}
+            pseudo={pseudo} setPseudo={(v) => { setPseudo(v); markTouched("pseudo"); }}
+            age={age} setAge={(v) => { setAge(v); markTouched("age"); }}
+            taille={taille} setTaille={(v) => { setTaille(v); markTouched("taille"); }}
+            poids={poids} setPoids={(v) => { setPoids(v); markTouched("poids"); }}
+            errors={{
+              pseudo: showError("pseudo"),
+              age: showError("age"),
+              taille: showError("taille"),
+              poids: showError("poids"),
+            }}
           />
         )}
         {step === 4 && <GoalStep selected={selectedGoal} onSelect={setSelectedGoal} />}
@@ -72,8 +150,8 @@ export default function Onboarding({ onDone }: { onDone: () => void }) {
       {/* Footer */}
       <div className="px-5 pb-6">
         <button
-          onClick={() => (step === 4 ? onDone() : setStep(step + 1))}
-          disabled={!canContinue()}
+          onClick={handleContinue}
+          disabled={step !== 3 && !canContinue()}
           className={`h-14 w-full rounded-2xl font-black uppercase tracking-wide transition-all duration-200 active:scale-95
             ${canContinue()
               ? "bg-arena text-arena-foreground shadow-[0_0_35px_var(--arena-glow)]"
@@ -110,7 +188,6 @@ function HeroCard() {
           <span className="text-xs text-arena-gold">Premier grade débloqué en 60 secondes</span>
         </div>
       </div>
-
       <div className="grid grid-cols-3 gap-3">
         {[
           { icon: ShieldCheck, label: "PR vérifiés par IA", color: "text-arena-green" },
@@ -161,21 +238,17 @@ function LeagueStep({ selected, onSelect }: { selected: string | null; onSelect:
   return (
     <div className="flex flex-col gap-3">
       <LeagueCard
-        title="NATURELLE"
-        emoji="🏛️"
+        title="NATURELLE" emoji="🏛️"
         desc="Drug-free. Tous tes PR sont vérifiés par IA vidéo. Triche = ban définitif."
         features={["Vérification IA", "Badge drug-free", "Classement protégé"]}
-        color="text-arena-green"
-        selected={selected === "naturelle"}
+        color="text-arena-green" selected={selected === "naturelle"}
         onSelect={() => onSelect("naturelle")}
       />
       <LeagueCard
-        title="OPEN"
-        emoji="⚔️"
+        title="OPEN" emoji="⚔️"
         desc="Tout le monde. Aucune restriction, aucun jugement. Seule la force compte."
         features={["Sans restriction", "Tous niveaux", "Classement libre"]}
-        color="text-arena-purple"
-        selected={selected === "open"}
+        color="text-arena-purple" selected={selected === "open"}
         onSelect={() => onSelect("open")}
       />
       <div className="mt-2 flex items-start gap-2 rounded-xl bg-arena/5 p-3">
@@ -222,20 +295,21 @@ function LeagueCard({ title, emoji, desc, features, color, selected, onSelect }:
 }
 
 /* ── Step 3: Profile Stats ── */
-function StatsStep({ pseudo, setPseudo, age, setAge, taille, setTaille, poids, setPoids }: {
+function StatsStep({ pseudo, setPseudo, age, setAge, taille, setTaille, poids, setPoids, errors }: {
   pseudo: string; setPseudo: (v: string) => void;
   age: string; setAge: (v: string) => void;
   taille: string; setTaille: (v: string) => void;
   poids: string; setPoids: (v: string) => void;
+  errors: StatsErrors;
 }) {
   return (
     <div className="flex flex-col gap-4">
       <p className="text-sm text-arena-sub">Ces infos permettent de calculer tes ratios et te classer correctement.</p>
-      <InputField label="Pseudo" placeholder="@ton_pseudo" value={pseudo} onChange={setPseudo} required />
-      <InputField label="Âge" placeholder="22" value={age} onChange={setAge} suffix="ans" />
+      <InputField label="Pseudo" placeholder="@ton_pseudo" value={pseudo} onChange={setPseudo} error={errors.pseudo} required />
+      <InputField label="Âge" placeholder="22" value={age} onChange={setAge} suffix="ans" error={errors.age} inputMode="numeric" />
       <div className="grid grid-cols-2 gap-3">
-        <InputField label="Taille" placeholder="178" value={taille} onChange={setTaille} suffix="cm" />
-        <InputField label="Poids" placeholder="84" value={poids} onChange={setPoids} suffix="kg" />
+        <InputField label="Taille" placeholder="178" value={taille} onChange={setTaille} suffix="cm" error={errors.taille} inputMode="decimal" />
+        <InputField label="Poids" placeholder="84" value={poids} onChange={setPoids} suffix="kg" error={errors.poids} inputMode="decimal" />
       </div>
       <div className="mt-1 flex items-start gap-2 rounded-xl bg-arena/5 p-3">
         <Lock size={14} className="mt-0.5 shrink-0 text-arena-muted" />
@@ -247,24 +321,36 @@ function StatsStep({ pseudo, setPseudo, age, setAge, taille, setTaille, poids, s
   );
 }
 
-function InputField({ label, placeholder, value, onChange, suffix, required }: {
-  label: string; placeholder: string; value: string; onChange: (v: string) => void; suffix?: string; required?: boolean;
+function InputField({ label, placeholder, value, onChange, suffix, required, error, inputMode }: {
+  label: string; placeholder: string; value: string; onChange: (v: string) => void;
+  suffix?: string; required?: boolean; error?: string; inputMode?: "text" | "numeric" | "decimal";
 }) {
   return (
-    <div className="rounded-2xl border border-arena-border bg-arena-surface p-4 focus-within:border-arena/50 transition-colors">
-      <label className="text-xs text-arena-sub">
-        {label} {required && <span className="text-arena">*</span>}
-      </label>
-      <div className="mt-1 flex items-center gap-2">
-        <input
-          type="text"
-          placeholder={placeholder}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          className="flex-1 bg-transparent font-bold text-foreground outline-none placeholder:text-arena-muted"
-        />
-        {suffix && <span className="text-xs text-arena-muted">{suffix}</span>}
+    <div>
+      <div className={`rounded-2xl border bg-arena-surface p-4 transition-colors
+        ${error ? "border-destructive/60" : "border-arena-border focus-within:border-arena/50"}`}>
+        <label className="text-xs text-arena-sub">
+          {label} {required && <span className="text-arena">*</span>}
+        </label>
+        <div className="mt-1 flex items-center gap-2">
+          <input
+            type="text"
+            inputMode={inputMode || "text"}
+            placeholder={placeholder}
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            maxLength={label === "Pseudo" ? 25 : 6}
+            className="flex-1 bg-transparent font-bold text-foreground outline-none placeholder:text-arena-muted"
+          />
+          {suffix && <span className="text-xs text-arena-muted">{suffix}</span>}
+        </div>
       </div>
+      {error && (
+        <div className="mt-1.5 flex items-center gap-1.5 px-1">
+          <AlertCircle size={12} className="shrink-0 text-destructive" />
+          <span className="text-[11px] text-destructive">{error}</span>
+        </div>
+      )}
     </div>
   );
 }
@@ -272,27 +358,9 @@ function InputField({ label, placeholder, value, onChange, suffix, required }: {
 /* ── Step 4: Goal ── */
 function GoalStep({ selected, onSelect }: { selected: string | null; onSelect: (v: string) => void }) {
   const goals = [
-    {
-      id: "masse",
-      label: "Prise de masse",
-      desc: "Surplus calorique, programmes hypertrophie, progression de charge.",
-      icon: Dumbbell,
-      emoji: "💪",
-    },
-    {
-      id: "seche",
-      label: "Sèche",
-      desc: "Déficit calorique contrôlé, maintien de force, suivi macro.",
-      icon: Target,
-      emoji: "🔥",
-    },
-    {
-      id: "performance",
-      label: "Performance",
-      desc: "Maximise tes PR. Programmation force pure, peaking, ratios.",
-      icon: TrendingUp,
-      emoji: "⚡",
-    },
+    { id: "masse", label: "Prise de masse", desc: "Surplus calorique, programmes hypertrophie, progression de charge.", emoji: "💪" },
+    { id: "seche", label: "Sèche", desc: "Déficit calorique contrôlé, maintien de force, suivi macro.", emoji: "🔥" },
+    { id: "performance", label: "Performance", desc: "Maximise tes PR. Programmation force pure, peaking, ratios.", emoji: "⚡" },
   ];
 
   return (
