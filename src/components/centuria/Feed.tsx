@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Flame, ShieldCheck, Save, Plus, Crown, Zap, X, Trophy, Target } from "lucide-react";
 import Logo from "./Logo";
+import LeagueIcon from "./LeagueIcon";
 import { loadUserProfile, goalLabel, goalEmoji, leagueLabel, leagueColor } from "./userProfile";
 
 const posts = [
@@ -80,8 +81,8 @@ function WelcomeBanner({ pseudo, league, onClose }: { pseudo?: string; league?: 
         <span className="rounded-full bg-arena/20 px-2.5 py-1 text-[10px] font-bold text-arena">🎯 Log un PR</span>
         <span className="rounded-full bg-arena-gold/20 px-2.5 py-1 text-[10px] font-bold text-arena-gold">⚡ +100 XP offerts</span>
         {league && (
-          <span className={`rounded-full ${lc.bg} px-2.5 py-1 text-[10px] font-bold ${lc.text}`}>
-            🏛️ Ligue {leagueLabel(league)}
+          <span className={`flex items-center gap-1.5 rounded-full ${lc.bg} px-2.5 py-1 text-[10px] font-bold ${lc.text}`}>
+            <LeagueIcon league={league} size="xs" /> Ligue {leagueLabel(league)}
           </span>
         )}
       </div>
@@ -133,9 +134,9 @@ function WarBanner({ league }: { league: string | null }) {
         <span className="text-xs font-bold text-arena">J-47</span>
       </div>
       <div className="mt-2 flex items-center justify-center gap-3">
-        <span className="text-xs font-black text-arena-green">🛡️ NATURELLE</span>
+        <span className="flex items-center gap-1 text-xs font-black text-arena-green"><LeagueIcon league="naturelle" size="xs" /> NATURELLE</span>
         <span className="text-sm font-black text-foreground">VS</span>
-        <span className="text-xs font-black text-arena-purple">⚡ OLYMPIEN</span>
+        <span className="flex items-center gap-1 text-xs font-black text-arena-purple"><LeagueIcon league="olympien" size="xs" /> OLYMPIEN</span>
       </div>
       <p className="mt-2 text-center text-xs text-arena-sub">
         {isNat
