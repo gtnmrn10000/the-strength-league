@@ -44,14 +44,40 @@ function hasErrors(errors: StatsErrors): boolean {
 
 /* ── Main component ── */
 
+const OB_KEY = "centuria_onboarding";
+
+interface OnboardingData {
+  step: number;
+  league: string | null;
+  goal: string | null;
+  pseudo: string;
+  age: string;
+  taille: string;
+  poids: string;
+}
+
+function loadSaved(): OnboardingData {
+  if (typeof window === "undefined") return { step: 0, league: null, goal: null, pseudo: "", age: "", taille: "", poids: "" };
+  try {
+    const raw = localStorage.getItem(OB_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch {}
+  return { step: 0, league: null, goal: null, pseudo: "", age: "", taille: "", poids: "" };
+}
+
+function saveDraft(data: OnboardingData) {
+  localStorage.setItem(OB_KEY, JSON.stringify(data));
+}
+
 export default function Onboarding({ onDone }: { onDone: () => void }) {
-  const [step, setStep] = useState(0);
-  const [selectedLeague, setSelectedLeague] = useState<string | null>(null);
-  const [selectedGoal, setSelectedGoal] = useState<string | null>(null);
-  const [pseudo, setPseudo] = useState("");
-  const [age, setAge] = useState("");
-  const [taille, setTaille] = useState("");
-  const [poids, setPoids] = useState("");
+  const saved = loadSaved();
+  const [step, setStep] = useState(saved.step);
+  const [selectedLeague, setSelectedLeague] = useState<string | null>(saved.league);
+  const [selectedGoal, setSelectedGoal] = useState<string | null>(saved.goal);
+  const [pseudo, setPseudo] = useState(saved.pseudo);
+  const [age, setAge] = useState(saved.age);
+  const [taille, setTaille] = useState(saved.taille);
+  const [poids, setPoids] = useState(saved.poids);
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [triedContinue, setTriedContinue] = useState(false);
 
