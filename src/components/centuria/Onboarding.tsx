@@ -191,7 +191,7 @@ export default function Onboarding({ onDone }: { onDone: () => void }) {
         </h1>
         {step === 0 && <HeroCard />}
         {step === 1 && <AuthStep />}
-        {step === 2 && <LeagueStep selected={selectedLeague} onSelect={(v) => { setSelectedLeague(v); persist({ league: v }); }} />}
+        {step === 2 && <LeagueStep selected={selectedLeague} onSelect={(v) => { setSelectedLeague(v); persist({ league: v }); track("league_selected", { league: v }); }} />}
         {step === 3 && (
           <StatsStep
             pseudo={pseudo} setPseudo={(v) => { setPseudo(v); markTouched("pseudo"); persist({ pseudo: v }); }}
@@ -206,7 +206,7 @@ export default function Onboarding({ onDone }: { onDone: () => void }) {
             }}
           />
         )}
-        {step === 4 && <GoalStep selected={selectedGoal} onSelect={(v) => { setSelectedGoal(v); persist({ goal: v }); }} />}
+        {step === 4 && <GoalStep selected={selectedGoal} onSelect={(v) => { setSelectedGoal(v); persist({ goal: v }); track("goal_selected", { goal: v }); }} />}
       </div>
 
       {/* Footer */}
