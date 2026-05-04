@@ -425,6 +425,51 @@ export default function PRFlow({ onClose }: { onClose: () => void }) {
                 +500 XP
               </motion.p>
 
+              {verifyResult && (
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.5 }}
+                  className="text-sm text-arena-sub"
+                >
+                  Total : {verifyResult.xp} XP
+                </motion.p>
+              )}
+
+              {verifyResult?.leveledUp && (
+                <motion.div
+                  initial={{ scale: 0, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ delay: 0.7, type: "spring", damping: 8 }}
+                  className="flex flex-col items-center gap-2 rounded-2xl border-2 border-arena-gold bg-arena-gold/10 px-8 py-4"
+                >
+                  <motion.span
+                    animate={{ scale: [1, 1.3, 1] }}
+                    transition={{ repeat: 2, duration: 0.5, delay: 1 }}
+                    className="text-4xl"
+                  >
+                    {GRADE_EMOJIS[verifyResult.newGrade]}
+                  </motion.span>
+                  <p className="font-[Anton] text-lg uppercase tracking-wider text-arena-gold">
+                    LEVEL UP !
+                  </p>
+                  <p className="text-sm text-foreground">
+                    {GRADE_LABELS[verifyResult.previousGrade]} → {GRADE_LABELS[verifyResult.newGrade]}
+                  </p>
+                </motion.div>
+              )}
+
+              {verifyResult && !verifyResult.leveledUp && (
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.6 }}
+                  className="text-sm text-arena-sub"
+                >
+                  {GRADE_EMOJIS[verifyResult.newGrade]} Grade : {GRADE_LABELS[verifyResult.newGrade]}
+                </motion.p>
+              )}
+
               <p className="text-sm text-arena-sub">
                 {EXERCISES.find((e) => e.id === exercise)?.label} — {weight} kg × {reps} rep
                 {reps > 1 ? "s" : ""}
