@@ -106,7 +106,7 @@ function PulsingLoader() {
 }
 
 /* ═══════════════════════════════════════════════════════ */
-export default function PRFlow({ onClose }: { onClose: () => void }) {
+export default function PRFlow({ onClose }: { onClose: (prValidated?: boolean) => void }) {
   const [step, setStep] = useState<Step>(1);
   const [exercise, setExercise] = useState<Exercise | null>(null);
   const [weight, setWeight] = useState("");
