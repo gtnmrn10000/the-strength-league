@@ -5,7 +5,7 @@ import Training from "./Training";
 import Meals from "./Meals";
 import Rankings from "./Rankings";
 import Profile from "./Profile";
-import PRModal from "./PRModal";
+import PRFlow from "./PRFlow";
 import BottomNav from "./BottomNav";
 import HeaderLogo from "./HeaderLogo";
 
@@ -45,7 +45,7 @@ export default function Shell() {
         {tab === "profile" && <Profile />}
       </div>
       <BottomNav active={tab} setActive={setTab} />
-      {showPR && <PRModal onClose={() => setShowPR(false)} />}
+      {showPR && <PRFlow onClose={() => setShowPR(false)} />}
     </div>
   );
 }
