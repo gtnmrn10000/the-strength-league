@@ -18,6 +18,7 @@ export type Database = {
         Row: {
           age: number | null
           created_at: string
+          current_grade: string
           goal: Database["public"]["Enums"]["goal_type"] | null
           id: string
           league: Database["public"]["Enums"]["league_type"]
@@ -27,10 +28,12 @@ export type Database = {
           taille: number | null
           updated_at: string
           user_id: string
+          xp: number
         }
         Insert: {
           age?: number | null
           created_at?: string
+          current_grade?: string
           goal?: Database["public"]["Enums"]["goal_type"] | null
           id?: string
           league: Database["public"]["Enums"]["league_type"]
@@ -40,10 +43,12 @@ export type Database = {
           taille?: number | null
           updated_at?: string
           user_id: string
+          xp?: number
         }
         Update: {
           age?: number | null
           created_at?: string
+          current_grade?: string
           goal?: Database["public"]["Enums"]["goal_type"] | null
           id?: string
           league?: Database["public"]["Enums"]["league_type"]
@@ -53,6 +58,7 @@ export type Database = {
           taille?: number | null
           updated_at?: string
           user_id?: string
+          xp?: number
         }
         Relationships: []
       }

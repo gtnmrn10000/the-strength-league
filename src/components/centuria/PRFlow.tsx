@@ -3,9 +3,17 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Camera, FolderOpen, Check, ChevronLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { submitPR, mockVerifyPR } from "@/server/prs.functions";
+import { GRADE_LABELS, GRADE_EMOJIS, type Grade } from "@/server/grades.server";
 
 type Exercise = "squat" | "bench" | "deadlift";
 type Step = 1 | 2 | 3 | 4 | "uploading" | "victory";
+
+interface VerifyResult {
+  previousGrade: Grade;
+  newGrade: Grade;
+  xp: number;
+  leveledUp: boolean;
+}
 
 const EXERCISES: { id: Exercise; emoji: string; label: string }[] = [
   { id: "squat", emoji: "🦵", label: "SQUAT" },
@@ -29,6 +37,7 @@ export default function PRFlow({ onClose }: { onClose: () => void }) {
   const [videoDuration, setVideoDuration] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [verifyResult, setVerifyResult] = useState<VerifyResult | null>(null);
   const weightRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -95,7 +104,8 @@ export default function PRFlow({ onClose }: { onClose: () => void }) {
 
       // Mock AI verification — 3 second delay
       await new Promise((r) => setTimeout(r, 3000));
-      await mockVerifyPR({ data: { prId: pr.id } });
+      const result = await mockVerifyPR({ data: { prId: pr.id } });
+      setVerifyResult(result);
 
       setUploadProgress(100);
       setStep("victory");
@@ -414,6 +424,51 @@ export default function PRFlow({ onClose }: { onClose: () => void }) {
               >
                 +500 XP
               </motion.p>
+
+              {verifyResult && (
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.5 }}
+                  className="text-sm text-arena-sub"
+                >
+                  Total : {verifyResult.xp} XP
+                </motion.p>
+              )}
+
+              {verifyResult?.leveledUp && (
+                <motion.div
+                  initial={{ scale: 0, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ delay: 0.7, type: "spring", damping: 8 }}
+                  className="flex flex-col items-center gap-2 rounded-2xl border-2 border-arena-gold bg-arena-gold/10 px-8 py-4"
+                >
+                  <motion.span
+                    animate={{ scale: [1, 1.3, 1] }}
+                    transition={{ repeat: 2, duration: 0.5, delay: 1 }}
+                    className="text-4xl"
+                  >
+                    {GRADE_EMOJIS[verifyResult.newGrade]}
+                  </motion.span>
+                  <p className="font-[Anton] text-lg uppercase tracking-wider text-arena-gold">
+                    LEVEL UP !
+                  </p>
+                  <p className="text-sm text-foreground">
+                    {GRADE_LABELS[verifyResult.previousGrade]} → {GRADE_LABELS[verifyResult.newGrade]}
+                  </p>
+                </motion.div>
+              )}
+
+              {verifyResult && !verifyResult.leveledUp && (
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.6 }}
+                  className="text-sm text-arena-sub"
+                >
+                  {GRADE_EMOJIS[verifyResult.newGrade]} Grade : {GRADE_LABELS[verifyResult.newGrade]}
+                </motion.p>
+              )}
 
               <p className="text-sm text-arena-sub">
                 {EXERCISES.find((e) => e.id === exercise)?.label} — {weight} kg × {reps} rep
