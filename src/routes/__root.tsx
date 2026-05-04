@@ -9,7 +9,7 @@ function NotFoundComponent() {
         <h1 className="text-7xl font-bold text-foreground">404</h1>
         <h2 className="mt-4 text-xl font-semibold text-foreground">Page introuvable</h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          La page que tu cherches n'existe pas ou a été déplacée.
+          La page que vous recherchez n'existe pas ou a été déplacée.
         </p>
         <div className="mt-6">
           <Link
@@ -31,18 +31,17 @@ export const Route = createRootRoute({
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "CENTURIA — Classe. Vérifie. Récompense." },
       { name: "description", content: "La première plateforme française qui classe, vérifie et récompense les pratiquants de musculation." },
-      { name: "author", content: "CENTURIA" },
-      { property: "og:title", content: "CENTURIA — Classe. Vérifie. Récompense." },
-      { property: "og:description", content: "La première plateforme française qui classe, vérifie et récompense les pratiquants de musculation." },
+      { name: "author", content: "Centuria" },
+      { property: "og:title", content: "CENTURIA" },
+      { property: "og:description", content: "Rejoins la ligue. Prouve ta force." },
       { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
-      { name: "twitter:site", content: "@centuria" },
+      { property: "og:image", content: "/centuria-og-image.png" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:site", content: "@centuria_app" },
     ],
     links: [
-      {
-        rel: "stylesheet",
-        href: appCss,
-      },
+      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+      { rel: "stylesheet", href: appCss },
     ],
   }),
   shellComponent: RootShell,
