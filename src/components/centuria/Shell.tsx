@@ -28,9 +28,9 @@ export default function Shell() {
     setOnboarded(true);
   };
 
-  const handlePRClose = (prValidated?: boolean) => {
-    setShowPR(false);
-    if (prValidated) {
+  const handlePROpenChange = (isOpen: boolean, prValidated?: boolean) => {
+    setShowPR(isOpen);
+    if (!isOpen && prValidated) {
       setRefreshKey((k) => k + 1);
     }
   };
@@ -53,7 +53,7 @@ export default function Shell() {
         {tab === "profile" && <Profile key={refreshKey} />}
       </div>
       <BottomNav active={tab} setActive={setTab} />
-      {showPR && <PRFlow onClose={handlePRClose} />}
+      <PRFlow open={showPR} onOpenChange={handlePROpenChange} />
     </div>
   );
 }
