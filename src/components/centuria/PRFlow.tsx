@@ -106,7 +106,7 @@ function PulsingLoader() {
 }
 
 /* ═══════════════════════════════════════════════════════ */
-export default function PRFlow({ onClose }: { onClose: () => void }) {
+export default function PRFlow({ onClose }: { onClose: (prValidated?: boolean) => void }) {
   const [step, setStep] = useState<Step>(1);
   const [exercise, setExercise] = useState<Exercise | null>(null);
   const [weight, setWeight] = useState("");
@@ -284,7 +284,7 @@ export default function PRFlow({ onClose }: { onClose: () => void }) {
               />
             ))}
           </div>
-          <button onClick={onClose} className="p-2 text-arena-sub">
+          <button onClick={() => onClose()} className="p-2 text-arena-sub">
             <X size={24} />
           </button>
         </div>
@@ -293,7 +293,7 @@ export default function PRFlow({ onClose }: { onClose: () => void }) {
       {/* Close button for non-step views */}
       {typeof step !== "number" && (
         <div className="flex justify-end px-4 pt-4">
-          <button onClick={onClose} className="p-2 text-arena-sub">
+          <button onClick={() => onClose(step === "victory")} className="p-2 text-arena-sub">
             <X size={24} />
           </button>
         </div>
@@ -709,14 +709,14 @@ export default function PRFlow({ onClose }: { onClose: () => void }) {
               {/* Action buttons */}
               <div className="relative z-10 mt-4 flex w-full flex-col gap-3">
                 <button
-                  onClick={onClose}
+                  onClick={() => onClose(true)}
                   className="h-12 w-full rounded-2xl border border-[#262626] text-sm font-bold text-arena-sub"
                 >
                   Voir mon profil
                 </button>
                 <motion.button
                   whileTap={{ scale: 0.97 }}
-                  onClick={onClose}
+                  onClick={() => onClose(true)}
                   className="h-14 w-full rounded-2xl bg-arena font-bold text-arena-foreground shadow-[0_0_25px_var(--arena-glow)]"
                 >
                   Partager sur le feed
