@@ -3,9 +3,17 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Camera, FolderOpen, Check, ChevronLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { submitPR, mockVerifyPR } from "@/server/prs.functions";
+import { GRADE_LABELS, GRADE_EMOJIS, type Grade } from "@/server/grades.server";
 
 type Exercise = "squat" | "bench" | "deadlift";
 type Step = 1 | 2 | 3 | 4 | "uploading" | "victory";
+
+interface VerifyResult {
+  previousGrade: Grade;
+  newGrade: Grade;
+  xp: number;
+  leveledUp: boolean;
+}
 
 const EXERCISES: { id: Exercise; emoji: string; label: string }[] = [
   { id: "squat", emoji: "🦵", label: "SQUAT" },
