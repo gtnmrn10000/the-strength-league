@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { loadUserProfile, goalLabel, goalEmoji, leagueLabel, leagueColor } from "./userProfile";
 import LeagueIcon from "./LeagueIcon";
 import { supabase } from "@/integrations/supabase/client";
-import { GRADES, GRADE_LABELS, GRADE_EMOJIS, type Grade } from "@/lib/grades";
+import { GRADES, GRADE_LABELS, GRADE_EMOJIS, THRESHOLDS, type Grade } from "@/lib/grades";
 
 interface DbProfile {
   xp: number;
@@ -122,6 +122,58 @@ export default function Profile() {
           </p>
         </div>
       </div>
+
+      {/* Per-exercise progress to next grade */}
+      {dbProfile?.poids && dbProfile.poids > 0 && (
+        <div className="mt-4 space-y-3">
+          <h4 className="text-[10px] font-black tracking-widest text-arena-muted">PROGRESSION PAR EXERCICE</h4>
+          {(["squat", "bench", "deadlift"] as const).map((ex) => {
+            const bestPR = bestPRs[ex];
+            const currentWeight = bestPR?.weight_kg ?? 0;
+            const bw = dbProfile.poids!;
+            const ratio = currentWeight / bw;
+            const thresholds = THRESHOLDS[ex];
+            // Find current grade index for this lift
+            let currentIdx = 0;
+            for (let i = thresholds.length - 1; i >= 0; i--) {
+              if (ratio >= thresholds[i]) { currentIdx = i; break; }
+            }
+            const isMax = currentIdx >= thresholds.length - 1;
+            const nextThreshold = isMax ? thresholds[thresholds.length - 1] : thresholds[currentIdx + 1];
+            const prevThreshold = thresholds[currentIdx];
+            const range = nextThreshold - prevThreshold;
+            const pct = isMax ? 100 : range > 0 ? Math.min(100, Math.round(((ratio - prevThreshold) / range) * 100)) : 0;
+            const nextGradeForLift = isMax ? GRADES[currentIdx] : GRADES[currentIdx + 1];
+            const nextWeightNeeded = isMax ? null : Math.ceil(nextThreshold * bw);
+            const exLabels: Record<string, string> = { squat: "Squat", bench: "Bench", deadlift: "Deadlift" };
+
+            return (
+              <div key={ex} className="rounded-xl border border-arena-border bg-secondary p-3">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-bold text-foreground">{exLabels[ex]}</span>
+                  <span className="text-arena-sub">
+                    {isMax
+                      ? `${GRADE_EMOJIS[nextGradeForLift]} MAX`
+                      : `→ ${GRADE_EMOJIS[nextGradeForLift]} ${GRADE_LABELS[nextGradeForLift]}`}
+                  </span>
+                </div>
+                <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-background">
+                  <motion.div
+                    className="h-full rounded-full bg-arena"
+                    initial={{ width: 0 }}
+                    animate={{ width: `${pct}%` }}
+                    transition={{ duration: 0.8, ease: "easeOut" }}
+                  />
+                </div>
+                <div className="mt-1 flex justify-between text-[10px] text-arena-sub">
+                  <span>{currentWeight > 0 ? `${currentWeight}kg (${ratio.toFixed(2)}× BW)` : "Aucun PR"}</span>
+                  <span>{isMax ? "🏆" : `${nextWeightNeeded}kg requis`}</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* Last level-up info */}
       {dbProfile?.last_pr_at && (
