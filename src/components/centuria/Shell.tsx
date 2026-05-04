@@ -47,7 +47,7 @@ export default function Shell() {
       <HeaderLogo />
       <div className="flex-1 overflow-y-auto scrollbar-hide pb-20">
         {tab === "feed" && <Feed onCreate={() => setShowPR(true)} />}
-        {tab === "training" && <Training onPR={() => setShowPR(true)} />}
+        {tab === "training" && <Training onPR={() => setShowPR(true)} refreshKey={refreshKey} />}
         {tab === "meals" && <Meals />}
         {tab === "rank" && <Rankings />}
         {tab === "profile" && <Profile key={refreshKey} />}
