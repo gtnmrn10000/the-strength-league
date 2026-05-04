@@ -16,6 +16,7 @@ export default function Shell() {
   const [onboarded, setOnboarded] = useState(false);
   const [tab, setTab] = useState("feed");
   const [showPR, setShowPR] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     setOnboarded(localStorage.getItem(ONBOARDED_KEY) === "true");
@@ -25,6 +26,13 @@ export default function Shell() {
   const handleOnboardingDone = () => {
     localStorage.setItem(ONBOARDED_KEY, "true");
     setOnboarded(true);
+  };
+
+  const handlePRClose = (prValidated?: boolean) => {
+    setShowPR(false);
+    if (prValidated) {
+      setRefreshKey((k) => k + 1);
+    }
   };
 
   // Render nothing until hydrated to avoid mismatch
@@ -42,10 +50,10 @@ export default function Shell() {
         {tab === "training" && <Training onPR={() => setShowPR(true)} />}
         {tab === "meals" && <Meals />}
         {tab === "rank" && <Rankings />}
-        {tab === "profile" && <Profile />}
+        {tab === "profile" && <Profile key={refreshKey} />}
       </div>
       <BottomNav active={tab} setActive={setTab} />
-      {showPR && <PRFlow onClose={() => setShowPR(false)} />}
+      {showPR && <PRFlow onClose={handlePRClose} />}
     </div>
   );
 }
