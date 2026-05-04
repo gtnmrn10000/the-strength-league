@@ -104,7 +104,8 @@ export default function PRFlow({ onClose }: { onClose: () => void }) {
 
       // Mock AI verification — 3 second delay
       await new Promise((r) => setTimeout(r, 3000));
-      await mockVerifyPR({ data: { prId: pr.id } });
+      const result = await mockVerifyPR({ data: { prId: pr.id } });
+      setVerifyResult(result);
 
       setUploadProgress(100);
       setStep("victory");
