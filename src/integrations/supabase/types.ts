@@ -21,6 +21,7 @@ export type Database = {
           current_grade: string
           goal: Database["public"]["Enums"]["goal_type"] | null
           id: string
+          last_pr_at: string | null
           league: Database["public"]["Enums"]["league_type"]
           onboarded: boolean
           poids: number | null
@@ -36,6 +37,7 @@ export type Database = {
           current_grade?: string
           goal?: Database["public"]["Enums"]["goal_type"] | null
           id?: string
+          last_pr_at?: string | null
           league: Database["public"]["Enums"]["league_type"]
           onboarded?: boolean
           poids?: number | null
@@ -51,6 +53,7 @@ export type Database = {
           current_grade?: string
           goal?: Database["public"]["Enums"]["goal_type"] | null
           id?: string
+          last_pr_at?: string | null
           league?: Database["public"]["Enums"]["league_type"]
           onboarded?: boolean
           poids?: number | null
@@ -66,6 +69,7 @@ export type Database = {
         Row: {
           created_at: string
           exercise: string
+          hype_count: number
           id: string
           reps: number
           status: string
@@ -76,6 +80,7 @@ export type Database = {
         Insert: {
           created_at?: string
           exercise: string
+          hype_count?: number
           id?: string
           reps?: number
           status?: string
@@ -86,6 +91,7 @@ export type Database = {
         Update: {
           created_at?: string
           exercise?: string
+          hype_count?: number
           id?: string
           reps?: number
           status?: string
