@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { loadUserProfile, goalLabel, goalEmoji, leagueLabel, leagueColor } from "./userProfile";
 import LeagueIcon from "./LeagueIcon";
 import { supabase } from "@/integrations/supabase/client";
-import { GRADES, GRADE_LABELS, GRADE_EMOJIS, type Grade } from "@/lib/grades";
+import { GRADES, GRADE_LABELS, GRADE_EMOJIS, THRESHOLDS, type Grade } from "@/lib/grades";
 
 interface DbProfile {
   xp: number;
