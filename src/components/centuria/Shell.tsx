@@ -28,9 +28,9 @@ export default function Shell() {
     setOnboarded(true);
   };
 
-  const handlePRClose = (prValidated?: boolean) => {
-    setShowPR(false);
-    if (prValidated) {
+  const handlePROpenChange = (isOpen: boolean, prValidated?: boolean) => {
+    setShowPR(isOpen);
+    if (!isOpen && prValidated) {
       setRefreshKey((k) => k + 1);
     }
   };
