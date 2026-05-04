@@ -53,7 +53,7 @@ export default function Shell() {
         {tab === "profile" && <Profile key={refreshKey} />}
       </div>
       <BottomNav active={tab} setActive={setTab} />
-      {showPR && <PRFlow onClose={handlePRClose} />}
+      <PRFlow open={showPR} onOpenChange={handlePROpenChange} />
     </div>
   );
 }
