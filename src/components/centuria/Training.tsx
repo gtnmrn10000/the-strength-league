@@ -1,6 +1,53 @@
+import { useState, useEffect } from "react";
 import { Camera, NotebookPen, Target, Sparkles, ChevronRight } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
-export default function Training({ onPR }: { onPR: () => void }) {
+interface VerifiedPR {
+  exercise: string;
+  weight_kg: number;
+  reps: number;
+  created_at: string;
+}
+
+export default function Training({ onPR, refreshKey }: { onPR: () => void; refreshKey?: number }) {
+  const [bestPRs, setBestPRs] = useState<Record<string, VerifiedPR>>({});
+  const [bodyweight, setBodyweight] = useState<number | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user || cancelled) return;
+
+      const [profileRes, prsRes] = await Promise.all([
+        supabase.from("profiles").select("poids").eq("user_id", user.id).maybeSingle(),
+        supabase
+          .from("prs")
+          .select("exercise, weight_kg, reps, created_at")
+          .eq("user_id", user.id)
+          .eq("status", "verified")
+          .order("weight_kg", { ascending: false }),
+      ]);
+
+      if (cancelled) return;
+      if (profileRes.data?.poids) setBodyweight(Number(profileRes.data.poids));
+
+      if (prsRes.data) {
+        const bests: Record<string, VerifiedPR> = {};
+        for (const pr of prsRes.data as VerifiedPR[]) {
+          if (!bests[pr.exercise] || pr.weight_kg > bests[pr.exercise].weight_kg) {
+            bests[pr.exercise] = pr;
+          }
+        }
+        setBestPRs(bests);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [refreshKey]);
+
+  const exerciseLabels: Record<string, string> = { squat: "Squat", bench: "Bench Press", deadlift: "Deadlift" };
+  const hasPRs = Object.keys(bestPRs).length > 0;
+
   return (
     <div className="px-4 pt-2 pb-4">
       <div className="mb-4 grid grid-cols-2 gap-3">
@@ -11,17 +58,29 @@ export default function Training({ onPR }: { onPR: () => void }) {
       </div>
 
       <SectionTitle>TES PR ACTUELS</SectionTitle>
-      <div className="flex flex-col gap-3">
-        {([["Squat", 180, "2,14x"], ["Bench", 130, "1,55x"], ["Deadlift", 220, "2,62x"]] as const).map(([e, kg, r]) => (
-          <div key={e} className="flex items-center justify-between rounded-2xl border border-arena-border bg-arena-surface p-4">
-            <div>
-              <p className="font-black text-foreground">{e}</p>
-              <p className="text-xs text-arena-sub">Ratio {r} BW</p>
-            </div>
-            <span className="text-xl font-black text-arena">{kg}kg</span>
-          </div>
-        ))}
-      </div>
+      {hasPRs ? (
+        <div className="flex flex-col gap-3">
+          {(["squat", "bench", "deadlift"] as const).map((ex) => {
+            const pr = bestPRs[ex];
+            if (!pr) return null;
+            const ratio = bodyweight ? (pr.weight_kg / bodyweight).toFixed(2) : null;
+            return (
+              <div key={ex} className="flex items-center justify-between rounded-2xl border border-arena-border bg-arena-surface p-4">
+                <div>
+                  <p className="font-black text-foreground">{exerciseLabels[ex]}</p>
+                  {ratio && <p className="text-xs text-arena-sub">Ratio {ratio}× BW</p>}
+                </div>
+                <span className="text-xl font-black text-arena">{pr.weight_kg}kg</span>
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="rounded-2xl border border-arena-border bg-arena-surface p-4 text-center">
+          <p className="text-sm text-arena-muted">Aucun PR enregistré</p>
+          <p className="mt-1 text-xs text-arena-sub">Log ton premier PR pour commencer 💪</p>
+        </div>
+      )}
 
       <SectionTitle>PROGRAMME IA RECOMMANDÉ</SectionTitle>
       <div className="rounded-2xl border border-arena-border bg-arena-surface p-4">
