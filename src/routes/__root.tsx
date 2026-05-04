@@ -29,14 +29,14 @@ export const Route = createRootRoute({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "CENTURIA — Prouve ta force" },
+      { name: "description", content: "La première plateforme française qui classe, vérifie et récompense les pratiquants de muscu. Rejoins ta ligue." },
+      { name: "author", content: "CENTURIA" },
+      { property: "og:title", content: "CENTURIA — Prouve ta force" },
+      { property: "og:description", content: "Classement national, PR vérifiés par IA, guerre de factions. Rejoins l'arène." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:site", content: "@centuria" },
     ],
     links: [
       {
