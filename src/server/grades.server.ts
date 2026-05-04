@@ -145,6 +145,7 @@ export async function updateProfileAfterPR(
     .update({
       xp: newXp,
       current_grade: newGrade,
+      last_pr_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     })
     .eq("user_id", userId);
