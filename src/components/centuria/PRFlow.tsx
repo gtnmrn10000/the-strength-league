@@ -37,6 +37,7 @@ export default function PRFlow({ onClose }: { onClose: () => void }) {
   const [videoDuration, setVideoDuration] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [verifyResult, setVerifyResult] = useState<VerifyResult | null>(null);
   const weightRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
