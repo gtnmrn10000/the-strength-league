@@ -1,8 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { insertPR, verifyPR } from "./prs.server";
-import { updateProfileAfterPR } from "./grades.server";
+import { insertPR, verifyPR } from "@/server/prs.server";
+import { updateProfileAfterPR } from "@/server/grades.server";
 
 const submitPRSchema = z.object({
   exercise: z.enum(["squat", "bench", "deadlift"]),
