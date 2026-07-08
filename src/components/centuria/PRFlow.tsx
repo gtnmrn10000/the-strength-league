@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Camera, FolderOpen, Check, ChevronLeft, ChevronRight, RotateCcw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { submitPR, mockVerifyPR } from "@/server/prs.functions";
+import { submitPR, mockVerifyPR } from "@/lib/prs.functions";
 import {
   GRADE_LABELS,
   GRADE_EMOJIS,
