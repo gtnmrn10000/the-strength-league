@@ -1,75 +1,101 @@
-// Courbes de récupération musculaire — heures nécessaires pour être frais à 100%
-// Basé sur les recos EBM (48-72h grands groupes, 24h petits groupes).
+// Courbes de récupération musculaire — heures pour retour à 100%.
+// Basé sur les recos EBM : grands groupes 48-72h, petits 24-36h.
 
 export type MuscleGroup =
-  | "pectoraux"
+  | "quadriceps"
+  | "ischios"
+  | "fessiers"
   | "dos"
-  | "jambes"
+  | "pectoraux"
   | "epaules"
   | "biceps"
   | "triceps"
+  | "avant_bras"
   | "abdos"
-  | "fessiers"
-  | "mollets"
-  | "avant_bras";
+  | "mollets";
 
 export const MUSCLE_LABEL: Record<MuscleGroup, string> = {
-  pectoraux: "Pectoraux",
+  quadriceps: "Quadriceps",
+  ischios: "Ischios",
+  fessiers: "Fessiers",
   dos: "Dos",
-  jambes: "Jambes",
+  pectoraux: "Pectoraux",
   epaules: "Épaules",
   biceps: "Biceps",
   triceps: "Triceps",
-  abdos: "Abdos",
-  fessiers: "Fessiers",
-  mollets: "Mollets",
   avant_bras: "Avant-bras",
+  abdos: "Abdos",
+  mollets: "Mollets",
 };
 
 export const RECOVERY_HOURS: Record<MuscleGroup, number> = {
-  pectoraux: 48,
+  quadriceps: 72,
+  ischios: 72,
+  fessiers: 72,
   dos: 48,
-  jambes: 72,
+  pectoraux: 48,
   epaules: 48,
-  biceps: 24,
-  triceps: 24,
-  abdos: 24,
-  fessiers: 48,
-  mollets: 24,
+  biceps: 30,
+  triceps: 30,
   avant_bras: 24,
+  abdos: 24,
+  mollets: 24,
 };
 
 export const ALL_GROUPS: MuscleGroup[] = Object.keys(RECOVERY_HOURS) as MuscleGroup[];
 
+export type RecoveryStatus = "fresh" | "recovering" | "fatigued";
+
 export type RecoveryState = {
   group: MuscleGroup;
   label: string;
-  percent: number; // 0 = épuisé, 100 = frais
+  percent: number; // 0 = tout juste sollicité, 100 = frais
   hoursSince: number | null;
   hoursTotal: number;
-  status: "fresh" | "recovering" | "fatigued";
+  status: RecoveryStatus;
   lastAt: string | null;
 };
 
+// Seuils demandés : rouge <50, orange 50-80, vert >80
+export function statusFromPercent(p: number): RecoveryStatus {
+  if (p > 80) return "fresh";
+  if (p >= 50) return "recovering";
+  return "fatigued";
+}
+
 /**
- * Calcule le % de récup d'un groupe donné à partir de la date du dernier travail.
- * Modèle linéaire : 0% juste après la séance, 100% après `RECOVERY_HOURS[group]`.
+ * % de récup = min(100, (heures_écoulées / recovery_hours) × 100).
  */
 export function recoveryFor(group: MuscleGroup, lastWorkedAt: string | null, now = new Date()): RecoveryState {
   const total = RECOVERY_HOURS[group];
   if (!lastWorkedAt) {
-    return { group, label: MUSCLE_LABEL[group], percent: 100, hoursSince: null, hoursTotal: total, status: "fresh", lastAt: null };
+    return {
+      group,
+      label: MUSCLE_LABEL[group],
+      percent: 100,
+      hoursSince: null,
+      hoursTotal: total,
+      status: "fresh",
+      lastAt: null,
+    };
   }
   const last = new Date(lastWorkedAt).getTime();
   const diffH = Math.max(0, (now.getTime() - last) / 36e5);
   const percent = Math.min(100, Math.round((diffH / total) * 100));
-  const status: RecoveryState["status"] = percent >= 90 ? "fresh" : percent >= 50 ? "recovering" : "fatigued";
-  return { group, label: MUSCLE_LABEL[group], percent, hoursSince: Math.round(diffH), hoursTotal: total, status, lastAt: lastWorkedAt };
+  return {
+    group,
+    label: MUSCLE_LABEL[group],
+    percent,
+    hoursSince: Math.round(diffH),
+    hoursTotal: total,
+    status: statusFromPercent(percent),
+    lastAt: lastWorkedAt,
+  };
 }
 
 /**
- * À partir d'une liste de séances (chacune avec `muscle_groups` + `completed_at`),
- * retourne la récup courante par groupe (dernier hit conservé).
+ * À partir d'une liste de séances (muscle_groups + performed_at/completed_at),
+ * calcule la récup courante par groupe.
  */
 export function computeRecovery(
   sessions: Array<{ muscle_groups: string[] | null; completed_at: string }>,

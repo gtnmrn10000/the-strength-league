@@ -14,6 +14,7 @@ export default function Training({ onPR, refreshKey }: { onPR: () => void; refre
   const [bestPRs, setBestPRs] = useState<Record<string, VerifiedPR>>({});
   const [bodyweight, setBodyweight] = useState<number | null>(null);
   const [coachOpen, setCoachOpen] = useState(false);
+  const [localTick, setLocalTick] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -45,7 +46,7 @@ export default function Training({ onPR, refreshKey }: { onPR: () => void; refre
       }
     })();
     return () => { cancelled = true; };
-  }, [refreshKey]);
+  }, [refreshKey, localTick]);
 
   const exerciseLabels: Record<string, string> = { squat: "Squat", bench: "Bench Press", deadlift: "Deadlift" };
   const hasPRs = Object.keys(bestPRs).length > 0;
@@ -58,7 +59,11 @@ export default function Training({ onPR, refreshKey }: { onPR: () => void; refre
         <ActionCard icon={Target} title="Mes objectifs" />
         <ActionCard icon={Sparkles} title="Coach IA" onClick={() => setCoachOpen(true)} />
       </div>
-      <CoachSheet open={coachOpen} onOpenChange={setCoachOpen} />
+      <CoachSheet
+        open={coachOpen}
+        onOpenChange={setCoachOpen}
+        onSessionStarted={() => setLocalTick((k) => k + 1)}
+      />
 
       <SectionTitle>TES PR ACTUELS</SectionTitle>
       {hasPRs ? (
