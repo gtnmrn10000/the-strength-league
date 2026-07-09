@@ -14,6 +14,60 @@ export type Database = {
   }
   public: {
     Tables: {
+      coach_conversations: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          role: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      exercises: {
+        Row: {
+          created_at: string
+          difficulty: string
+          equipment: string | null
+          id: string
+          instructions: string | null
+          muscle_groups: string[]
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          difficulty?: string
+          equipment?: string | null
+          id?: string
+          instructions?: string | null
+          muscle_groups?: string[]
+          name: string
+        }
+        Update: {
+          created_at?: string
+          difficulty?: string
+          equipment?: string | null
+          id?: string
+          instructions?: string | null
+          muscle_groups?: string[]
+          name?: string
+        }
+        Relationships: []
+      }
       follows: {
         Row: {
           created_at: string
@@ -258,6 +312,42 @@ export type Database = {
           user_id?: string
           video_url?: string | null
           weight_kg?: number
+        }
+        Relationships: []
+      }
+      workout_sessions: {
+        Row: {
+          completed_at: string
+          created_at: string
+          duration_min: number | null
+          exercises: Json
+          id: string
+          muscle_groups: string[]
+          name: string
+          notes: string | null
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string
+          created_at?: string
+          duration_min?: number | null
+          exercises?: Json
+          id?: string
+          muscle_groups?: string[]
+          name: string
+          notes?: string | null
+          user_id: string
+        }
+        Update: {
+          completed_at?: string
+          created_at?: string
+          duration_min?: number | null
+          exercises?: Json
+          id?: string
+          muscle_groups?: string[]
+          name?: string
+          notes?: string | null
+          user_id?: string
         }
         Relationships: []
       }
