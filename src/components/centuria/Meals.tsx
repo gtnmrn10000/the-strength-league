@@ -1,5 +1,7 @@
-import { Plus, ScanLine, Search, Loader2, Trash2, PackageX } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Plus, ScanLine, Search, Loader2, Trash2, PackageX, Camera, Sparkles, Lock } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { recognizeFoodPhoto } from "@/lib/foodPhoto.functions";
 import BarcodeScanner from "./food/BarcodeScanner";
 import ProductSheet from "./food/ProductSheet";
 import ManualEntrySheet from "./food/ManualEntrySheet";
