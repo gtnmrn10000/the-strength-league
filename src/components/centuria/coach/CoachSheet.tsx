@@ -1,14 +1,21 @@
 import { useEffect, useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { MessageCircle, Activity, Dumbbell, Lock } from "lucide-react";
+import { MessageCircle, Activity, Lock } from "lucide-react";
 import CoachChat from "./CoachChat";
 import CoachRecovery from "./CoachRecovery";
-import CoachWorkout from "./CoachWorkout";
 import { isCurrentUserPremium } from "@/lib/subscription";
 
-type Tab = "chat" | "recovery" | "workout";
+type Tab = "chat" | "recovery";
 
-export default function CoachSheet({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
+export default function CoachSheet({
+  open,
+  onOpenChange,
+  onSessionStarted,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  onSessionStarted?: () => void;
+}) {
   const [tab, setTab] = useState<Tab>("chat");
   const [premium, setPremium] = useState<boolean | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -17,6 +24,12 @@ export default function CoachSheet({ open, onOpenChange }: { open: boolean; onOp
     if (!open) return;
     (async () => setPremium(await isCurrentUserPremium()))();
   }, [open]);
+
+  const handleSessionStarted = () => {
+    setRefreshKey((k) => k + 1);
+    onSessionStarted?.();
+    onOpenChange(false);
+  };
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -32,7 +45,7 @@ export default function CoachSheet({ open, onOpenChange }: { open: boolean; onOp
             </div>
             <h3 className="text-lg font-black text-foreground">Coach IA Premium</h3>
             <p className="max-w-xs text-sm text-arena-muted">
-              Chat illimité, génération de séances perso et suivi de récupération musculaire — réservé aux abonnés.
+              Chat illimité, séances perso générées à la volée et suivi de récupération musculaire — réservé aux abonnés.
             </p>
           </div>
         ) : premium === null ? (
@@ -41,15 +54,13 @@ export default function CoachSheet({ open, onOpenChange }: { open: boolean; onOp
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-3 border-b border-arena-border bg-background">
+            <div className="grid grid-cols-2 border-b border-arena-border bg-background">
               <TabBtn active={tab === "chat"} onClick={() => setTab("chat")} icon={MessageCircle} label="Chat" />
-              <TabBtn active={tab === "recovery"} onClick={() => setTab("recovery")} icon={Activity} label="Récup" />
-              <TabBtn active={tab === "workout"} onClick={() => setTab("workout")} icon={Dumbbell} label="Séance" />
+              <TabBtn active={tab === "recovery"} onClick={() => setTab("recovery")} icon={Activity} label="Récupération" />
             </div>
             <div className="flex-1 overflow-hidden">
-              {tab === "chat" && <CoachChat />}
+              {tab === "chat" && <CoachChat onSessionStarted={handleSessionStarted} />}
               {tab === "recovery" && <CoachRecovery refreshKey={refreshKey} />}
-              {tab === "workout" && <CoachWorkout onSaved={() => setRefreshKey((k) => k + 1)} />}
             </div>
           </>
         )}

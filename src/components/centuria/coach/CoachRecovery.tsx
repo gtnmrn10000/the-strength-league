@@ -28,9 +28,9 @@ export default function CoachRecovery({ refreshKey }: { refreshKey?: number }) {
   const rows = useMemo(() => computeRecovery(sessions), [sessions]);
 
   return (
-    <div className="px-4 py-3">
+    <div className="overflow-y-auto px-4 py-3">
       <p className="mb-3 text-xs text-arena-muted">
-        Estimation basée sur tes dernières séances loggées. 100 % = frais, 0 % = tout juste sollicité.
+        % de récupération = min(100, heures écoulées / fenêtre de récup du groupe). Rouge &lt; 50 %, orange 50-80 %, vert &gt; 80 %.
       </p>
       {loading ? (
         <div className="flex justify-center py-8">
@@ -48,8 +48,10 @@ export default function CoachRecovery({ refreshKey }: { refreshKey?: number }) {
 }
 
 function RecoveryRow({ r }: { r: RecoveryState }) {
-  const color = r.status === "fresh" ? "bg-green-500" : r.status === "recovering" ? "bg-yellow-500" : "bg-red-500";
-  const dot = r.status === "fresh" ? "text-green-400" : r.status === "recovering" ? "text-yellow-400" : "text-red-400";
+  const color =
+    r.status === "fresh" ? "bg-green-500" : r.status === "recovering" ? "bg-orange-500" : "bg-red-500";
+  const dot =
+    r.status === "fresh" ? "text-green-400" : r.status === "recovering" ? "text-orange-400" : "text-red-400";
   return (
     <li className="rounded-2xl border border-arena-border bg-arena-surface p-3">
       <div className="mb-1 flex items-baseline justify-between">
