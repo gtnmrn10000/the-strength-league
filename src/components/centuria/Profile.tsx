@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
-import { MapPin, ShieldCheck, Settings, Trophy, Flame, Dumbbell, Target, Zap } from "lucide-react";
+import { MapPin, Trophy, Flame, Dumbbell, Target, Zap } from "lucide-react";
 import { motion } from "framer-motion";
-import { loadUserProfile, goalLabel, goalEmoji, leagueLabel, leagueColor } from "./userProfile";
-import LeagueIcon from "./LeagueIcon";
+import { loadUserProfile, goalLabel, goalEmoji } from "./userProfile";
 import { supabase } from "@/integrations/supabase/client";
 import { GRADES, GRADE_LABELS, GRADE_EMOJIS, THRESHOLDS, type Grade } from "@/lib/grades";
 
