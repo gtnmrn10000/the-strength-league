@@ -244,23 +244,62 @@ export default function Meals() {
         </div>
       </div>
 
-      <div className="mb-3 grid grid-cols-2 gap-3">
+      <div className="mb-3 grid grid-cols-3 gap-2">
         <button
           onClick={() => setShowScanner(true)}
-          className="flex h-14 items-center justify-center gap-2 rounded-2xl bg-arena text-sm font-black text-arena-on active:scale-[0.98]"
+          className="flex h-14 flex-col items-center justify-center gap-1 rounded-2xl bg-arena text-[11px] font-black text-arena-on active:scale-[0.98]"
         >
-          <ScanLine size={18} /> Scanner
+          <ScanLine size={18} />
+          Scanner
+        </button>
+        <button
+          onClick={() => {
+            if (!isPremium) {
+              toast.error("Photo réservée aux abonnés Premium.");
+              return;
+            }
+            photoInputRef.current?.click();
+          }}
+          disabled={photoLoading}
+          className="relative flex h-14 flex-col items-center justify-center gap-1 rounded-2xl border border-arena-border bg-gradient-to-br from-arena/20 to-arena-surface text-[11px] font-black text-foreground active:scale-[0.98] disabled:opacity-60"
+        >
+          {photoLoading ? (
+            <Loader2 size={18} className="animate-spin" />
+          ) : isPremium ? (
+            <Sparkles size={18} className="text-arena" />
+          ) : (
+            <Lock size={16} className="text-arena-muted" />
+          )}
+          Photo IA
+          {!isPremium && (
+            <span className="absolute -top-1 -right-1 rounded-full bg-arena px-1.5 py-0.5 text-[8px] font-black text-arena-on">
+              PRO
+            </span>
+          )}
         </button>
         <button
           onClick={() => {
             setManualDefaultName("");
             setManualOpen(true);
           }}
-          className="flex h-14 items-center justify-center gap-2 rounded-2xl border border-arena-border bg-arena-surface text-sm font-bold text-foreground active:scale-[0.98]"
+          className="flex h-14 flex-col items-center justify-center gap-1 rounded-2xl border border-arena-border bg-arena-surface text-[11px] font-bold text-foreground active:scale-[0.98]"
         >
-          <Plus size={16} /> Saisie manuelle
+          <Plus size={16} />
+          Manuel
         </button>
       </div>
+      <input
+        ref={photoInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        className="hidden"
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) handlePhotoFile(f);
+          e.target.value = "";
+        }}
+      />
 
       <form onSubmit={handleSearch} className="mb-4 flex gap-2">
         <div className="flex flex-1 items-center gap-2 rounded-xl border border-arena-border bg-arena-surface px-3">
