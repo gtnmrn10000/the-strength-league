@@ -162,6 +162,7 @@ export type Database = {
           following_count: number
           goal: Database["public"]["Enums"]["goal_type"] | null
           id: string
+          is_premium: boolean
           last_pr_at: string | null
           niveau_activite: Database["public"]["Enums"]["activity_level"] | null
           onboarded: boolean
@@ -185,6 +186,7 @@ export type Database = {
           following_count?: number
           goal?: Database["public"]["Enums"]["goal_type"] | null
           id?: string
+          is_premium?: boolean
           last_pr_at?: string | null
           niveau_activite?: Database["public"]["Enums"]["activity_level"] | null
           onboarded?: boolean
@@ -208,6 +210,7 @@ export type Database = {
           following_count?: number
           goal?: Database["public"]["Enums"]["goal_type"] | null
           id?: string
+          is_premium?: boolean
           last_pr_at?: string | null
           niveau_activite?: Database["public"]["Enums"]["activity_level"] | null
           onboarded?: boolean

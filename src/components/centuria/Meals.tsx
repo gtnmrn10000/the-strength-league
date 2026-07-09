@@ -1,5 +1,6 @@
-import { Plus, ScanLine, Search, Loader2, Trash2, PackageX } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Plus, ScanLine, Search, Loader2, Trash2, PackageX, Sparkles, Lock } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { recognizeFoodPhoto } from "@/lib/foodPhoto.functions";
 import BarcodeScanner from "./food/BarcodeScanner";
 import ProductSheet from "./food/ProductSheet";
 import ManualEntrySheet from "./food/ManualEntrySheet";
@@ -35,6 +36,10 @@ export default function Meals() {
   const [results, setResults] = useState<FoodProduct[]>([]);
   const [logs, setLogs] = useState<FoodLog[]>([]);
   const [goals, setGoals] = useState<MacroGoals>(DEFAULT_GOALS);
+  const [isPremium, setIsPremium] = useState(false);
+  const [photoLoading, setPhotoLoading] = useState(false);
+  const photoInputRef = useRef<HTMLInputElement>(null);
+  const recognizePhoto = recognizeFoodPhoto;
 
   const reloadLogs = useCallback(async () => {
     try {
@@ -54,17 +59,19 @@ export default function Meals() {
       if (!auth.user) return;
       const { data } = await supabase
         .from("profiles")
-        .select("sexe, age, poids, taille, niveau_activite")
+        .select("sexe, age, poids, taille, niveau_activite, is_premium")
         .eq("user_id", auth.user.id)
         .maybeSingle();
       if (!data) return;
-      const { sexe, age, poids, taille, niveau_activite } = data as {
+      const { sexe, age, poids, taille, niveau_activite, is_premium } = data as {
         sexe: Sexe | null;
         age: number | null;
         poids: number | null;
         taille: number | null;
         niveau_activite: ActivityLevel | null;
+        is_premium: boolean | null;
       };
+      setIsPremium(!!is_premium);
       if (sexe && age && poids && taille) {
         const kcal = tdee({
           sexe,
@@ -154,6 +161,57 @@ export default function Meals() {
     }
   };
 
+  const handlePhotoFile = async (file: File) => {
+    if (!isPremium) {
+      toast.error("Fonctionnalité réservée aux abonnés Premium.");
+      return;
+    }
+    setPhotoLoading(true);
+    try {
+      const dataUrl: string = await new Promise((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => resolve(r.result as string);
+        r.onerror = () => reject(r.error);
+        r.readAsDataURL(file);
+      });
+      const result = await recognizePhoto({ data: { image_data_url: dataUrl } });
+      // Convert to FoodProduct shape for ProductSheet
+      const p: FoodProduct = {
+        barcode: `photo-${Date.now()}`,
+        name: result.name,
+        brand: result.brand,
+        image_url: dataUrl,
+        nutriscore: null,
+        nova_group: null,
+        serving_size: `${result.estimated_grams} g (estimé, ${result.confidence})`,
+        nutriments: {
+          energy_kcal_100g: result.nutriments_100g.energy_kcal_100g,
+          proteins_100g: result.nutriments_100g.proteins_100g,
+          carbs_100g: result.nutriments_100g.carbs_100g,
+          fat_100g: result.nutriments_100g.fat_100g,
+          sugars_100g: null,
+          fiber_100g: null,
+          salt_100g: null,
+        },
+      };
+      setProduct(p);
+      setPendingSource("photo");
+      setSheetOpen(true);
+      if (result.notes) toast.info(result.notes);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      if (msg.includes("PREMIUM_REQUIRED") || msg.includes("402")) {
+        toast.error("Fonctionnalité réservée aux abonnés Premium.");
+      } else if (msg.includes("429")) {
+        toast.error("Trop de requêtes, réessaie dans un instant.");
+      } else {
+        toast.error("Analyse impossible. Réessaie avec une photo plus nette.");
+      }
+    } finally {
+      setPhotoLoading(false);
+    }
+  };
+
   const totals = useMemo(
     () =>
       logs.reduce(
@@ -185,23 +243,62 @@ export default function Meals() {
         </div>
       </div>
 
-      <div className="mb-3 grid grid-cols-2 gap-3">
+      <div className="mb-3 grid grid-cols-3 gap-2">
         <button
           onClick={() => setShowScanner(true)}
-          className="flex h-14 items-center justify-center gap-2 rounded-2xl bg-arena text-sm font-black text-arena-on active:scale-[0.98]"
+          className="flex h-14 flex-col items-center justify-center gap-1 rounded-2xl bg-arena text-[11px] font-black text-arena-on active:scale-[0.98]"
         >
-          <ScanLine size={18} /> Scanner
+          <ScanLine size={18} />
+          Scanner
+        </button>
+        <button
+          onClick={() => {
+            if (!isPremium) {
+              toast.error("Photo réservée aux abonnés Premium.");
+              return;
+            }
+            photoInputRef.current?.click();
+          }}
+          disabled={photoLoading}
+          className="relative flex h-14 flex-col items-center justify-center gap-1 rounded-2xl border border-arena-border bg-gradient-to-br from-arena/20 to-arena-surface text-[11px] font-black text-foreground active:scale-[0.98] disabled:opacity-60"
+        >
+          {photoLoading ? (
+            <Loader2 size={18} className="animate-spin" />
+          ) : isPremium ? (
+            <Sparkles size={18} className="text-arena" />
+          ) : (
+            <Lock size={16} className="text-arena-muted" />
+          )}
+          Photo IA
+          {!isPremium && (
+            <span className="absolute -top-1 -right-1 rounded-full bg-arena px-1.5 py-0.5 text-[8px] font-black text-arena-on">
+              PRO
+            </span>
+          )}
         </button>
         <button
           onClick={() => {
             setManualDefaultName("");
             setManualOpen(true);
           }}
-          className="flex h-14 items-center justify-center gap-2 rounded-2xl border border-arena-border bg-arena-surface text-sm font-bold text-foreground active:scale-[0.98]"
+          className="flex h-14 flex-col items-center justify-center gap-1 rounded-2xl border border-arena-border bg-arena-surface text-[11px] font-bold text-foreground active:scale-[0.98]"
         >
-          <Plus size={16} /> Saisie manuelle
+          <Plus size={16} />
+          Manuel
         </button>
       </div>
+      <input
+        ref={photoInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        className="hidden"
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) handlePhotoFile(f);
+          e.target.value = "";
+        }}
+      />
 
       <form onSubmit={handleSearch} className="mb-4 flex gap-2">
         <div className="flex flex-1 items-center gap-2 rounded-xl border border-arena-border bg-arena-surface px-3">
