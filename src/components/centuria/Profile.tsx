@@ -227,7 +227,6 @@ function Badge({ label }: { label: string }) {
 
 function CombatCard({
   profile,
-  lc,
   grade,
   xp,
   prCount,
@@ -235,7 +234,6 @@ function CombatCard({
   bodyweight,
 }: {
   profile: ReturnType<typeof loadUserProfile>;
-  lc: { text: string; bg: string };
   grade: Grade;
   xp: number;
   prCount: number;
@@ -280,28 +278,10 @@ function CombatCard({
       </div>
 
       <div className="mt-3 flex flex-wrap gap-2">
-        {profile?.league && (
-          <span className={`flex items-center gap-1.5 rounded-full ${lc.bg} px-2 py-0.5 text-[10px] font-bold ${lc.text}`}>
-            <LeagueIcon league={profile.league} size="xs" /> Ligue {leagueLabel(profile.league)}
-          </span>
-        )}
         <span className="rounded-full bg-arena/10 px-2 py-0.5 text-[10px] font-bold text-arena">
           {GRADE_EMOJIS[grade]} {GRADE_LABELS[grade].toUpperCase()}
         </span>
       </div>
-
-      {profile?.league === "naturelle" && (
-        <div className="mt-2 flex items-center gap-1 text-xs text-arena-green">
-          <ShieldCheck size={14} />
-          <span>Drug-free — En attente de vérification</span>
-        </div>
-      )}
-      {profile?.league === "olympien" && (
-        <div className="mt-2 flex items-center gap-1 text-xs text-arena-purple">
-          <Flame size={14} />
-          <span>Olympien — Aucune limite, force absolue</span>
-        </div>
-      )}
 
       <h4 className="mb-2 mt-4 text-xs font-black text-arena-muted">PR VÉRIFIÉS</h4>
       {hasPRs ? (
