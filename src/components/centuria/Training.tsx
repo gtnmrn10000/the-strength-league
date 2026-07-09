@@ -62,7 +62,7 @@ export default function Training({ onPR, refreshKey }: { onPR: () => void; refre
       <CoachSheet
         open={coachOpen}
         onOpenChange={setCoachOpen}
-        onSessionStarted={() => setRefreshKey((k) => k + 1)}
+        onSessionStarted={() => setLocalTick((k) => k + 1)}
       />
 
       <SectionTitle>TES PR ACTUELS</SectionTitle>
