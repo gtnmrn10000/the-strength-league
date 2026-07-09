@@ -39,7 +39,7 @@ export default function Meals() {
   const [isPremium, setIsPremium] = useState(false);
   const [photoLoading, setPhotoLoading] = useState(false);
   const photoInputRef = useRef<HTMLInputElement>(null);
-  const recognizePhoto = useServerFn(recognizeFoodPhoto);
+  const recognizePhoto = recognizeFoodPhoto;
 
   const reloadLogs = useCallback(async () => {
     try {
