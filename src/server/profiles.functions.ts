@@ -8,8 +8,10 @@ const saveProfileSchema = z.object({
   age: z.number().min(13).max(99).nullable().optional(),
   taille: z.number().min(100).max(230).nullable().optional(),
   poids: z.number().min(30).max(250).nullable().optional(),
-  league: z.enum(["naturelle", "olympien"]),
   goal: z.enum(["masse", "seche", "performance"]).nullable().optional(),
+  bio: z.string().max(200).nullable().optional(),
+  avatar_url: z.string().max(500).nullable().optional(),
+  cover_url: z.string().max(500).nullable().optional(),
 });
 
 export const saveProfile = createServerFn({ method: "POST" })
@@ -21,8 +23,10 @@ export const saveProfile = createServerFn({ method: "POST" })
       age: data.age ?? null,
       taille: data.taille ?? null,
       poids: data.poids ?? null,
-      league: data.league,
       goal: data.goal ?? null,
+      bio: data.bio ?? null,
+      avatar_url: data.avatar_url ?? null,
+      cover_url: data.cover_url ?? null,
     });
   });
 
