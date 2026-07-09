@@ -14,6 +14,7 @@ export default function Training({ onPR, refreshKey }: { onPR: () => void; refre
   const [bestPRs, setBestPRs] = useState<Record<string, VerifiedPR>>({});
   const [bodyweight, setBodyweight] = useState<number | null>(null);
   const [coachOpen, setCoachOpen] = useState(false);
+  const [localTick, setLocalTick] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
