@@ -21,7 +21,7 @@ interface VerifiedPR {
 
 export default function Profile() {
   const profile = loadUserProfile();
-  const lc = leagueColor(profile?.league ?? null);
+  
 
   const [dbProfile, setDbProfile] = useState<DbProfile | null>(null);
   const [verifiedPRs, setVerifiedPRs] = useState<VerifiedPR[]>([]);
