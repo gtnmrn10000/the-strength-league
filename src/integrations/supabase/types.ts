@@ -16,24 +16,24 @@ export type Database = {
     Tables: {
       coach_conversations: {
         Row: {
-          content: string
           created_at: string
           id: string
-          role: string
+          messages: Json
+          updated_at: string
           user_id: string
         }
         Insert: {
-          content: string
           created_at?: string
           id?: string
-          role: string
+          messages?: Json
+          updated_at?: string
           user_id: string
         }
         Update: {
-          content?: string
           created_at?: string
           id?: string
-          role?: string
+          messages?: Json
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
@@ -47,6 +47,7 @@ export type Database = {
           instructions: string | null
           muscle_groups: string[]
           name: string
+          recovery_hours: number
         }
         Insert: {
           created_at?: string
@@ -56,6 +57,7 @@ export type Database = {
           instructions?: string | null
           muscle_groups?: string[]
           name: string
+          recovery_hours?: number
         }
         Update: {
           created_at?: string
@@ -65,6 +67,7 @@ export type Database = {
           instructions?: string | null
           muscle_groups?: string[]
           name?: string
+          recovery_hours?: number
         }
         Relationships: []
       }
