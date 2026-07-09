@@ -58,7 +58,11 @@ export default function Training({ onPR, refreshKey }: { onPR: () => void; refre
         <ActionCard icon={Target} title="Mes objectifs" />
         <ActionCard icon={Sparkles} title="Coach IA" onClick={() => setCoachOpen(true)} />
       </div>
-      <CoachSheet open={coachOpen} onOpenChange={setCoachOpen} />
+      <CoachSheet
+        open={coachOpen}
+        onOpenChange={setCoachOpen}
+        onSessionStarted={() => setRefreshKey((k) => k + 1)}
+      />
 
       <SectionTitle>TES PR ACTUELS</SectionTitle>
       {hasPRs ? (
