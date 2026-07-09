@@ -1,15 +1,13 @@
 import { useState } from "react";
 import { Flame, ShieldCheck, Save, Plus, Crown, Zap, X, Trophy, Target } from "lucide-react";
 import Logo from "./Logo";
-import LeagueIcon from "./LeagueIcon";
-import { loadUserProfile, goalLabel, goalEmoji, leagueLabel, leagueColor } from "./userProfile";
+import { loadUserProfile, goalLabel, goalEmoji } from "./userProfile";
 
 const posts = [
   {
     type: "pr" as const,
     user: "Lucas",
     avatar: "https://images.unsplash.com/photo-1594381898411-846e7d193883?q=80&w=400&auto=format&fit=crop",
-    league: "NATURELLE",
     grade: "GLADIATEUR",
     exercise: "BENCH PRESS",
     value: "130 KG",
@@ -41,9 +39,8 @@ export default function Feed({ onCreate }: { onCreate: () => void }) {
 
   return (
     <div className="px-4 pt-2 pb-4">
-      {showWelcome && <WelcomeBanner pseudo={profile?.pseudo} league={profile?.league} onClose={() => setShowWelcome(false)} />}
-      <QuickStats goal={profile?.goal ?? null} league={profile?.league ?? null} />
-      <WarBanner league={profile?.league ?? null} />
+      {showWelcome && <WelcomeBanner pseudo={profile?.pseudo} onClose={() => setShowWelcome(false)} />}
+      <QuickStats goal={profile?.goal ?? null} />
       <FounderBanner />
       <h3 className="mb-3 mt-5 text-xs font-black tracking-widest text-arena-muted">FEED</h3>
       <div className="flex flex-col gap-4">
@@ -61,8 +58,7 @@ export default function Feed({ onCreate }: { onCreate: () => void }) {
   );
 }
 
-function WelcomeBanner({ pseudo, league, onClose }: { pseudo?: string; league?: string | null; onClose: () => void }) {
-  const lc = leagueColor(league ?? null);
+function WelcomeBanner({ pseudo, onClose }: { pseudo?: string; onClose: () => void }) {
   return (
     <div className="mb-3 rounded-2xl border border-arena/30 bg-gradient-to-br from-arena/10 to-arena-gold/5 p-4 relative">
       <button onClick={onClose} className="absolute top-3 right-3 text-arena-muted hover:text-foreground transition-colors">
@@ -80,18 +76,12 @@ function WelcomeBanner({ pseudo, league, onClose }: { pseudo?: string; league?: 
       <div className="mt-3 flex flex-wrap gap-2">
         <span className="rounded-full bg-arena/20 px-2.5 py-1 text-[10px] font-bold text-arena">🎯 Log un PR</span>
         <span className="rounded-full bg-arena-gold/20 px-2.5 py-1 text-[10px] font-bold text-arena-gold">⚡ +100 XP offerts</span>
-        {league && (
-          <span className={`flex items-center gap-1.5 rounded-full ${lc.bg} px-2.5 py-1 text-[10px] font-bold ${lc.text}`}>
-            <LeagueIcon league={league} size="xs" /> Ligue {leagueLabel(league)}
-          </span>
-        )}
       </div>
     </div>
   );
 }
 
-function QuickStats({ goal, league }: { goal: string | null; league: string | null }) {
-  const lc = leagueColor(league);
+function QuickStats({ goal }: { goal: string | null }) {
   return (
     <div className="mb-3">
       <div className="grid grid-cols-3 gap-2">
@@ -107,46 +97,12 @@ function QuickStats({ goal, league }: { goal: string | null; league: string | nu
           </div>
         ))}
       </div>
-      {/* Objective & league badges */}
-      <div className="mt-2 flex flex-wrap gap-2">
-        {goal && (
+      {goal && (
+        <div className="mt-2 flex flex-wrap gap-2">
           <span className="rounded-full bg-arena/10 px-2.5 py-1 text-[10px] font-bold text-arena">
             {goalEmoji(goal)} {goalLabel(goal)}
           </span>
-        )}
-        {league && (
-          <span className={`rounded-full ${lc.bg} px-2.5 py-1 text-[10px] font-bold ${lc.text}`}>
-            {leagueLabel(league)}
-          </span>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function WarBanner({ league }: { league: string | null }) {
-  const isNat = league === "naturelle";
-  const lc = leagueColor(league);
-  return (
-    <div className="mb-3 rounded-2xl border border-arena-border bg-arena-surface p-4">
-      <div className="flex items-center justify-between">
-        <span className="text-xs font-bold text-arena">Guerre — Saison 1</span>
-        <span className="text-xs font-bold text-arena">J-47</span>
-      </div>
-      <div className="mt-2 flex items-center justify-center gap-3">
-        <span className="flex items-center gap-1 text-xs font-black text-arena-green"><LeagueIcon league="naturelle" size="xs" /> NATURELLE</span>
-        <span className="text-sm font-black text-foreground">VS</span>
-        <span className="flex items-center gap-1 text-xs font-black text-arena-purple"><LeagueIcon league="olympien" size="xs" /> OLYMPIEN</span>
-      </div>
-      <p className="mt-2 text-center text-xs text-arena-sub">
-        {isNat
-          ? "Naturels en tête : +142k XP"
-          : "Olympiens en tête : +277k XP"}
-      </p>
-      {league && (
-        <p className={`mt-1 text-center text-[10px] font-bold ${lc.text}`}>
-          Tu combats pour les {isNat ? "🛡️ Naturels" : "⚡ Olympiens"}
-        </p>
+        </div>
       )}
     </div>
   );
@@ -187,7 +143,6 @@ function PRPost({ post }: { post: any }) {
           </div>
           <span className="text-xs text-arena-sub">{post.time}</span>
         </div>
-        <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-bold text-arena-green">NATURELLE</span>
       </div>
       <div className="mt-3 rounded-xl bg-secondary p-3">
         <p className="text-xs font-bold text-arena-sub">{post.exercise}</p>

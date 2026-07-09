@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
-import { MapPin, ShieldCheck, Settings, Trophy, Flame, Dumbbell, Target, Zap } from "lucide-react";
+import { MapPin, Trophy, Flame, Dumbbell, Target, Zap } from "lucide-react";
 import { motion } from "framer-motion";
-import { loadUserProfile, goalLabel, goalEmoji, leagueLabel, leagueColor } from "./userProfile";
-import LeagueIcon from "./LeagueIcon";
+import { loadUserProfile, goalLabel, goalEmoji } from "./userProfile";
 import { supabase } from "@/integrations/supabase/client";
 import { GRADES, GRADE_LABELS, GRADE_EMOJIS, THRESHOLDS, type Grade } from "@/lib/grades";
 
@@ -22,7 +21,7 @@ interface VerifiedPR {
 
 export default function Profile() {
   const profile = loadUserProfile();
-  const lc = leagueColor(profile?.league ?? null);
+  
 
   const [dbProfile, setDbProfile] = useState<DbProfile | null>(null);
   const [verifiedPRs, setVerifiedPRs] = useState<VerifiedPR[]>([]);
@@ -83,7 +82,6 @@ export default function Profile() {
     <div className="px-4 pt-2 pb-4">
       <CombatCard
         profile={profile}
-        lc={lc}
         grade={grade}
         xp={xp}
         prCount={prCount}
@@ -229,7 +227,6 @@ function Badge({ label }: { label: string }) {
 
 function CombatCard({
   profile,
-  lc,
   grade,
   xp,
   prCount,
@@ -237,7 +234,6 @@ function CombatCard({
   bodyweight,
 }: {
   profile: ReturnType<typeof loadUserProfile>;
-  lc: { text: string; bg: string };
   grade: Grade;
   xp: number;
   prCount: number;
@@ -282,28 +278,10 @@ function CombatCard({
       </div>
 
       <div className="mt-3 flex flex-wrap gap-2">
-        {profile?.league && (
-          <span className={`flex items-center gap-1.5 rounded-full ${lc.bg} px-2 py-0.5 text-[10px] font-bold ${lc.text}`}>
-            <LeagueIcon league={profile.league} size="xs" /> Ligue {leagueLabel(profile.league)}
-          </span>
-        )}
         <span className="rounded-full bg-arena/10 px-2 py-0.5 text-[10px] font-bold text-arena">
           {GRADE_EMOJIS[grade]} {GRADE_LABELS[grade].toUpperCase()}
         </span>
       </div>
-
-      {profile?.league === "naturelle" && (
-        <div className="mt-2 flex items-center gap-1 text-xs text-arena-green">
-          <ShieldCheck size={14} />
-          <span>Drug-free — En attente de vérification</span>
-        </div>
-      )}
-      {profile?.league === "olympien" && (
-        <div className="mt-2 flex items-center gap-1 text-xs text-arena-purple">
-          <Flame size={14} />
-          <span>Olympien — Aucune limite, force absolue</span>
-        </div>
-      )}
 
       <h4 className="mb-2 mt-4 text-xs font-black text-arena-muted">PR VÉRIFIÉS</h4>
       {hasPRs ? (

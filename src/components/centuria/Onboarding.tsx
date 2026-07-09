@@ -3,7 +3,7 @@ import { Apple, Mail, Lock, ChevronLeft, Sparkles, ShieldCheck, Trophy, Check, D
 import Logo from "./Logo";
 import { saveUserProfile } from "./userProfile";
 import { track } from "./analytics";
-import { leagueNaturelle, leagueOlympien } from "./LeagueIcon";
+
 
 /* ── Validation helpers ── */
 
@@ -51,7 +51,6 @@ const OB_KEY = "centuria_onboarding";
 
 interface OnboardingData {
   step: number;
-  league: string | null;
   goal: string | null;
   pseudo: string;
   age: string;
@@ -59,7 +58,7 @@ interface OnboardingData {
   poids: string;
 }
 
-const DEFAULT_DATA: OnboardingData = { step: 0, league: null, goal: null, pseudo: "", age: "", taille: "", poids: "" };
+const DEFAULT_DATA: OnboardingData = { step: 0, goal: null, pseudo: "", age: "", taille: "", poids: "" };
 
 function loadSaved(): OnboardingData {
   if (typeof window === "undefined") return DEFAULT_DATA;
@@ -75,9 +74,9 @@ function saveDraft(data: OnboardingData) {
 }
 
 export default function Onboarding({ onDone }: { onDone: () => void }) {
-  // Always start at step 0 for SSR, then restore from localStorage
+  // Steps: 0=hero, 1=auth, 2=profile, 3=goal
+  const TOTAL_STEPS = 4;
   const [step, setStep] = useState(0);
-  const [selectedLeague, setSelectedLeague] = useState<string | null>(null);
   const [selectedGoal, setSelectedGoal] = useState<string | null>(null);
   const [pseudo, setPseudo] = useState("");
   const [age, setAge] = useState("");
@@ -86,12 +85,10 @@ export default function Onboarding({ onDone }: { onDone: () => void }) {
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [triedContinue, setTriedContinue] = useState(false);
 
-  // Restore saved draft after hydration
   useEffect(() => {
     const saved = loadSaved();
     if (saved.step > 0 || saved.pseudo) {
-      setStep(saved.step);
-      setSelectedLeague(saved.league);
+      setStep(Math.min(saved.step, TOTAL_STEPS - 1));
       setSelectedGoal(saved.goal);
       setPseudo(saved.pseudo);
       setAge(saved.age);
@@ -101,9 +98,8 @@ export default function Onboarding({ onDone }: { onDone: () => void }) {
   }, []);
 
   const titles = [
-    "REJOINS LA LIGUE. PROUVE TA FORCE.",
+    "PROUVE TA FORCE.",
     "CRÉE TON COMPTE",
-    "CHOISIS TA LIGUE",
     "FORGE TON PROFIL",
     "FIXE TON PREMIER OBJECTIF",
   ];
@@ -111,35 +107,32 @@ export default function Onboarding({ onDone }: { onDone: () => void }) {
   const statsErrors = validateStats(pseudo, age, taille, poids);
 
   const canContinue = useCallback(() => {
-    if (step === 2) return selectedLeague !== null;
-    if (step === 3) return !hasErrors(statsErrors) && pseudo.trim().length >= 3;
-    if (step === 4) return selectedGoal !== null;
+    if (step === 2) return !hasErrors(statsErrors) && pseudo.trim().length >= 3;
+    if (step === 3) return selectedGoal !== null;
     return true;
-  }, [step, selectedLeague, selectedGoal, statsErrors, pseudo]);
+  }, [step, selectedGoal, statsErrors, pseudo]);
 
   const persist = (overrides: Partial<OnboardingData> = {}) => {
-    saveDraft({ step, league: selectedLeague, goal: selectedGoal, pseudo, age, taille, poids, ...overrides });
+    saveDraft({ step, goal: selectedGoal, pseudo, age, taille, poids, ...overrides });
   };
 
-  const stepNames = ["hero", "auth", "league", "profile", "goal"];
+  const stepNames = ["hero", "auth", "profile", "goal"];
 
   const handleContinue = () => {
-    if (step === 3) {
+    if (step === 2) {
       setTriedContinue(true);
       if (!canContinue()) return;
     }
     if (!canContinue()) return;
-    if (step === 4) {
+    if (step === TOTAL_STEPS - 1) {
       localStorage.removeItem(OB_KEY);
-      saveUserProfile({ pseudo, age, taille, poids, league: selectedLeague, goal: selectedGoal });
-      track("onboarding_completed", { league: selectedLeague, goal: selectedGoal, pseudo });
+      saveUserProfile({ pseudo, age, taille, poids, goal: selectedGoal });
+      track("onboarding_completed", { goal: selectedGoal, pseudo });
       onDone();
     } else {
       const next = step + 1;
-      // Track step completion with relevant data
       const props: Record<string, string | number | boolean | null> = { from_step: stepNames[step], to_step: stepNames[next] };
-      if (step === 2) props.league = selectedLeague;
-      if (step === 3) props.pseudo = pseudo;
+      if (step === 2) props.pseudo = pseudo;
       track("onboarding_step_completed", props);
 
       setTriedContinue(false);
@@ -174,14 +167,14 @@ export default function Onboarding({ onDone }: { onDone: () => void }) {
           )}
           <span className="text-sm font-black tracking-[0.2em] text-foreground">CENTURIA</span>
         </div>
-        <span className="text-xs text-arena-sub">{step + 1}/5</span>
+        <span className="text-xs text-arena-sub">{step + 1}/{TOTAL_STEPS}</span>
       </div>
 
       {/* Progress bar */}
       <div className="mx-5 mt-3 h-1 overflow-hidden rounded-full bg-secondary">
         <div
           className="h-full rounded-full bg-arena transition-all duration-500 ease-out"
-          style={{ width: `${((step + 1) / 5) * 100}%` }}
+          style={{ width: `${((step + 1) / TOTAL_STEPS) * 100}%` }}
         />
       </div>
 
@@ -192,8 +185,7 @@ export default function Onboarding({ onDone }: { onDone: () => void }) {
         </h1>
         {step === 0 && <HeroCard />}
         {step === 1 && <AuthStep />}
-        {step === 2 && <LeagueStep selected={selectedLeague} onSelect={(v) => { setSelectedLeague(v); persist({ league: v }); track("league_selected", { league: v }); }} />}
-        {step === 3 && (
+        {step === 2 && (
           <StatsStep
             pseudo={pseudo} setPseudo={(v) => { setPseudo(v); markTouched("pseudo"); persist({ pseudo: v }); }}
             age={age} setAge={(v) => { setAge(v); markTouched("age"); persist({ age: v }); }}
@@ -207,21 +199,21 @@ export default function Onboarding({ onDone }: { onDone: () => void }) {
             }}
           />
         )}
-        {step === 4 && <GoalStep selected={selectedGoal} onSelect={(v) => { setSelectedGoal(v); persist({ goal: v }); track("goal_selected", { goal: v }); }} />}
+        {step === 3 && <GoalStep selected={selectedGoal} onSelect={(v) => { setSelectedGoal(v); persist({ goal: v }); track("goal_selected", { goal: v }); }} />}
       </div>
 
       {/* Footer */}
       <div className="px-5 pb-6">
         <button
           onClick={handleContinue}
-          disabled={step !== 3 && !canContinue()}
+          disabled={step !== 2 && !canContinue()}
           className={`h-14 w-full rounded-2xl font-black uppercase tracking-wide transition-all duration-200 active:scale-95
             ${canContinue()
               ? "bg-arena text-arena-foreground shadow-[0_0_35px_var(--arena-glow)]"
               : "bg-arena/30 text-arena-foreground/50 cursor-not-allowed"
             }`}
         >
-          {step === 4 ? "⚔️ Entrer dans l'arène" : "Continuer"}
+          {step === TOTAL_STEPS - 1 ? "⚔️ Entrer dans l'arène" : "Continuer"}
         </button>
         {step === 0 && (
           <button className="mt-3 w-full text-center text-xs font-semibold text-arena-sub hover:text-foreground transition-colors">
@@ -294,69 +286,6 @@ function AuthBtn({ icon: Icon, label, highlight }: { icon: React.ElementType; la
   );
 }
 
-/* ── Step 2: League ── */
-function LeagueStep({ selected, onSelect }: { selected: string | null; onSelect: (v: string) => void }) {
-  return (
-    <div className="flex flex-col gap-3">
-      <LeagueCard
-        title="NATURELLE" icon={leagueNaturelle}
-        desc="Drug-free. Tous tes PR sont vérifiés par IA vidéo. Triche = ban définitif."
-        features={["Vérification IA", "Badge drug-free", "Classement protégé"]}
-        color="text-arena-green" selected={selected === "naturelle"}
-        onSelect={() => onSelect("naturelle")}
-      />
-      <LeagueCard
-        title="OLYMPIEN" subtitle="DOPÉ" icon={leagueOlympien}
-        desc="Aucune limite. Force brute, performances extrêmes. Seul le total compte."
-        features={["Sans restriction", "Force maximale", "Classement absolu"]}
-        color="text-arena-purple" selected={selected === "olympien"}
-        onSelect={() => onSelect("olympien")}
-      />
-      <div className="mt-2 flex items-start gap-2 rounded-xl bg-arena/5 p-3">
-        <ShieldCheck size={16} className="mt-0.5 shrink-0 text-arena" />
-        <p className="text-xs text-arena-muted leading-relaxed">
-          Tu peux changer de ligue <span className="font-bold text-arena-sub">1 seule fois</span> dans ta vie. Choisis bien.
-        </p>
-      </div>
-    </div>
-  );
-}
-
-function LeagueCard({ title, subtitle, icon, desc, features, color, selected, onSelect }: {
-  title: string; subtitle?: string; icon: string; desc: string; features: string[]; color: string; selected: boolean; onSelect: () => void;
-}) {
-  return (
-    <button
-      onClick={onSelect}
-      className={`w-full rounded-2xl border p-4 text-left transition-all duration-200 active:scale-[0.98]
-        ${selected
-          ? "border-arena bg-arena/10 shadow-[0_0_20px_var(--arena-glow)]"
-          : "border-arena-border bg-arena-surface hover:border-arena/30"
-        }`}
-    >
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <img src={icon} alt={title} className="h-10 w-10 rounded-lg object-contain" />
-          <div className="flex flex-col">
-            <span className={`font-black ${color}`}>{title}</span>
-            {subtitle && <span className="text-[10px] font-bold text-arena-muted uppercase tracking-wider">{subtitle}</span>}
-          </div>
-        </div>
-        {selected && (
-          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-arena">
-            <Check size={14} className="text-arena-foreground" />
-          </div>
-        )}
-      </div>
-      <p className="mt-2 text-sm text-arena-sub">{desc}</p>
-      <div className="mt-3 flex flex-wrap gap-2">
-        {features.map((f) => (
-          <span key={f} className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-bold text-arena-sub">{f}</span>
-        ))}
-      </div>
-    </button>
-  );
-}
 
 /* ── Step 3: Profile Stats ── */
 function StatsStep({ pseudo, setPseudo, age, setAge, taille, setTaille, poids, setPoids, errors }: {
