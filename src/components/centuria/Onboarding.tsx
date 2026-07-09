@@ -167,14 +167,14 @@ export default function Onboarding({ onDone }: { onDone: () => void }) {
           )}
           <span className="text-sm font-black tracking-[0.2em] text-foreground">CENTURIA</span>
         </div>
-        <span className="text-xs text-arena-sub">{step + 1}/5</span>
+        <span className="text-xs text-arena-sub">{step + 1}/{TOTAL_STEPS}</span>
       </div>
 
       {/* Progress bar */}
       <div className="mx-5 mt-3 h-1 overflow-hidden rounded-full bg-secondary">
         <div
           className="h-full rounded-full bg-arena transition-all duration-500 ease-out"
-          style={{ width: `${((step + 1) / 5) * 100}%` }}
+          style={{ width: `${((step + 1) / TOTAL_STEPS) * 100}%` }}
         />
       </div>
 
@@ -185,8 +185,7 @@ export default function Onboarding({ onDone }: { onDone: () => void }) {
         </h1>
         {step === 0 && <HeroCard />}
         {step === 1 && <AuthStep />}
-        {step === 2 && <LeagueStep selected={selectedLeague} onSelect={(v) => { setSelectedLeague(v); persist({ league: v }); track("league_selected", { league: v }); }} />}
-        {step === 3 && (
+        {step === 2 && (
           <StatsStep
             pseudo={pseudo} setPseudo={(v) => { setPseudo(v); markTouched("pseudo"); persist({ pseudo: v }); }}
             age={age} setAge={(v) => { setAge(v); markTouched("age"); persist({ age: v }); }}
@@ -200,21 +199,21 @@ export default function Onboarding({ onDone }: { onDone: () => void }) {
             }}
           />
         )}
-        {step === 4 && <GoalStep selected={selectedGoal} onSelect={(v) => { setSelectedGoal(v); persist({ goal: v }); track("goal_selected", { goal: v }); }} />}
+        {step === 3 && <GoalStep selected={selectedGoal} onSelect={(v) => { setSelectedGoal(v); persist({ goal: v }); track("goal_selected", { goal: v }); }} />}
       </div>
 
       {/* Footer */}
       <div className="px-5 pb-6">
         <button
           onClick={handleContinue}
-          disabled={step !== 3 && !canContinue()}
+          disabled={step !== 2 && !canContinue()}
           className={`h-14 w-full rounded-2xl font-black uppercase tracking-wide transition-all duration-200 active:scale-95
             ${canContinue()
               ? "bg-arena text-arena-foreground shadow-[0_0_35px_var(--arena-glow)]"
               : "bg-arena/30 text-arena-foreground/50 cursor-not-allowed"
             }`}
         >
-          {step === 4 ? "⚔️ Entrer dans l'arène" : "Continuer"}
+          {step === TOTAL_STEPS - 1 ? "⚔️ Entrer dans l'arène" : "Continuer"}
         </button>
         {step === 0 && (
           <button className="mt-3 w-full text-center text-xs font-semibold text-arena-sub hover:text-foreground transition-colors">
