@@ -46,7 +46,7 @@ export default function Training({ onPR, refreshKey }: { onPR: () => void; refre
       }
     })();
     return () => { cancelled = true; };
-  }, [refreshKey]);
+  }, [refreshKey, localTick]);
 
   const exerciseLabels: Record<string, string> = { squat: "Squat", bench: "Bench Press", deadlift: "Deadlift" };
   const hasPRs = Object.keys(bestPRs).length > 0;
