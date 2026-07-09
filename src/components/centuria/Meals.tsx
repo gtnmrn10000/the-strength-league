@@ -60,17 +60,19 @@ export default function Meals() {
       if (!auth.user) return;
       const { data } = await supabase
         .from("profiles")
-        .select("sexe, age, poids, taille, niveau_activite")
+        .select("sexe, age, poids, taille, niveau_activite, is_premium")
         .eq("user_id", auth.user.id)
         .maybeSingle();
       if (!data) return;
-      const { sexe, age, poids, taille, niveau_activite } = data as {
+      const { sexe, age, poids, taille, niveau_activite, is_premium } = data as {
         sexe: Sexe | null;
         age: number | null;
         poids: number | null;
         taille: number | null;
         niveau_activite: ActivityLevel | null;
+        is_premium: boolean | null;
       };
+      setIsPremium(!!is_premium);
       if (sexe && age && poids && taille) {
         const kcal = tdee({
           sexe,
