@@ -82,7 +82,6 @@ export default function Profile() {
     <div className="px-4 pt-2 pb-4">
       <CombatCard
         profile={profile}
-        lc={lc}
         grade={grade}
         xp={xp}
         prCount={prCount}
