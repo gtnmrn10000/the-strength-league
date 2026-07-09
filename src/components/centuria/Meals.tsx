@@ -162,6 +162,57 @@ export default function Meals() {
     }
   };
 
+  const handlePhotoFile = async (file: File) => {
+    if (!isPremium) {
+      toast.error("Fonctionnalité réservée aux abonnés Premium.");
+      return;
+    }
+    setPhotoLoading(true);
+    try {
+      const dataUrl: string = await new Promise((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => resolve(r.result as string);
+        r.onerror = () => reject(r.error);
+        r.readAsDataURL(file);
+      });
+      const result = await recognizePhoto({ data: { image_data_url: dataUrl } });
+      // Convert to FoodProduct shape for ProductSheet
+      const p: FoodProduct = {
+        barcode: `photo-${Date.now()}`,
+        name: result.name,
+        brand: result.brand,
+        image_url: dataUrl,
+        nutriscore: null,
+        nova_group: null,
+        serving_size: `${result.estimated_grams} g (estimé, ${result.confidence})`,
+        nutriments: {
+          energy_kcal_100g: result.nutriments_100g.energy_kcal_100g,
+          proteins_100g: result.nutriments_100g.proteins_100g,
+          carbs_100g: result.nutriments_100g.carbs_100g,
+          fat_100g: result.nutriments_100g.fat_100g,
+          sugars_100g: null,
+          fiber_100g: null,
+          salt_100g: null,
+        },
+      };
+      setProduct(p);
+      setPendingSource("photo");
+      setSheetOpen(true);
+      if (result.notes) toast.info(result.notes);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      if (msg.includes("PREMIUM_REQUIRED") || msg.includes("402")) {
+        toast.error("Fonctionnalité réservée aux abonnés Premium.");
+      } else if (msg.includes("429")) {
+        toast.error("Trop de requêtes, réessaie dans un instant.");
+      } else {
+        toast.error("Analyse impossible. Réessaie avec une photo plus nette.");
+      }
+    } finally {
+      setPhotoLoading(false);
+    }
+  };
+
   const totals = useMemo(
     () =>
       logs.reduce(
