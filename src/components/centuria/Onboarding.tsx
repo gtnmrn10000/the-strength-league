@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
-import { Apple, Mail, Lock, ChevronLeft, Sparkles, ShieldCheck, Trophy, Check, Dumbbell, Target, TrendingUp, AlertCircle } from "lucide-react";
+import { Apple, Mail, Lock, ChevronLeft, Sparkles, ShieldCheck, Trophy, Check, Dumbbell, Target, TrendingUp, AlertCircle, Flame } from "lucide-react";
 import Logo from "./Logo";
 import { saveUserProfile } from "./userProfile";
 import { track } from "./analytics";
@@ -245,7 +245,7 @@ function HeroCard() {
         {[
           { icon: ShieldCheck, label: "PR vérifiés par IA", color: "text-arena-green" },
           { icon: Trophy, label: "Classement national", color: "text-arena-gold" },
-          { icon: Trophy, label: "Guerre de factions", color: "text-arena" },
+          { icon: Flame, label: "Feed social", color: "text-arena" },
         ].map(({ icon: Icon, label, color }) => (
           <div key={label} className="flex flex-col items-center gap-2 rounded-2xl border border-arena-border bg-arena-surface p-3 text-center">
             <Icon size={20} className={color} />

@@ -14,17 +14,113 @@ export type Database = {
   }
   public: {
     Tables: {
+      follows: {
+        Row: {
+          created_at: string
+          follower_id: string
+          following_id: string
+        }
+        Insert: {
+          created_at?: string
+          follower_id: string
+          following_id: string
+        }
+        Update: {
+          created_at?: string
+          follower_id?: string
+          following_id?: string
+        }
+        Relationships: []
+      }
+      post_hypes: {
+        Row: {
+          created_at: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_hypes_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      posts: {
+        Row: {
+          caption: string | null
+          created_at: string
+          hype_count: number
+          id: string
+          macros: Json | null
+          media_url: string | null
+          muscle_groups: string[] | null
+          pr_id: string | null
+          type: Database["public"]["Enums"]["post_type"]
+          user_id: string
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string
+          hype_count?: number
+          id?: string
+          macros?: Json | null
+          media_url?: string | null
+          muscle_groups?: string[] | null
+          pr_id?: string | null
+          type: Database["public"]["Enums"]["post_type"]
+          user_id: string
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string
+          hype_count?: number
+          id?: string
+          macros?: Json | null
+          media_url?: string | null
+          muscle_groups?: string[] | null
+          pr_id?: string | null
+          type?: Database["public"]["Enums"]["post_type"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "posts_pr_id_fkey"
+            columns: ["pr_id"]
+            isOneToOne: false
+            referencedRelation: "prs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           age: number | null
+          avatar_url: string | null
+          bio: string | null
+          cover_url: string | null
           created_at: string
           current_grade: string
+          followers_count: number
+          following_count: number
           goal: Database["public"]["Enums"]["goal_type"] | null
           id: string
           last_pr_at: string | null
-          league: Database["public"]["Enums"]["league_type"]
           onboarded: boolean
           poids: number | null
+          posts_count: number
           pseudo: string
           taille: number | null
           updated_at: string
@@ -33,14 +129,19 @@ export type Database = {
         }
         Insert: {
           age?: number | null
+          avatar_url?: string | null
+          bio?: string | null
+          cover_url?: string | null
           created_at?: string
           current_grade?: string
+          followers_count?: number
+          following_count?: number
           goal?: Database["public"]["Enums"]["goal_type"] | null
           id?: string
           last_pr_at?: string | null
-          league: Database["public"]["Enums"]["league_type"]
           onboarded?: boolean
           poids?: number | null
+          posts_count?: number
           pseudo: string
           taille?: number | null
           updated_at?: string
@@ -49,14 +150,19 @@ export type Database = {
         }
         Update: {
           age?: number | null
+          avatar_url?: string | null
+          bio?: string | null
+          cover_url?: string | null
           created_at?: string
           current_grade?: string
+          followers_count?: number
+          following_count?: number
           goal?: Database["public"]["Enums"]["goal_type"] | null
           id?: string
           last_pr_at?: string | null
-          league?: Database["public"]["Enums"]["league_type"]
           onboarded?: boolean
           poids?: number | null
+          posts_count?: number
           pseudo?: string
           taille?: number | null
           updated_at?: string
@@ -110,7 +216,7 @@ export type Database = {
     }
     Enums: {
       goal_type: "masse" | "seche" | "performance"
-      league_type: "naturelle" | "olympien"
+      post_type: "pr" | "meal" | "workout" | "level_up"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -239,7 +345,7 @@ export const Constants = {
   public: {
     Enums: {
       goal_type: ["masse", "seche", "performance"],
-      league_type: ["naturelle", "olympien"],
+      post_type: ["pr", "meal", "workout", "level_up"],
     },
   },
 } as const
