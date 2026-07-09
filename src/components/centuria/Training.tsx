@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Camera, NotebookPen, Target, Sparkles, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import CoachSheet from "./coach/CoachSheet";
 
 interface VerifiedPR {
   exercise: string;
@@ -12,6 +13,7 @@ interface VerifiedPR {
 export default function Training({ onPR, refreshKey }: { onPR: () => void; refreshKey?: number }) {
   const [bestPRs, setBestPRs] = useState<Record<string, VerifiedPR>>({});
   const [bodyweight, setBodyweight] = useState<number | null>(null);
+  const [coachOpen, setCoachOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -54,8 +56,9 @@ export default function Training({ onPR, refreshKey }: { onPR: () => void; refre
         <ActionCard icon={Camera} title="Log un PR" glow onClick={onPR} />
         <ActionCard icon={NotebookPen} title="Log séance" />
         <ActionCard icon={Target} title="Mes objectifs" />
-        <ActionCard icon={Sparkles} title="Coach IA" />
+        <ActionCard icon={Sparkles} title="Coach IA" onClick={() => setCoachOpen(true)} />
       </div>
+      <CoachSheet open={coachOpen} onOpenChange={setCoachOpen} />
 
       <SectionTitle>TES PR ACTUELS</SectionTitle>
       {hasPRs ? (
