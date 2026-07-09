@@ -1,20 +1,82 @@
-import { Plus, ScanLine, Search, Loader2 } from "lucide-react";
-import { useState } from "react";
+import { Plus, ScanLine, Search, Loader2, Trash2, PackageX } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import BarcodeScanner from "./food/BarcodeScanner";
 import ProductSheet from "./food/ProductSheet";
+import ManualEntrySheet from "./food/ManualEntrySheet";
 import { FoodProduct, fetchProductByBarcode, searchProducts } from "@/lib/openFoodFacts";
+import {
+  FoodLog,
+  FoodSource,
+  addFoodLog,
+  addFoodLogFromProduct,
+  deleteFoodLog,
+  fetchTodayLogs,
+} from "@/lib/foodLogs";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  ActivityLevel,
+  DEFAULT_GOALS,
+  MacroGoals,
+  Sexe,
+  macroGoalsFromTdee,
+  tdee,
+} from "@/lib/nutrition";
 import { toast } from "sonner";
-
-type JournalEntry = { product: FoodProduct; grams: number; at: number };
 
 export default function Meals() {
   const [showScanner, setShowScanner] = useState(false);
   const [product, setProduct] = useState<FoodProduct | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [manualOpen, setManualOpen] = useState(false);
+  const [manualDefaultName, setManualDefaultName] = useState<string>("");
+  const [pendingSource, setPendingSource] = useState<FoodSource>("manual");
   const [loading, setLoading] = useState(false);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<FoodProduct[]>([]);
-  const [journal, setJournal] = useState<JournalEntry[]>([]);
+  const [logs, setLogs] = useState<FoodLog[]>([]);
+  const [goals, setGoals] = useState<MacroGoals>(DEFAULT_GOALS);
+
+  const reloadLogs = useCallback(async () => {
+    try {
+      setLogs(await fetchTodayLogs());
+    } catch {
+      // silent
+    }
+  }, []);
+
+  useEffect(() => {
+    reloadLogs();
+  }, [reloadLogs]);
+
+  useEffect(() => {
+    (async () => {
+      const { data: auth } = await supabase.auth.getUser();
+      if (!auth.user) return;
+      const { data } = await supabase
+        .from("profiles")
+        .select("sexe, age, poids, taille, niveau_activite")
+        .eq("user_id", auth.user.id)
+        .maybeSingle();
+      if (!data) return;
+      const { sexe, age, poids, taille, niveau_activite } = data as {
+        sexe: Sexe | null;
+        age: number | null;
+        poids: number | null;
+        taille: number | null;
+        niveau_activite: ActivityLevel | null;
+      };
+      if (sexe && age && poids && taille) {
+        const kcal = tdee({
+          sexe,
+          age,
+          poids_kg: Number(poids),
+          taille_cm: Number(taille),
+          activite: niveau_activite ?? "modere",
+        });
+        setGoals(macroGoalsFromTdee(kcal));
+      }
+    })();
+  }, []);
 
   const handleBarcode = async (code: string) => {
     setShowScanner(false);
@@ -22,9 +84,12 @@ export default function Meals() {
     try {
       const p = await fetchProductByBarcode(code);
       if (!p) {
-        toast.error("Produit introuvable dans Open Food Facts.");
+        toast.error("Produit introuvable. Passe en saisie manuelle.");
+        setManualDefaultName("");
+        setManualOpen(true);
       } else {
         setProduct(p);
+        setPendingSource("barcode");
         setSheetOpen(true);
       }
     } catch {
@@ -49,32 +114,75 @@ export default function Meals() {
     }
   };
 
-  const addToJournal = (p: FoodProduct, grams: number) => {
-    setJournal((j) => [{ product: p, grams, at: Date.now() }, ...j]);
-    setSheetOpen(false);
-    toast.success(`${p.name} ajouté (${grams} g).`);
+  const addToJournal = async (p: FoodProduct, grams: number) => {
+    try {
+      await addFoodLogFromProduct(p, grams, pendingSource);
+      setSheetOpen(false);
+      toast.success(`${p.name} ajouté (${grams} g).`);
+      reloadLogs();
+    } catch (e) {
+      toast.error("Impossible d'ajouter au journal.");
+    }
   };
 
-  const totals = journal.reduce(
-    (a, e) => {
-      const f = e.grams / 100;
-      const n = e.product.nutriments;
-      a.kcal += (n.energy_kcal_100g ?? 0) * f;
-      a.prot += (n.proteins_100g ?? 0) * f;
-      a.carbs += (n.carbs_100g ?? 0) * f;
-      a.fat += (n.fat_100g ?? 0) * f;
-      return a;
-    },
-    { kcal: 0, prot: 0, carbs: 0, fat: 0 },
+  const handleManualSubmit = async (entry: {
+    product_name: string;
+    quantity_g: number;
+    calories: number;
+    proteins_g: number;
+    carbs_g: number;
+    fats_g: number;
+  }) => {
+    try {
+      await addFoodLog({ source: "manual", ...entry });
+      setManualOpen(false);
+      toast.success(`${entry.product_name} ajouté.`);
+      reloadLogs();
+    } catch {
+      toast.error("Impossible d'ajouter au journal.");
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    const prev = logs;
+    setLogs((l) => l.filter((x) => x.id !== id));
+    try {
+      await deleteFoodLog(id);
+    } catch {
+      setLogs(prev);
+      toast.error("Suppression impossible.");
+    }
+  };
+
+  const totals = useMemo(
+    () =>
+      logs.reduce(
+        (a, e) => ({
+          kcal: a.kcal + Number(e.calories),
+          prot: a.prot + Number(e.proteins_g),
+          carbs: a.carbs + Number(e.carbs_g),
+          fat: a.fat + Number(e.fats_g),
+        }),
+        { kcal: 0, prot: 0, carbs: 0, fat: 0 },
+      ),
+    [logs],
   );
 
   return (
     <div className="px-4 pt-2 pb-4">
-      <div className="mb-4 grid grid-cols-4 gap-2 text-center">
-        <Tile label="Kcal" value={Math.round(totals.kcal)} />
-        <Tile label="Prot" value={`${Math.round(totals.prot)}g`} />
-        <Tile label="Gluc" value={`${Math.round(totals.carbs)}g`} />
-        <Tile label="Lip" value={`${Math.round(totals.fat)}g`} />
+      <div className="mb-4 rounded-2xl border border-arena-border bg-arena-surface p-4">
+        <div className="mb-3 flex items-baseline justify-between">
+          <span className="text-xs font-black tracking-widest text-arena-muted">AUJOURD'HUI</span>
+          <span className="text-[11px] text-arena-muted">
+            {Math.round(totals.kcal)} / {goals.kcal} kcal
+          </span>
+        </div>
+        <ProgressBar label="Kcal" value={totals.kcal} goal={goals.kcal} unit="" />
+        <div className="mt-2 grid grid-cols-3 gap-2">
+          <ProgressBar label="Prot" value={totals.prot} goal={goals.prot} unit="g" compact />
+          <ProgressBar label="Gluc" value={totals.carbs} goal={goals.carbs} unit="g" compact />
+          <ProgressBar label="Lip" value={totals.fat} goal={goals.fat} unit="g" compact />
+        </div>
       </div>
 
       <div className="mb-3 grid grid-cols-2 gap-3">
@@ -85,10 +193,13 @@ export default function Meals() {
           <ScanLine size={18} /> Scanner
         </button>
         <button
-          onClick={() => document.getElementById("food-search")?.focus()}
+          onClick={() => {
+            setManualDefaultName("");
+            setManualOpen(true);
+          }}
           className="flex h-14 items-center justify-center gap-2 rounded-2xl border border-arena-border bg-arena-surface text-sm font-bold text-foreground active:scale-[0.98]"
         >
-          <Plus size={16} /> Ajouter manuel
+          <Plus size={16} /> Saisie manuelle
         </button>
       </div>
 
@@ -119,7 +230,11 @@ export default function Meals() {
             {results.map((p) => (
               <li key={p.barcode}>
                 <button
-                  onClick={() => { setProduct(p); setSheetOpen(true); }}
+                  onClick={() => {
+                    setProduct(p);
+                    setPendingSource("manual");
+                    setSheetOpen(true);
+                  }}
                   className="flex w-full items-center gap-3 rounded-2xl border border-arena-border bg-arena-surface p-3 text-left active:scale-[0.99]"
                 >
                   {p.image_url ? (
@@ -132,37 +247,62 @@ export default function Meals() {
                     {p.brand && <p className="truncate text-[11px] text-arena-muted">{p.brand}</p>}
                   </div>
                   {p.nutriments.energy_kcal_100g != null && (
-                    <span className="text-xs font-black text-arena">{Math.round(p.nutriments.energy_kcal_100g)} kcal</span>
+                    <span className="text-xs font-black text-arena">
+                      {Math.round(p.nutriments.energy_kcal_100g)} kcal
+                    </span>
                   )}
                 </button>
               </li>
             ))}
           </ul>
+          <button
+            onClick={() => {
+              setManualDefaultName(query);
+              setManualOpen(true);
+            }}
+            className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-arena-border p-3 text-xs font-bold text-arena-muted active:scale-[0.99]"
+          >
+            <PackageX size={14} /> Pas trouvé ? Saisir manuellement
+          </button>
         </div>
       )}
 
       <h3 className="mb-3 text-xs font-black tracking-widest text-arena-muted">JOURNAL DU JOUR</h3>
-      {journal.length === 0 ? (
+      {logs.length === 0 ? (
         <p className="rounded-2xl border border-dashed border-arena-border p-6 text-center text-xs text-arena-muted">
           Scanne un produit ou cherche un aliment pour démarrer.
         </p>
       ) : (
         <ul className="flex flex-col gap-2">
-          {journal.map((e, i) => {
-            const f = e.grams / 100;
-            const kcal = Math.round((e.product.nutriments.energy_kcal_100g ?? 0) * f);
+          {logs.map((e) => {
+            const t = new Date(e.logged_at);
+            const hh = `${t.getHours().toString().padStart(2, "0")}:${t
+              .getMinutes()
+              .toString()
+              .padStart(2, "0")}`;
             return (
-              <li key={i} className="flex items-center gap-3 rounded-2xl border border-arena-border bg-arena-surface p-3">
-                {e.product.image_url ? (
-                  <img src={e.product.image_url} alt="" className="h-10 w-10 rounded-lg bg-black object-contain" />
-                ) : (
-                  <div className="h-10 w-10 rounded-lg bg-black" />
-                )}
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-bold text-foreground">{e.product.name}</p>
-                  <p className="text-[11px] text-arena-muted">{e.grams} g</p>
+              <li
+                key={e.id}
+                className="flex items-center gap-3 rounded-2xl border border-arena-border bg-arena-surface p-3"
+              >
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-black text-[10px] font-black text-arena-muted">
+                  {hh}
                 </div>
-                <span className="text-xs font-black text-arena">{kcal} kcal</span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-bold text-foreground">{e.product_name}</p>
+                  <p className="text-[11px] text-arena-muted">
+                    {Number(e.quantity_g)} g · {Math.round(Number(e.proteins_g))}P /{" "}
+                    {Math.round(Number(e.carbs_g))}G / {Math.round(Number(e.fats_g))}L
+                  </p>
+                </div>
+                <span className="text-xs font-black text-arena">{Math.round(Number(e.calories))} kcal</span>
+                <button
+                  onClick={() => handleDelete(e.id)}
+                  aria-label="Supprimer"
+                  className="rounded-full p-1 text-arena-muted active:scale-90"
+                >
+                  <Trash2 size={14} />
+                </button>
               </li>
             );
           })}
@@ -171,15 +311,47 @@ export default function Meals() {
 
       {showScanner && <BarcodeScanner onDetected={handleBarcode} onClose={() => setShowScanner(false)} />}
       <ProductSheet product={product} open={sheetOpen} onOpenChange={setSheetOpen} onAdd={addToJournal} />
+      <ManualEntrySheet
+        open={manualOpen}
+        onOpenChange={setManualOpen}
+        onSubmit={handleManualSubmit}
+        defaultName={manualDefaultName}
+      />
     </div>
   );
 }
 
-function Tile({ label, value }: { label: string; value: React.ReactNode }) {
+function ProgressBar({
+  label,
+  value,
+  goal,
+  unit,
+  compact,
+}: {
+  label: string;
+  value: number;
+  goal: number;
+  unit: string;
+  compact?: boolean;
+}) {
+  const pct = Math.min(100, goal > 0 ? (value / goal) * 100 : 0);
+  const over = value > goal;
   return (
-    <div className="rounded-2xl border border-arena-border bg-arena-surface p-2">
-      <p className="text-sm font-black text-foreground">{value}</p>
-      <p className="text-[10px] uppercase tracking-widest text-arena-muted">{label}</p>
+    <div className={compact ? "" : "w-full"}>
+      <div className="mb-1 flex items-baseline justify-between gap-1">
+        <span className="text-[10px] font-black uppercase tracking-widest text-arena-muted">{label}</span>
+        <span className={`text-[10px] font-bold ${over ? "text-red-400" : "text-foreground"}`}>
+          {Math.round(value)}
+          {unit}
+          <span className="text-arena-muted"> / {goal}{unit}</span>
+        </span>
+      </div>
+      <div className="h-2 w-full overflow-hidden rounded-full bg-black">
+        <div
+          className={`h-full rounded-full transition-all ${over ? "bg-red-500" : "bg-arena"}`}
+          style={{ width: `${pct}%` }}
+        />
+      </div>
     </div>
   );
 }
