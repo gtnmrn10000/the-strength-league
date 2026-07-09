@@ -32,6 +32,51 @@ export type Database = {
         }
         Relationships: []
       }
+      food_logs: {
+        Row: {
+          barcode: string | null
+          calories: number
+          carbs_g: number
+          created_at: string
+          fats_g: number
+          id: string
+          logged_at: string
+          product_name: string
+          proteins_g: number
+          quantity_g: number
+          source: Database["public"]["Enums"]["food_source"]
+          user_id: string
+        }
+        Insert: {
+          barcode?: string | null
+          calories?: number
+          carbs_g?: number
+          created_at?: string
+          fats_g?: number
+          id?: string
+          logged_at?: string
+          product_name: string
+          proteins_g?: number
+          quantity_g: number
+          source?: Database["public"]["Enums"]["food_source"]
+          user_id: string
+        }
+        Update: {
+          barcode?: string | null
+          calories?: number
+          carbs_g?: number
+          created_at?: string
+          fats_g?: number
+          id?: string
+          logged_at?: string
+          product_name?: string
+          proteins_g?: number
+          quantity_g?: number
+          source?: Database["public"]["Enums"]["food_source"]
+          user_id?: string
+        }
+        Relationships: []
+      }
       post_hypes: {
         Row: {
           created_at: string
@@ -118,10 +163,12 @@ export type Database = {
           goal: Database["public"]["Enums"]["goal_type"] | null
           id: string
           last_pr_at: string | null
+          niveau_activite: Database["public"]["Enums"]["activity_level"] | null
           onboarded: boolean
           poids: number | null
           posts_count: number
           pseudo: string
+          sexe: Database["public"]["Enums"]["sexe_type"] | null
           taille: number | null
           updated_at: string
           user_id: string
@@ -139,10 +186,12 @@ export type Database = {
           goal?: Database["public"]["Enums"]["goal_type"] | null
           id?: string
           last_pr_at?: string | null
+          niveau_activite?: Database["public"]["Enums"]["activity_level"] | null
           onboarded?: boolean
           poids?: number | null
           posts_count?: number
           pseudo: string
+          sexe?: Database["public"]["Enums"]["sexe_type"] | null
           taille?: number | null
           updated_at?: string
           user_id: string
@@ -160,10 +209,12 @@ export type Database = {
           goal?: Database["public"]["Enums"]["goal_type"] | null
           id?: string
           last_pr_at?: string | null
+          niveau_activite?: Database["public"]["Enums"]["activity_level"] | null
           onboarded?: boolean
           poids?: number | null
           posts_count?: number
           pseudo?: string
+          sexe?: Database["public"]["Enums"]["sexe_type"] | null
           taille?: number | null
           updated_at?: string
           user_id?: string
@@ -215,8 +266,16 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
+      activity_level:
+        | "sedentaire"
+        | "leger"
+        | "modere"
+        | "intense"
+        | "tres_intense"
+      food_source: "barcode" | "photo" | "manual"
       goal_type: "masse" | "seche" | "performance"
       post_type: "pr" | "meal" | "workout" | "level_up"
+      sexe_type: "homme" | "femme"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -344,8 +403,17 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      activity_level: [
+        "sedentaire",
+        "leger",
+        "modere",
+        "intense",
+        "tres_intense",
+      ],
+      food_source: ["barcode", "photo", "manual"],
       goal_type: ["masse", "seche", "performance"],
       post_type: ["pr", "meal", "workout", "level_up"],
+      sexe_type: ["homme", "femme"],
     },
   },
 } as const
