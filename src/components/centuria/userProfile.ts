@@ -3,7 +3,6 @@ export interface UserProfile {
   age: string;
   taille: string;
   poids: string;
-  league: string | null;
   goal: string | null;
 }
 
@@ -38,17 +37,4 @@ export function goalEmoji(goal: string | null): string {
     case "performance": return "⚡";
     default: return "🎯";
   }
-}
-
-export function leagueLabel(league: string | null): string {
-  switch (league) {
-    case "naturelle": return "NATURELLE";
-    case "olympien": return "OLYMPIEN";
-    default: return "—";
-  }
-}
-
-export function leagueColor(league: string | null): { text: string; bg: string } {
-  if (league === "naturelle") return { text: "text-arena-green", bg: "bg-arena-green/10" };
-  return { text: "text-arena-purple", bg: "bg-arena-purple/10" };
 }

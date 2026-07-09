@@ -1,10 +1,10 @@
-import { Home, Dumbbell, Utensils, Swords, User } from "lucide-react";
+import { Home, Dumbbell, Utensils, Trophy, User } from "lucide-react";
 
 const tabs = [
   { id: "feed", label: "Feed", icon: Home },
   { id: "training", label: "Training", icon: Dumbbell },
   { id: "meals", label: "Repas", icon: Utensils },
-  { id: "rank", label: "Guerre", icon: Swords },
+  { id: "rank", label: "Classement", icon: Trophy },
   { id: "profile", label: "Profil", icon: User },
 ];
 

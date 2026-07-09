@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Flag } from "lucide-react";
 
 const ranking: [number, string, string, string][] = [
   [1, "Marius", "TITAN", "690 kg"],
@@ -14,7 +13,7 @@ export default function Rankings() {
   return (
     <div className="px-4 pt-2 pb-4">
       <div className="mb-4 flex gap-2">
-        {["Classements", "Guerre", "Duels"].map((x) => (
+        {["Classements", "Duels"].map((x) => (
           <button
             key={x}
             onClick={() => setSub(x)}
@@ -28,7 +27,7 @@ export default function Rankings() {
       {sub === "Classements" && (
         <>
           <div className="mb-3 flex gap-2 overflow-x-auto scrollbar-hide">
-            {["Naturelle", "Olympien", "National", "Total", "-93kg"].map((x) => (
+            {["National", "Total", "-93kg", "-105kg", "+105kg"].map((x) => (
               <span key={x} className="whitespace-nowrap rounded-full bg-secondary px-3 py-1 text-[10px] font-bold text-arena-sub">{x}</span>
             ))}
           </div>
@@ -46,14 +45,6 @@ export default function Rankings() {
           </div>
           <p className="mt-3 text-center text-xs text-arena-sub">Tu es #847 sur 47 392 — Top 1,8%</p>
         </>
-      )}
-
-      {sub === "Guerre" && (
-        <div className="rounded-2xl border border-arena-border bg-arena-surface p-5 text-center">
-          <Flag size={28} className="mx-auto text-arena" />
-          <p className="mt-3 font-black text-foreground">Guerre de Factions</p>
-          <p className="mt-1 text-xs text-arena-sub">Saison 1 en cours — J-47</p>
-        </div>
       )}
 
       {sub === "Duels" && (
