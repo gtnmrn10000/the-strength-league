@@ -12,11 +12,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { paywallProvider, EntitlementStatus } from "@/lib/paywall/provider";
 import type { PlanId } from "@/lib/paywall/plans";
 
-type PaywallReason = "coach" | "photo-ia" | "analyse" | "generic";
+type PaywallReason = "coach" | "photo-ia" | "analyse" | "recipes" | "video" | "generic";
 
 type SubscriptionContextValue = {
   status: EntitlementStatus | null;
   isPremium: boolean;
+  /** Alias sémantique de `isPremium` — préférer `isPaid` pour les gates d'accès payant. */
+  isPaid: boolean;
   loading: boolean;
   purchasing: PlanId | null;
   paywallOpen: boolean;
@@ -102,6 +104,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
     () => ({
       status,
       isPremium: !!status?.isPremium,
+      isPaid: !!status?.isPremium,
       loading,
       purchasing,
       paywallOpen,

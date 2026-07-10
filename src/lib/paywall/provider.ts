@@ -45,28 +45,17 @@ export class MockPaywallProvider implements PaywallProvider {
     }
     return {
       isPremium: !!data,
-      activePlan: data ? "centuria_monthly" : null,
+      activePlan: data ? "centuria_standard" : null,
       expiresAt: null,
       willRenew: !!data,
       provider: "mock",
     };
   }
 
-  async purchase(planId: PlanId): Promise<EntitlementStatus> {
-    const { data: auth } = await supabase.auth.getUser();
-    if (!auth.user) throw new Error("Connecte-toi pour t'abonner.");
-    const { error } = await supabase
-      .from("profiles")
-      .update({ is_premium: true, updated_at: new Date().toISOString() })
-      .eq("user_id", auth.user.id);
-    if (error) throw new Error(error.message);
-    return {
-      isPremium: true,
-      activePlan: planId,
-      expiresAt: null,
-      willRenew: true,
-      provider: "mock",
-    };
+  // Mock uniquement : ne débloque PAS le premium. L'UI affiche un toast
+  // "Bientôt disponible" et attend l'intégration RevenueCat.
+  async purchase(_planId: PlanId): Promise<EntitlementStatus> {
+    return this.getStatus();
   }
 
   async restore(): Promise<EntitlementStatus> {

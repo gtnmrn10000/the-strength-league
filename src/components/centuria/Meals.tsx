@@ -1,4 +1,5 @@
 import { Plus, ScanLine, Search, Loader2, Trash2, PackageX, Sparkles, Lock } from "lucide-react";
+import PremiumBadge from "./paywall/PremiumBadge";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { recognizeFoodPhoto } from "@/lib/foodPhoto.functions";
 import BarcodeScanner from "./food/BarcodeScanner";
@@ -267,11 +268,7 @@ export default function Meals() {
             <Lock size={16} className="text-arena-muted" />
           )}
           Photo IA
-          {!isPremium && (
-            <span className="absolute -top-1 -right-1 rounded-full bg-arena px-1.5 py-0.5 text-[8px] font-black text-arena-on">
-              PRO
-            </span>
-          )}
+          <PremiumBadge unlocked={isPremium} className="absolute -top-1 -right-1" />
         </button>
         <button
           onClick={() => {

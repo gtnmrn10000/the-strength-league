@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Camera, NotebookPen, Target, Sparkles, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import CoachSheet from "./coach/CoachSheet";
+import PremiumBadge from "./paywall/PremiumBadge";
 
 interface VerifiedPR {
   exercise: string;
@@ -57,7 +58,7 @@ export default function Training({ onPR, refreshKey }: { onPR: () => void; refre
         <ActionCard icon={Camera} title="Log un PR" glow onClick={onPR} />
         <ActionCard icon={NotebookPen} title="Log séance" />
         <ActionCard icon={Target} title="Mes objectifs" />
-        <ActionCard icon={Sparkles} title="Coach IA" onClick={() => setCoachOpen(true)} />
+        <ActionCard icon={Sparkles} title="Coach IA" premium onClick={() => setCoachOpen(true)} />
       </div>
       <CoachSheet
         open={coachOpen}
@@ -104,12 +105,13 @@ export default function Training({ onPR, refreshKey }: { onPR: () => void; refre
   );
 }
 
-function ActionCard({ icon: Icon, title, glow, onClick }: { icon: React.ElementType; title: string; glow?: boolean; onClick?: () => void }) {
+function ActionCard({ icon: Icon, title, glow, premium, onClick }: { icon: React.ElementType; title: string; glow?: boolean; premium?: boolean; onClick?: () => void }) {
   return (
     <button
       onClick={onClick}
-      className={`flex flex-col items-center gap-2 rounded-2xl border border-arena-border bg-arena-surface p-4 active:scale-95 transition-transform ${glow ? "shadow-[0_0_20px_var(--arena-glow)]" : ""}`}
+      className={`relative flex flex-col items-center gap-2 rounded-2xl border border-arena-border bg-arena-surface p-4 active:scale-95 transition-transform ${glow ? "shadow-[0_0_20px_var(--arena-glow)]" : ""}`}
     >
+      {premium && <PremiumBadge className="absolute right-1.5 top-1.5" />}
       <Icon size={22} className={glow ? "text-arena" : "text-arena-sub"} />
       <span className="text-xs font-bold text-foreground">{title}</span>
     </button>

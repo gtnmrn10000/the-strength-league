@@ -1,58 +1,56 @@
-/**
- * Catalogue des plans premium Centuria.
- *
- * Les `id` correspondront aux identifiants produit RevenueCat
- * (App Store / Play Store) une fois l'intégration branchée.
- * Les prix affichés ici sont indicatifs ; RevenueCat renverra
- * les prix localisés à la place au runtime.
- */
-export type PlanId = "centuria_monthly" | "centuria_yearly";
+export type PlanId = "centuria_standard" | "centuria_student";
 
 export type Plan = {
   id: PlanId;
   label: string;
-  period: "mois" | "an";
+  period: "mois";
   priceLabel: string;
-  pricePerMonthLabel?: string;
   badge?: string;
-  savings?: string;
+  note?: string;
 };
 
 export const PREMIUM_ENTITLEMENT = "premium";
 
 export const PLANS: Plan[] = [
   {
-    id: "centuria_monthly",
-    label: "Mensuel",
+    id: "centuria_standard",
+    label: "Standard",
     period: "mois",
-    priceLabel: "9,99 €",
+    priceLabel: "25 €",
   },
   {
-    id: "centuria_yearly",
-    label: "Annuel",
-    period: "an",
-    priceLabel: "59,99 €",
-    pricePerMonthLabel: "≈ 5,00 €/mois",
-    badge: "MEILLEURE OFFRE",
-    savings: "-50%",
+    id: "centuria_student",
+    label: "Étudiant",
+    period: "mois",
+    priceLabel: "13 €",
+    badge: "-48%",
+    note: "Justificatif requis",
   },
 ];
 
 export const PREMIUM_FEATURES: { title: string; description: string }[] = [
   {
-    title: "Coach IA illimité",
-    description: "Chat, séances personnalisées, analyse hebdo, suivi de récupération musculaire.",
+    title: "Coach IA complet",
+    description: "Chat, séances perso, suivi de récupération musculaire.",
   },
   {
-    title: "Photo IA nutrition",
-    description: "Scanne une assiette et récupère macros + calories en 3 secondes.",
+    title: "Scan photo nutrition",
+    description: "Prends une assiette en photo, macros remplies en 3s.",
   },
   {
-    title: "Analyse avancée",
-    description: "Détection de plateau, prédiction de PR et rapports hebdomadaires.",
+    title: "Recettes personnalisées",
+    description: "Recettes générées pour tes objectifs et macros restantes.",
   },
   {
-    title: "Support prioritaire",
-    description: "Accès direct à l'équipe Centuria pour tes questions.",
+    title: "Feedback vidéo de forme",
+    description: "Analyse IA de tes exécutions à partir d'une vidéo.",
+  },
+  {
+    title: "Plateau & prédiction PR",
+    description: "Détection de stagnation et projection de ton prochain PR.",
+  },
+  {
+    title: "Rapport hebdomadaire",
+    description: "Bilan complet volume, macros, PRs, chaque semaine.",
   },
 ];
