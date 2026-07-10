@@ -34,11 +34,7 @@ export default function Profile() {
       if (!user || cancelled) return;
 
       const [profileRes, prsRes] = await Promise.all([
-        supabase
-          .from("profiles")
-          .select("xp, current_grade, last_pr_at, poids")
-          .eq("user_id", user.id)
-          .maybeSingle(),
+        supabase.rpc("get_my_profile").maybeSingle(),
         supabase
           .from("prs")
           .select("exercise, weight_kg, reps, created_at")
@@ -48,7 +44,7 @@ export default function Profile() {
       ]);
 
       if (!cancelled) {
-        if (profileRes.data) setDbProfile(profileRes.data as DbProfile);
+        if (profileRes.data) setDbProfile(profileRes.data as unknown as DbProfile);
         if (prsRes.data) {
           setVerifiedPRs(prsRes.data as VerifiedPR[]);
           setPrCount(prsRes.data.length);

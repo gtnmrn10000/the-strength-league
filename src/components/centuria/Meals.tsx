@@ -58,9 +58,7 @@ export default function Meals() {
       const { data: auth } = await supabase.auth.getUser();
       if (!auth.user) return;
       const { data } = await supabase
-        .from("profiles")
-        .select("sexe, age, poids, taille, niveau_activite, is_premium")
-        .eq("user_id", auth.user.id)
+        .rpc("get_my_profile")
         .maybeSingle();
       if (!data) return;
       const { sexe, age, poids, taille, niveau_activite, is_premium } = data as {

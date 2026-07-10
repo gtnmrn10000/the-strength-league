@@ -160,12 +160,11 @@ export default function PRFlow({
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user) return;
       supabase
-        .from("profiles")
-        .select("poids")
-        .eq("user_id", user.id)
+        .rpc("get_my_profile")
         .maybeSingle()
         .then(({ data }) => {
-          if (data?.poids) setUserBW(Number(data.poids));
+          const poids = (data as any)?.poids;
+          if (poids) setUserBW(Number(poids));
         });
     });
   }, [open]);

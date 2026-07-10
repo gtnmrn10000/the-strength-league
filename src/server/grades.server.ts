@@ -22,17 +22,16 @@ export async function updateProfileAfterPR(
   xp: number;
   leveledUp: boolean;
 }> {
-  // 1. Get profile
+  // 1. Get profile (via SECURITY DEFINER RPC to access sensitive `poids`)
   const { data: profile, error: pErr } = await supabase
-    .from("profiles")
-    .select("poids, xp, current_grade")
-    .eq("user_id", userId)
-    .single();
+    .rpc("get_my_profile")
+    .maybeSingle();
   if (pErr || !profile) throw new Error("Profile not found");
+  const p = profile as { poids: number | null; xp: number | null; current_grade: string | null };
 
-  const bodyweight = Number(profile.poids) || 80;
-  const previousGrade = (profile.current_grade || "recruit") as Grade;
-  const previousXp = Number(profile.xp) || 0;
+  const bodyweight = Number(p.poids) || 80;
+  const previousGrade = (p.current_grade || "recruit") as Grade;
+  const previousXp = Number(p.xp) || 0;
 
   // 2. Get best verified PR per exercise
   const { data: prs, error: prErr } = await supabase

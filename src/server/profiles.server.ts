@@ -43,14 +43,13 @@ export async function upsertProfile(
 
 export async function getProfile(
   supabase: SupabaseClient,
-  userId: string
+  _userId: string
 ): Promise<ProfileRow | null> {
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("user_id", userId)
-    .maybeSingle();
+  // Use SECURITY DEFINER RPC so the caller can read their own sensitive fields
+  // (age, poids, taille, sexe, niveau_activite, goal) which are no longer
+  // exposed through the Data API's column-level SELECT grants.
+  const { data, error } = await supabase.rpc("get_my_profile").maybeSingle();
 
   if (error) throw new Error(`Failed to load profile: ${error.message}`);
-  return data as ProfileRow | null;
+  return (data as ProfileRow | null) ?? null;
 }
