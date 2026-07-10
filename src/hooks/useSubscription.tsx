@@ -104,6 +104,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
     () => ({
       status,
       isPremium: !!status?.isPremium,
+      isPaid: !!status?.isPremium,
       loading,
       purchasing,
       paywallOpen,
