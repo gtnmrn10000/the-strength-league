@@ -104,12 +104,13 @@ export default function Training({ onPR, refreshKey }: { onPR: () => void; refre
   );
 }
 
-function ActionCard({ icon: Icon, title, glow, onClick }: { icon: React.ElementType; title: string; glow?: boolean; onClick?: () => void }) {
+function ActionCard({ icon: Icon, title, glow, premium, onClick }: { icon: React.ElementType; title: string; glow?: boolean; premium?: boolean; onClick?: () => void }) {
   return (
     <button
       onClick={onClick}
-      className={`flex flex-col items-center gap-2 rounded-2xl border border-arena-border bg-arena-surface p-4 active:scale-95 transition-transform ${glow ? "shadow-[0_0_20px_var(--arena-glow)]" : ""}`}
+      className={`relative flex flex-col items-center gap-2 rounded-2xl border border-arena-border bg-arena-surface p-4 active:scale-95 transition-transform ${glow ? "shadow-[0_0_20px_var(--arena-glow)]" : ""}`}
     >
+      {premium && <PremiumBadge className="absolute right-1.5 top-1.5" />}
       <Icon size={22} className={glow ? "text-arena" : "text-arena-sub"} />
       <span className="text-xs font-bold text-foreground">{title}</span>
     </button>
