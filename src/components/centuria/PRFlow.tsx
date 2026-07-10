@@ -453,7 +453,7 @@ export default function PRFlow({
 
                 <div className="mt-4 rounded-2xl border border-arena/30 bg-[#1A0F0F] p-4 text-sm">
                   <p className="mb-2 flex items-center gap-2 font-bold text-foreground">
-                    <span>⚠️</span> RÈGLES OBLIGATOIRES
+                    <AlertTriangle size={14} className="text-yellow-500" /> RÈGLES OBLIGATOIRES
                   </p>
                   {[
                     "Plan large (corps entier visible)",
@@ -466,7 +466,7 @@ export default function PRFlow({
                     </p>
                   ))}
                   <p className="mt-2 flex items-start gap-2 text-yellow-500 text-xs">
-                    <span>⚠️</span> Triche détectée = ban définitif
+                    <AlertTriangle size={12} className="mt-0.5 shrink-0" /> Triche détectée = ban définitif
                   </p>
                 </div>
 
