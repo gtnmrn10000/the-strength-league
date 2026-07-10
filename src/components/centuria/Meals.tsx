@@ -37,7 +37,7 @@ export default function Meals() {
   const [results, setResults] = useState<FoodProduct[]>([]);
   const [logs, setLogs] = useState<FoodLog[]>([]);
   const [goals, setGoals] = useState<MacroGoals>(DEFAULT_GOALS);
-  const [isPremium, setIsPremium] = useState(false);
+  const { isPremium, openPaywall } = useSubscription();
   const [photoLoading, setPhotoLoading] = useState(false);
   const photoInputRef = useRef<HTMLInputElement>(null);
   const recognizePhoto = recognizeFoodPhoto;
