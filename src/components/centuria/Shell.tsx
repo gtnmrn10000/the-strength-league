@@ -45,18 +45,21 @@ export default function Shell() {
   if (!onboarded) return <Onboarding onDone={handleOnboardingDone} />;
 
   return (
-    <div className="relative mx-auto flex h-dvh max-w-md flex-col overflow-hidden bg-background">
-      <HeaderLogo />
-      <div className="flex-1 overflow-y-auto scrollbar-hide pb-20">
-        {tab === "feed" && <Feed onCreate={() => setShowPR(true)} />}
-        {tab === "training" && <Training onPR={() => setShowPR(true)} refreshKey={refreshKey} />}
-        {tab === "meals" && <Meals />}
-        {tab === "rank" && <Rankings />}
-        {tab === "profile" && <Profile key={refreshKey} />}
+    <SubscriptionProvider>
+      <div className="relative mx-auto flex h-dvh max-w-md flex-col overflow-hidden bg-background">
+        <HeaderLogo />
+        <div className="flex-1 overflow-y-auto scrollbar-hide pb-20">
+          {tab === "feed" && <Feed onCreate={() => setShowPR(true)} />}
+          {tab === "training" && <Training onPR={() => setShowPR(true)} refreshKey={refreshKey} />}
+          {tab === "meals" && <Meals />}
+          {tab === "rank" && <Rankings />}
+          {tab === "profile" && <Profile key={refreshKey} />}
+        </div>
+        <BottomNav active={tab} setActive={setTab} />
+        <PRFlow open={showPR} onOpenChange={handlePROpenChange} />
+        <Paywall />
       </div>
-      <BottomNav active={tab} setActive={setTab} />
-      <PRFlow open={showPR} onOpenChange={handlePROpenChange} />
-    </div>
+    </SubscriptionProvider>
   );
 }
 
