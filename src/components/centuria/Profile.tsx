@@ -91,11 +91,11 @@ export default function Profile() {
       <div className="rounded-2xl border border-arena-border bg-arena-surface p-4">
         <div className="flex items-center justify-between">
           <span className="flex items-center gap-2 text-sm font-bold text-foreground">
-            {GRADE_EMOJIS[grade]} {GRADE_LABELS[grade]}
+            <GradeIcon grade={grade} size={16} className="text-arena-gold" /> {GRADE_LABELS[grade]}
           </span>
           {!isMaxGrade && (
-            <span className="text-xs text-arena-sub">
-              → {GRADE_EMOJIS[nextGrade]} {GRADE_LABELS[nextGrade]}
+            <span className="flex items-center gap-1 text-xs text-arena-sub">
+              <ArrowRight size={12} /> <GradeIcon grade={nextGrade} size={12} className="text-arena-gold" /> {GRADE_LABELS[nextGrade]}
             </span>
           )}
         </div>
