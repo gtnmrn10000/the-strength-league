@@ -1,4 +1,4 @@
-import { Check, Loader2, Sparkles, X } from "lucide-react";
+import { Check, Sparkles, X } from "lucide-react";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { PLANS, PREMIUM_FEATURES, type PlanId } from "@/lib/paywall/plans";
 import { useSubscription } from "@/hooks/useSubscription";
@@ -8,15 +8,23 @@ import { toast } from "sonner";
 const REASON_COPY: Record<string, { title: string; subtitle: string }> = {
   coach: {
     title: "Débloque le Coach IA",
-    subtitle: "Chat illimité, séances perso et suivi de récupération.",
+    subtitle: "Chat illimité, séances perso, récupération musculaire.",
   },
   "photo-ia": {
     title: "Scan photo IA",
-    subtitle: "Prends une photo de ton assiette, on remplit les macros.",
+    subtitle: "Prends ton assiette en photo, on remplit les macros.",
   },
   analyse: {
     title: "Analyse avancée",
-    subtitle: "Détection de plateau et prédiction de PR.",
+    subtitle: "Détection de plateau, prédiction de PR, rapport hebdo.",
+  },
+  recipes: {
+    title: "Recettes personnalisées",
+    subtitle: "Recettes générées pour tes objectifs et macros restantes.",
+  },
+  video: {
+    title: "Feedback vidéo",
+    subtitle: "Analyse IA de ton exécution à partir d'une vidéo.",
   },
   generic: {
     title: "Passe à Centuria Premium",
@@ -25,27 +33,16 @@ const REASON_COPY: Record<string, { title: string; subtitle: string }> = {
 };
 
 export default function Paywall() {
-  const { paywallOpen, closePaywall, paywallReason, purchase, purchasing, restore, isPremium } = useSubscription();
-  const [selected, setSelected] = useState<PlanId>("centuria_yearly");
+  const { paywallOpen, closePaywall, paywallReason } = useSubscription();
+  const [selected, setSelected] = useState<PlanId>("centuria_standard");
   const copy = REASON_COPY[paywallReason] ?? REASON_COPY.generic;
 
-  const handlePurchase = async () => {
-    try {
-      await purchase(selected);
-      toast.success("Bienvenue dans Centuria Premium 🔥");
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : "Achat impossible.";
-      toast.error(msg);
-    }
+  const handleSubscribe = () => {
+    toast.info("Bientôt disponible — intégration RevenueCat en cours.");
   };
 
-  const handleRestore = async () => {
-    try {
-      await restore();
-      toast.success(isPremium ? "Abonnement restauré." : "Aucun abonnement actif.");
-    } catch {
-      toast.error("Restauration impossible.");
-    }
+  const handleRestore = () => {
+    toast.info("Bientôt disponible — intégration RevenueCat en cours.");
   };
 
   return (
@@ -93,9 +90,7 @@ export default function Paywall() {
                   key={p.id}
                   onClick={() => setSelected(p.id)}
                   className={`flex w-full items-center justify-between rounded-2xl border p-4 text-left transition-all ${
-                    active
-                      ? "border-arena bg-arena/10"
-                      : "border-arena-border bg-arena-surface"
+                    active ? "border-arena bg-arena/10" : "border-arena-border bg-arena-surface"
                   }`}
                 >
                   <div>
@@ -107,16 +102,13 @@ export default function Paywall() {
                         </span>
                       )}
                     </div>
-                    {p.pricePerMonthLabel && (
-                      <div className="mt-0.5 text-[11px] text-arena-muted">{p.pricePerMonthLabel}</div>
+                    {p.note && (
+                      <div className="mt-0.5 text-[11px] text-arena-muted">{p.note}</div>
                     )}
                   </div>
                   <div className="text-right">
                     <div className="text-sm font-black text-foreground">{p.priceLabel}</div>
                     <div className="text-[10px] text-arena-muted">/ {p.period}</div>
-                    {p.savings && (
-                      <div className="mt-0.5 text-[10px] font-black text-arena">{p.savings}</div>
-                    )}
                   </div>
                 </button>
               );
@@ -126,12 +118,10 @@ export default function Paywall() {
 
         <div className="border-t border-arena-border bg-background px-6 py-4">
           <button
-            onClick={handlePurchase}
-            disabled={purchasing !== null}
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-arena text-sm font-black tracking-widest text-arena-on disabled:opacity-60"
+            onClick={handleSubscribe}
+            className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-arena text-sm font-black tracking-widest text-arena-on active:scale-[0.98]"
           >
-            {purchasing ? <Loader2 size={16} className="animate-spin" /> : null}
-            {isPremium ? "GÉRER MON ABONNEMENT" : "S'ABONNER"}
+            S'ABONNER
           </button>
           <div className="mt-2 flex justify-center gap-4 text-[10px] text-arena-muted">
             <button onClick={handleRestore}>Restaurer un achat</button>
