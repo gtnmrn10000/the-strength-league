@@ -281,8 +281,8 @@ function CombatCard({
       </div>
 
       <div className="mt-3 flex flex-wrap gap-2">
-        <span className="rounded-full bg-arena/10 px-2 py-0.5 text-[10px] font-bold text-arena">
-          {GRADE_EMOJIS[grade]} {GRADE_LABELS[grade].toUpperCase()}
+        <span className="inline-flex items-center gap-1 rounded-full bg-arena/10 px-2 py-0.5 text-[10px] font-bold text-arena">
+          <GradeIcon grade={grade} size={10} /> {GRADE_LABELS[grade].toUpperCase()}
         </span>
       </div>
 
