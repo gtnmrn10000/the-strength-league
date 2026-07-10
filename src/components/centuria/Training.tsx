@@ -3,6 +3,8 @@ import { Camera, NotebookPen, Target, Sparkles, ChevronRight, Dumbbell } from "l
 import { supabase } from "@/integrations/supabase/client";
 import CoachSheet from "./coach/CoachSheet";
 import PremiumBadge from "./paywall/PremiumBadge";
+import WorkoutLogger from "./WorkoutLogger";
+import GoalEditor from "./GoalEditor";
 
 interface VerifiedPR {
   exercise: string;
