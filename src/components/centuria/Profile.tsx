@@ -168,7 +168,7 @@ export default function Profile() {
                 </div>
                 <div className="mt-1 flex justify-between text-[10px] text-arena-sub">
                   <span>{currentWeight > 0 ? `${currentWeight}kg (${ratio.toFixed(2)}× BW)` : "Aucun PR"}</span>
-                  <span>{isMax ? "🏆" : `${nextWeightNeeded}kg requis`}</span>
+                  <span className="flex items-center gap-1">{isMax ? <Trophy size={10} className="text-arena-gold" /> : `${nextWeightNeeded}kg requis`}</span>
                 </div>
               </div>
             );
