@@ -1,4 +1,5 @@
 import { Plus, ScanLine, Search, Loader2, Trash2, PackageX, Sparkles, Lock } from "lucide-react";
+import PremiumBadge from "./paywall/PremiumBadge";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { recognizeFoodPhoto } from "@/lib/foodPhoto.functions";
 import BarcodeScanner from "./food/BarcodeScanner";
