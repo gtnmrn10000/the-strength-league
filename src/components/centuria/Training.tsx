@@ -60,8 +60,8 @@ export default function Training({ onPR, refreshKey }: { onPR: () => void; refre
     <div className="px-4 pt-2 pb-4">
       <div className="mb-4 grid grid-cols-2 gap-3">
         <ActionCard icon={Camera} title="Log un PR" glow onClick={onPR} />
-        <ActionCard icon={NotebookPen} title="Log séance" />
-        <ActionCard icon={Target} title="Mes objectifs" />
+        <ActionCard icon={NotebookPen} title="Log séance" onClick={() => setWorkoutOpen(true)} />
+        <ActionCard icon={Target} title="Mes objectifs" onClick={() => setGoalOpen(true)} />
         <ActionCard icon={Sparkles} title="Coach IA" premium onClick={() => setCoachOpen(true)} />
       </div>
       <CoachSheet
@@ -69,6 +69,12 @@ export default function Training({ onPR, refreshKey }: { onPR: () => void; refre
         onOpenChange={setCoachOpen}
         onSessionStarted={() => setLocalTick((k) => k + 1)}
       />
+      <WorkoutLogger
+        open={workoutOpen}
+        onOpenChange={setWorkoutOpen}
+        onCompleted={() => setLocalTick((k) => k + 1)}
+      />
+      <GoalEditor open={goalOpen} onOpenChange={setGoalOpen} onSaved={() => setLocalTick((k) => k + 1)} />
 
       <SectionTitle>TES PR ACTUELS</SectionTitle>
       {hasPRs ? (
