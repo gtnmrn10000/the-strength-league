@@ -22,12 +22,10 @@ export async function updateProfileAfterPR(
   xp: number;
   leveledUp: boolean;
 }> {
-  // 1. Get profile
+  // 1. Get profile (via SECURITY DEFINER RPC to access sensitive `poids`)
   const { data: profile, error: pErr } = await supabase
-    .from("profiles")
-    .select("poids, xp, current_grade")
-    .eq("user_id", userId)
-    .single();
+    .rpc("get_my_profile")
+    .maybeSingle();
   if (pErr || !profile) throw new Error("Profile not found");
 
   const bodyweight = Number(profile.poids) || 80;
