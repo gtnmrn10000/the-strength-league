@@ -28,6 +28,7 @@ export default function Profile() {
   const [dbProfile, setDbProfile] = useState<DbProfile | null>(null);
   const [verifiedPRs, setVerifiedPRs] = useState<VerifiedPR[]>([]);
   const [prCount, setPrCount] = useState(0);
+  const [galleryOpen, setGalleryOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
