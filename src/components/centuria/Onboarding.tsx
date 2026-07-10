@@ -373,7 +373,7 @@ function GoalStep({ selected, onSelect }: { selected: string | null; onSelect: (
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <span className="text-xl">{g.emoji}</span>
+              <g.icon size={22} className="text-arena" />
               <div>
                 <p className="font-black text-foreground">{g.label}</p>
                 <p className="mt-0.5 text-xs text-arena-sub">{g.desc}</p>
