@@ -59,12 +59,9 @@ function tierFor(intensity: number | undefined): 0 | 1 | 2 | 3 {
 export type MuscleIntensity = Partial<Record<Region, number>>;
 
 // Palette or → rouge sang, indexée par frequency-1
-const HIGHLIGHT_COLORS = [
-  "#8a6a1f", // tier 1 — or sombre
-  "#d4af37", // tier 2 — or franc
-  "#b91c1c", // tier 3 — rouge sang
-];
-const BODY_COLOR = "#1a1a1d";
+// Dégradé or : or sombre → or franc → or clair (F0D875)
+const HIGHLIGHT_COLORS = ["#8a6a1f", "#D4AF37", "#F0D875"];
+const BODY_COLOR = "#1a1a1a";
 
 function buildData(
   intensities: MuscleIntensity | undefined,
