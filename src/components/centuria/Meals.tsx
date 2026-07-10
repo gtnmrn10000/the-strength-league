@@ -251,7 +251,7 @@ export default function Meals() {
         <button
           onClick={() => {
             if (!isPremium) {
-              toast.error("Photo réservée aux abonnés Premium.");
+              openPaywall("photo-ia");
               return;
             }
             photoInputRef.current?.click();
