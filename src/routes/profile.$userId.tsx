@@ -13,7 +13,8 @@ import {
 import UserAvatar from "@/components/centuria/social/UserAvatar";
 import FollowButton from "@/components/centuria/social/FollowButton";
 import UserListSheet from "@/components/centuria/social/UserListSheet";
-import { GRADE_LABELS, GRADE_EMOJIS, type Grade } from "@/lib/grades";
+import { GRADE_LABELS, type Grade } from "@/lib/grades";
+import { GradeIcon } from "@/lib/gradeIcons";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
 export const Route = createFileRoute("/profile/$userId")({
