@@ -133,7 +133,7 @@ export default function WorkoutLogger({
       const { error } = await supabase.from("workout_sessions").insert([{
         user_id: user.id,
         name: template.name,
-        exercises: template.exercises as unknown as Record<string, unknown>,
+        exercises: template.exercises as unknown as import("@/integrations/supabase/types").Json,
         muscle_groups: template.muscle_groups,
         duration_min: durationMin,
         completed_at: new Date().toISOString(),
