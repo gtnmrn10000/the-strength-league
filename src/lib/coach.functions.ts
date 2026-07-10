@@ -133,6 +133,48 @@ function sanitizeWorkout(parsed: any, fallbackFocus: string, fallbackDuration: n
   };
 }
 
+function sanitizeRecipe(parsed: any): GeneratedRecipe {
+  return {
+    name: String(parsed?.name ?? "Recette Coach").slice(0, 80),
+    prep_min: Math.max(1, Math.min(240, Number(parsed?.prep_min) || 15)),
+    kcal: Math.max(0, Math.min(4000, Math.round(Number(parsed?.kcal) || 0))),
+    prot_g: Math.max(0, Math.min(400, Math.round(Number(parsed?.prot_g) || 0))),
+    carbs_g: Math.max(0, Math.min(600, Math.round(Number(parsed?.carbs_g) || 0))),
+    fats_g: Math.max(0, Math.min(300, Math.round(Number(parsed?.fats_g) || 0))),
+    ingredients: Array.isArray(parsed?.ingredients)
+      ? parsed.ingredients.slice(0, 20).map((i: any) => ({
+          name: String(i?.name ?? "").slice(0, 60),
+          qty: String(i?.qty ?? "").slice(0, 40),
+        })).filter((i: any) => i.name)
+      : [],
+    steps: Array.isArray(parsed?.steps)
+      ? parsed.steps.slice(0, 12).map((s: any) => String(s).slice(0, 300)).filter(Boolean)
+      : [],
+  };
+}
+
+async function loadTodayNutrition(supabase: any, userId: string) {
+  const start = new Date();
+  start.setHours(0, 0, 0, 0);
+  const { data } = await supabase
+    .from("food_logs")
+    .select("product_name, calories, proteins_g, carbs_g, fats_g")
+    .eq("user_id", userId)
+    .gte("logged_at", start.toISOString())
+    .order("logged_at", { ascending: false });
+  const logs = (data ?? []) as Array<{ product_name: string; calories: number; proteins_g: number; carbs_g: number; fats_g: number }>;
+  const totals = logs.reduce(
+    (acc, l) => ({
+      kcal: acc.kcal + (l.calories ?? 0),
+      prot: acc.prot + (l.proteins_g ?? 0),
+      carbs: acc.carbs + (l.carbs_g ?? 0),
+      fats: acc.fats + (l.fats_g ?? 0),
+    }),
+    { kcal: 0, prot: 0, carbs: 0, fats: 0 },
+  );
+  return { logs, totals };
+}
+
 // ---------- System prompt (bloc stable, cache-friendly) ----------
 function buildStableSystemPrompt(profile: ProfileCtx): string {
   const stats = [
