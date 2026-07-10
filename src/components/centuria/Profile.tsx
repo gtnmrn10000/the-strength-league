@@ -146,10 +146,16 @@ export default function Profile() {
               <div key={ex} className="rounded-xl border border-arena-border bg-secondary p-3">
                 <div className="flex items-center justify-between text-xs">
                   <span className="font-bold text-foreground">{exLabels[ex]}</span>
-                  <span className="text-arena-sub">
-                    {isMax
-                      ? `${GRADE_EMOJIS[nextGradeForLift]} MAX`
-                      : `→ ${GRADE_EMOJIS[nextGradeForLift]} ${GRADE_LABELS[nextGradeForLift]}`}
+                  <span className="flex items-center gap-1 text-arena-sub">
+                    {isMax ? (
+                      <>
+                        <GradeIcon grade={nextGradeForLift} size={12} className="text-arena-gold" /> MAX
+                      </>
+                    ) : (
+                      <>
+                        <ArrowRight size={10} /> <GradeIcon grade={nextGradeForLift} size={12} className="text-arena-gold" /> {GRADE_LABELS[nextGradeForLift]}
+                      </>
+                    )}
                   </span>
                 </div>
                 <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-background">
