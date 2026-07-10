@@ -36,19 +36,24 @@ export default function CoachChat({ onSessionStarted }: { onSessionStarted?: () 
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
 
-  const send = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const text = input.trim();
+  const runMessage = async (text: string) => {
     if (!text || loading) return;
     const optimistic: ChatMsg = { role: "user", content: text, at: new Date().toISOString() };
     setMessages((m) => [...m, optimistic]);
     setInput("");
     setLoading(true);
     try {
-      const { reply, workout, warnings } = await coachChat({ data: { message: text } });
+      const { reply, workout, recipe, warnings } = await coachChat({ data: { message: text } });
       setMessages((m) => [
         ...m,
-        { role: "assistant", content: reply, workout: workout ?? null, warnings: warnings ?? [], at: new Date().toISOString() },
+        {
+          role: "assistant",
+          content: reply,
+          workout: workout ?? null,
+          recipe: recipe ?? null,
+          warnings: warnings ?? [],
+          at: new Date().toISOString(),
+        },
       ]);
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
@@ -59,6 +64,16 @@ export default function CoachChat({ onSessionStarted }: { onSessionStarted?: () 
     } finally {
       setLoading(false);
     }
+  };
+
+  const send = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await runMessage(input.trim());
+  };
+
+  const quickAction = (label: string, prompt: string) => () => {
+    if (loading) return;
+    runMessage(prompt);
   };
 
   const clear = async () => {
