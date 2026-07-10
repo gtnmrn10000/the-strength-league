@@ -63,7 +63,9 @@ export function GradeIcon({
       style={{
         width: size,
         height: size,
-        borderRadius: "50%",
+        minWidth: size,
+        minHeight: size,
+        borderRadius: "9999px",
         border: `${borderWidth}px solid var(--arena-gold, #D4AF37)`,
         boxShadow: glow,
         display: "inline-block",
@@ -72,18 +74,20 @@ export function GradeIcon({
         aspectRatio: "1 / 1",
         background: "#0a0a0a",
         verticalAlign: "middle",
+        boxSizing: "border-box",
       }}
     >
       <img
         src={GRADE_IMAGE[grade]}
         alt={grade}
+        draggable={false}
         style={{
           width: "100%",
           height: "100%",
           objectFit: "cover",
           objectPosition: "center",
           display: "block",
-          transform: "scale(1.02)",
+          borderRadius: "9999px",
         }}
       />
     </span>
