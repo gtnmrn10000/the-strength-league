@@ -4,7 +4,8 @@ import { ChevronLeft, Sparkles } from "lucide-react";
 import { fetchSuggestions, type PublicProfile } from "@/lib/social";
 import UserAvatar from "@/components/centuria/social/UserAvatar";
 import FollowButton from "@/components/centuria/social/FollowButton";
-import { GRADE_LABELS, GRADE_EMOJIS, type Grade } from "@/lib/grades";
+import { GRADE_LABELS, type Grade } from "@/lib/grades";
+import { GradeIcon } from "@/lib/gradeIcons";
 
 export const Route = createFileRoute("/discover")({
   component: DiscoverPage,
