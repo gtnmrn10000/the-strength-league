@@ -208,6 +208,7 @@ export default function CoachChat({ onSessionStarted }: { onSessionStarted?: () 
 
       <form onSubmit={send} className="flex items-center gap-2 border-t border-arena-border bg-background px-3 py-2">
         {messages.length > 0 && (
+          <button
             type="button"
             onClick={clear}
             aria-label="Effacer"
