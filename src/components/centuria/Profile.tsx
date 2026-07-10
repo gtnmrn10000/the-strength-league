@@ -61,7 +61,7 @@ export default function Profile() {
   const xp = dbProfile?.xp ?? 0;
   const nextGradeIdx = Math.min(GRADES.indexOf(grade) + 1, GRADES.length - 1);
   const nextGrade = GRADES[nextGradeIdx];
-  const isMaxGrade = grade === "legende";
+  const isMaxGrade = grade === "divin";
 
   // XP thresholds per grade (rough: 500 XP per PR, ~3 PRs per grade)
   const xpPerGrade = 1500;
