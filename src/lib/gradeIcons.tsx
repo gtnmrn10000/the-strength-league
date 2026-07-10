@@ -58,23 +58,35 @@ export function GradeIcon({
       ? `0 0 ${Math.round(size * 0.2)}px rgba(212,175,55,0.35)`
       : "none";
   return (
-    <img
-      src={GRADE_IMAGE[grade]}
-      alt={grade}
-      width={size}
-      height={size}
+    <span
       className={className}
       style={{
         width: size,
         height: size,
         borderRadius: "50%",
-        objectFit: "cover",
         border: `${borderWidth}px solid var(--arena-gold, #D4AF37)`,
         boxShadow: glow,
         display: "inline-block",
+        overflow: "hidden",
         flexShrink: 0,
+        aspectRatio: "1 / 1",
+        background: "#0a0a0a",
+        verticalAlign: "middle",
       }}
-    />
+    >
+      <img
+        src={GRADE_IMAGE[grade]}
+        alt={grade}
+        style={{
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+          objectPosition: "center",
+          display: "block",
+          transform: "scale(1.02)",
+        }}
+      />
+    </span>
   );
 }
 
