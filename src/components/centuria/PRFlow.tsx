@@ -675,15 +675,18 @@ export default function PRFlow({
                       transition={{ repeat: Infinity, duration: 2 }}
                       className="flex h-20 w-20 items-center justify-center rounded-2xl bg-arena-gold/10"
                     >
-                      <span className="text-5xl">✅</span>
+                      <CheckCircle2 size={56} className="text-arena-green" strokeWidth={2.2} />
                     </motion.div>
 
                     <h2 className="font-[Anton] text-3xl uppercase tracking-wider text-foreground">
                       PR VÉRIFIÉ
                     </h2>
 
-                    <p className="text-sm text-arena-sub">
-                      {EXERCISES.find((e) => e.id === exercise)?.emoji}{" "}
+                    <p className="inline-flex items-center gap-2 text-sm text-arena-sub">
+                      {(() => {
+                        const ex = EXERCISES.find((e) => e.id === exercise);
+                        return ex ? <ex.icon size={14} className="text-arena" /> : null;
+                      })()}
                       {EXERCISES.find((e) => e.id === exercise)?.label} — {weight} kg × {reps} rep
                       {reps > 1 ? "s" : ""}
                     </p>
