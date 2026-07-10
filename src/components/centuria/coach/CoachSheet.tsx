@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { MessageCircle, Activity, Lock } from "lucide-react";
+import { MessageCircle, Activity, BarChart3, Lock } from "lucide-react";
 import CoachChat from "./CoachChat";
 import CoachRecovery from "./CoachRecovery";
+import CoachAnalyse from "./CoachAnalyse";
 import { isCurrentUserPremium } from "@/lib/subscription";
 
-type Tab = "chat" | "recovery";
+type Tab = "chat" | "recovery" | "analyse";
 
 export default function CoachSheet({
   open,
