@@ -745,9 +745,9 @@ export default function PRFlow({
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.8 }}
-                    className="relative z-10 text-sm text-arena-sub"
+                    className="relative z-10 inline-flex items-center gap-1 text-sm text-arena-sub"
                   >
-                    {GRADE_EMOJIS[verifyResult.newGrade]} Grade :{" "}
+                    <GradeIcon grade={verifyResult.newGrade} size={14} /> Grade :{" "}
                     {GRADE_LABELS[verifyResult.newGrade]}
                   </motion.p>
                 )}
