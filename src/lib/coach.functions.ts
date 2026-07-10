@@ -264,9 +264,10 @@ export const coachChat = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => chatSchema.parse(d))
   .handler(async ({ data, context }): Promise<AssistantContent> => {
     const profile = await ensurePremium(context.supabase, context.userId);
-    const [{ recovery, recent5 }, conv] = await Promise.all([
+    const [{ recovery, recent5 }, conv, nutrition] = await Promise.all([
       loadRecoverySnapshot(context.supabase, context.userId),
       loadOrInitConversation(context.supabase, context.userId),
+      loadTodayNutrition(context.supabase, context.userId),
     ]);
 
     // Contexte volatile injecté juste avant le message utilisateur
@@ -285,15 +286,40 @@ export const coachChat = createServerFn({ method: "POST" })
             .join(" | ")}.`
         : "Aucune séance loggée récemment.";
 
-    const stableSystem = buildStableSystemPrompt(profile);
-    const volatileContext = `Récupération actuelle: ${recoveryLine}. ${undersLine} ${sessionsLine}`;
+    // Objectifs macros (Mifflin-St Jeor split 30/40/30) — reproduit ici côté serveur pour éviter un import client.
+    let goalsLine = "Objectifs macros: non calculables (profil incomplet).";
+    let remainingLine = "";
+    if (profile.age && profile.poids && profile.taille && profile.sexe && profile.niveau_activite) {
+      const activityFactor: Record<string, number> = {
+        sedentaire: 1.2, leger: 1.375, modere: 1.55, intense: 1.725, tres_intense: 1.9,
+      };
+      const base = 10 * profile.poids + 6.25 * profile.taille - 5 * profile.age;
+      const bmr = profile.sexe === "homme" ? base + 5 : base - 161;
+      const kcalGoal = Math.round(bmr * (activityFactor[profile.niveau_activite] ?? 1.55));
+      const protGoal = Math.round((kcalGoal * 0.3) / 4);
+      const carbsGoal = Math.round((kcalGoal * 0.4) / 4);
+      const fatGoal = Math.round((kcalGoal * 0.3) / 9);
+      goalsLine = `Objectifs jour: ${kcalGoal}kcal / ${protGoal}g prot / ${carbsGoal}g gluc / ${fatGoal}g lip.`;
+      const remKcal = Math.max(0, kcalGoal - Math.round(nutrition.totals.kcal));
+      const remProt = Math.max(0, protGoal - Math.round(nutrition.totals.prot));
+      const remCarbs = Math.max(0, carbsGoal - Math.round(nutrition.totals.carbs));
+      const remFat = Math.max(0, fatGoal - Math.round(nutrition.totals.fats));
+      remainingLine = `Restant à couvrir aujourd'hui: ${remKcal}kcal / ${remProt}g prot / ${remCarbs}g gluc / ${remFat}g lip.`;
+    }
+    const consumedLine = `Consommé aujourd'hui: ${Math.round(nutrition.totals.kcal)}kcal / ${Math.round(nutrition.totals.prot)}g prot / ${Math.round(nutrition.totals.carbs)}g gluc / ${Math.round(nutrition.totals.fats)}g lip (${nutrition.logs.length} entrée${nutrition.logs.length > 1 ? "s" : ""}).`;
 
-    // On ne renvoie que le contenu texte des tours précédents (pas le blob workout complet),
-    // ça garde le contexte léger tout en préservant le fil de discussion.
-    const historyForModel = conv.messages.slice(-20).map((m) => ({
-      role: m.role,
-      content: m.role === "assistant" && m.workout ? `${m.content}\n[séance générée: ${m.workout.name}]` : m.content,
-    }));
+    const stableSystem = buildStableSystemPrompt(profile);
+    const volatileContext = `Récupération actuelle: ${recoveryLine}. ${undersLine} ${sessionsLine} ${goalsLine} ${consumedLine} ${remainingLine}`.trim();
+
+    // On ne renvoie que le contenu texte des tours précédents pour garder le contexte léger.
+    const historyForModel = conv.messages.slice(-20).map((m) => {
+      let content = m.content;
+      if (m.role === "assistant") {
+        if (m.workout) content += `\n[séance générée: ${m.workout.name}]`;
+        if (m.recipe) content += `\n[recette générée: ${m.recipe.name}]`;
+      }
+      return { role: m.role, content };
+    });
 
     const res = await callLovableAI({
       model: "google/gemini-2.5-flash",
@@ -313,27 +339,29 @@ export const coachChat = createServerFn({ method: "POST" })
     try {
       parsed = JSON.parse(content);
     } catch {
-      parsed = { type: "text", reply: content?.toString().trim() || "…", workout: null, warnings: [] };
+      parsed = { type: "text", reply: content?.toString().trim() || "…", workout: null, recipe: null, warnings: [] };
     }
 
-    const type = parsed?.type === "workout" ? "workout" : "text";
-    const reply: string = (parsed?.reply ?? "").toString().trim() || (type === "workout" ? "Voici ta séance." : "…");
+    const type = parsed?.type === "workout" ? "workout" : parsed?.type === "recipe" ? "recipe" : "text";
+    const reply: string =
+      (parsed?.reply ?? "").toString().trim() ||
+      (type === "workout" ? "Voici ta séance." : type === "recipe" ? "Voici une recette adaptée." : "…");
     const warnings: string[] = Array.isArray(parsed?.warnings)
       ? parsed.warnings.slice(0, 10).map((w: any) => String(w).slice(0, 200))
       : [];
     const workout = type === "workout" && parsed?.workout ? sanitizeWorkout(parsed.workout, "séance", 60) : null;
+    const recipe = type === "recipe" && parsed?.recipe ? sanitizeRecipe(parsed.recipe) : null;
 
     const nowIso = new Date().toISOString();
     const newMessages: ChatMsg[] = [
       ...conv.messages,
       { role: "user", content: data.message, at: nowIso },
-      { role: "assistant", content: reply, workout, warnings, at: new Date().toISOString() },
+      { role: "assistant", content: reply, workout, recipe, warnings, at: new Date().toISOString() },
     ];
-    // Clamp history to last 200 turns
     const trimmed = newMessages.slice(-200);
     await saveConversation(context.supabase, context.userId, trimmed);
 
-    return { reply, workout, warnings };
+    return { reply, workout, recipe, warnings };
   });
 
 // ---------- Historique ----------
