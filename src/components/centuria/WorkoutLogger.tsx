@@ -130,14 +130,14 @@ export default function WorkoutLogger({
       if (!user) throw new Error("Non authentifié");
       const durationMin = startedAt ? Math.max(1, Math.round((Date.now() - startedAt) / 60000)) : null;
 
-      const { error } = await supabase.from("workout_sessions").insert({
+      const { error } = await supabase.from("workout_sessions").insert([{
         user_id: user.id,
         name: template.name,
         exercises: template.exercises as unknown as Record<string, unknown>,
         muscle_groups: template.muscle_groups,
         duration_min: durationMin,
         completed_at: new Date().toISOString(),
-      });
+      }]);
       if (error) throw error;
 
       toast.success("Séance enregistrée 💪");
