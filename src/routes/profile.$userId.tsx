@@ -114,8 +114,8 @@ function ProfilePage() {
 
         <div className="mt-3">
           <h1 className="text-xl font-black">{profile.pseudo}</h1>
-          <p className="mt-1 text-xs font-black tracking-widest text-arena-gold">
-            {GRADE_EMOJIS[grade]} {GRADE_LABELS[grade]?.toUpperCase()} · {profile.xp} XP
+          <p className="mt-1 inline-flex items-center gap-1 text-xs font-black tracking-widest text-arena-gold">
+            <GradeIcon grade={grade} size={12} /> {GRADE_LABELS[grade]?.toUpperCase()} · {profile.xp} XP
           </p>
           {profile.bio && (
             <p className="mt-2 text-sm text-foreground/90 whitespace-pre-line">{profile.bio}</p>
