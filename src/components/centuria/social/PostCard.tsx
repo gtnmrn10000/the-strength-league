@@ -3,7 +3,8 @@ import { Link } from "@tanstack/react-router";
 import { Flame, ShieldCheck, Zap, Dumbbell, Utensils } from "lucide-react";
 import UserAvatar from "./UserAvatar";
 import { toggleHype, type FeedPost } from "@/lib/social";
-import { GRADE_LABELS, GRADE_EMOJIS, type Grade } from "@/lib/grades";
+import { GRADE_LABELS, type Grade } from "@/lib/grades";
+import { GradeIcon } from "@/lib/gradeIcons";
 
 function timeAgo(iso: string): string {
   const diff = (Date.now() - new Date(iso).getTime()) / 1000;
