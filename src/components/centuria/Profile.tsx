@@ -316,7 +316,7 @@ function CombatCard({
       ) : (
         <div className="rounded-xl bg-secondary p-4 text-center">
           <p className="text-xs text-arena-muted">Aucun PR enregistré pour le moment.</p>
-          <p className="mt-1 text-[10px] text-arena-sub">Log ton premier PR pour commencer 💪</p>
+          <p className="mt-1 flex items-center justify-center gap-1 text-[10px] text-arena-sub">Log ton premier PR pour commencer <Dumbbell size={10} className="text-arena" /></p>
         </div>
       )}
 
