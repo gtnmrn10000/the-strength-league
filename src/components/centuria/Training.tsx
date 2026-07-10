@@ -3,6 +3,8 @@ import { Camera, NotebookPen, Target, Sparkles, ChevronRight, Dumbbell } from "l
 import { supabase } from "@/integrations/supabase/client";
 import CoachSheet from "./coach/CoachSheet";
 import PremiumBadge from "./paywall/PremiumBadge";
+import WorkoutLogger from "./WorkoutLogger";
+import GoalEditor from "./GoalEditor";
 
 interface VerifiedPR {
   exercise: string;
@@ -15,6 +17,8 @@ export default function Training({ onPR, refreshKey }: { onPR: () => void; refre
   const [bestPRs, setBestPRs] = useState<Record<string, VerifiedPR>>({});
   const [bodyweight, setBodyweight] = useState<number | null>(null);
   const [coachOpen, setCoachOpen] = useState(false);
+  const [workoutOpen, setWorkoutOpen] = useState(false);
+  const [goalOpen, setGoalOpen] = useState(false);
   const [localTick, setLocalTick] = useState(0);
 
   useEffect(() => {
@@ -56,8 +60,8 @@ export default function Training({ onPR, refreshKey }: { onPR: () => void; refre
     <div className="px-4 pt-2 pb-4">
       <div className="mb-4 grid grid-cols-2 gap-3">
         <ActionCard icon={Camera} title="Log un PR" glow onClick={onPR} />
-        <ActionCard icon={NotebookPen} title="Log séance" />
-        <ActionCard icon={Target} title="Mes objectifs" />
+        <ActionCard icon={NotebookPen} title="Log séance" onClick={() => setWorkoutOpen(true)} />
+        <ActionCard icon={Target} title="Mes objectifs" onClick={() => setGoalOpen(true)} />
         <ActionCard icon={Sparkles} title="Coach IA" premium onClick={() => setCoachOpen(true)} />
       </div>
       <CoachSheet
@@ -65,6 +69,12 @@ export default function Training({ onPR, refreshKey }: { onPR: () => void; refre
         onOpenChange={setCoachOpen}
         onSessionStarted={() => setLocalTick((k) => k + 1)}
       />
+      <WorkoutLogger
+        open={workoutOpen}
+        onOpenChange={setWorkoutOpen}
+        onCompleted={() => setLocalTick((k) => k + 1)}
+      />
+      <GoalEditor open={goalOpen} onOpenChange={setGoalOpen} onSaved={() => setLocalTick((k) => k + 1)} />
 
       <SectionTitle>TES PR ACTUELS</SectionTitle>
       {hasPRs ? (

@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
-import { MapPin, Trophy, Flame, Dumbbell, Target, Zap, ArrowRight } from "lucide-react";
+import { MapPin, Trophy, Flame, Dumbbell, Target, Zap, ArrowRight, LayoutGrid } from "lucide-react";
 import { motion } from "framer-motion";
 import { loadUserProfile, goalLabel } from "./userProfile";
 import { supabase } from "@/integrations/supabase/client";
 import { GRADES, GRADE_LABELS, THRESHOLDS, type Grade } from "@/lib/grades";
 import { GradeIcon, GoalIcon } from "@/lib/gradeIcons";
+import GradeGallery from "./GradeGallery";
 
 interface DbProfile {
   xp: number;
@@ -27,6 +28,7 @@ export default function Profile() {
   const [dbProfile, setDbProfile] = useState<DbProfile | null>(null);
   const [verifiedPRs, setVerifiedPRs] = useState<VerifiedPR[]>([]);
   const [prCount, setPrCount] = useState(0);
+  const [galleryOpen, setGalleryOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -59,7 +61,7 @@ export default function Profile() {
   const xp = dbProfile?.xp ?? 0;
   const nextGradeIdx = Math.min(GRADES.indexOf(grade) + 1, GRADES.length - 1);
   const nextGrade = GRADES[nextGradeIdx];
-  const isMaxGrade = grade === "legende";
+  const isMaxGrade = grade === "divin";
 
   // XP thresholds per grade (rough: 500 XP per PR, ~3 PRs per grade)
   const xpPerGrade = 1500;
@@ -116,7 +118,16 @@ export default function Profile() {
             {isMaxGrade ? "Grade maximum atteint !" : `${progressPct}%`}
           </p>
         </div>
+        <button
+          onClick={() => setGalleryOpen(true)}
+          className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-arena-gold/40 bg-arena-gold/5 py-2 text-xs font-black tracking-widest text-arena-gold active:scale-[0.98] transition"
+        >
+          <LayoutGrid size={14} /> VOIR TOUS LES GRADES
+        </button>
       </div>
+
+      <GradeGallery open={galleryOpen} onOpenChange={setGalleryOpen} currentGrade={grade} />
+
 
       {/* Per-exercise progress to next grade */}
       {dbProfile?.poids && dbProfile.poids > 0 && (
