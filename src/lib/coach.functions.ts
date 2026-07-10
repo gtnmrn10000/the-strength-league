@@ -455,11 +455,7 @@ export const getWeeklyStats = createServerFn({ method: "GET" })
         .eq("user_id", context.userId)
         .eq("status", "verified")
         .gte("created_at", since),
-      context.supabase
-        .from("profiles")
-        .select("age, poids, taille, sexe, niveau_activite, last_pr_at")
-        .eq("user_id", context.userId)
-        .maybeSingle(),
+      context.supabase.rpc("get_my_profile").maybeSingle(),
     ]);
 
     const sessions = (sessionsQ.data ?? []) as Array<{ muscle_groups: string[] | null; duration_min: number | null; completed_at: string }>;
