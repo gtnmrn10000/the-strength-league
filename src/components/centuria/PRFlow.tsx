@@ -1,14 +1,28 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Camera, FolderOpen, Check, ChevronLeft, ChevronRight, RotateCcw } from "lucide-react";
+import {
+  Camera,
+  FolderOpen,
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  RotateCcw,
+  AlertTriangle,
+  Flame,
+  CheckCircle2,
+  Footprints,
+  Dumbbell,
+  Weight,
+  type LucideIcon,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { submitPR, mockVerifyPR } from "@/lib/prs.functions";
 import {
   GRADE_LABELS,
-  GRADE_EMOJIS,
   computeGradeForLift,
   type Grade,
 } from "@/lib/grades";
+import { GradeIcon } from "@/lib/gradeIcons";
 import {
   Sheet,
   SheetContent,
@@ -25,10 +39,10 @@ interface VerifyResult {
   leveledUp: boolean;
 }
 
-const EXERCISES: { id: Exercise; emoji: string; label: string }[] = [
-  { id: "squat", emoji: "🦵", label: "SQUAT" },
-  { id: "bench", emoji: "💪", label: "BENCH PRESS" },
-  { id: "deadlift", emoji: "🔴", label: "DEADLIFT" },
+const EXERCISES: { id: Exercise; icon: LucideIcon; label: string }[] = [
+  { id: "squat", icon: Footprints, label: "SQUAT" },
+  { id: "bench", icon: Dumbbell, label: "BENCH PRESS" },
+  { id: "deadlift", icon: Weight, label: "DEADLIFT" },
 ];
 
 const ANALYSIS_TEXTS = [
