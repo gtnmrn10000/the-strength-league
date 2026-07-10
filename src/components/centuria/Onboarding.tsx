@@ -213,7 +213,9 @@ export default function Onboarding({ onDone }: { onDone: () => void }) {
               : "bg-arena/30 text-arena-foreground/50 cursor-not-allowed"
             }`}
         >
-          {step === TOTAL_STEPS - 1 ? "⚔️ Entrer dans l'arène" : "Continuer"}
+          {step === TOTAL_STEPS - 1 ? (
+            <span className="inline-flex items-center justify-center gap-2"><Swords size={16} /> Entrer dans l'arène</span>
+          ) : "Continuer"}
         </button>
         {step === 0 && (
           <button className="mt-3 w-full text-center text-xs font-semibold text-arena-sub hover:text-foreground transition-colors">
