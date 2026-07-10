@@ -423,3 +423,101 @@ export const getRecentMuscleWork = createServerFn({ method: "GET" })
     if (error) throw new Response("Erreur récup", { status: 500 });
     return (data ?? []) as Array<{ muscle_groups: string[]; completed_at: string; name: string }>;
   });
+
+// ---------- Bilan hebdomadaire (onglet Analyse) ----------
+export type WeeklyStats = {
+  sessions: { count: number; total_min: number; by_group: Record<string, number> };
+  nutrition: {
+    days: number;
+    avg_kcal: number;
+    avg_prot: number;
+    avg_carbs: number;
+    avg_fats: number;
+    goals: { kcal: number; prot: number; carbs: number; fats: number } | null;
+  };
+  prs: { verified_count: number; last_pr_at: string | null };
+};
+
+export const getWeeklyStats = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<WeeklyStats> => {
+    const since = new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString();
+    const [sessionsQ, foodQ, prsQ, profQ] = await Promise.all([
+      context.supabase
+        .from("workout_sessions")
+        .select("muscle_groups, duration_min, completed_at")
+        .eq("user_id", context.userId)
+        .gte("completed_at", since),
+      context.supabase
+        .from("food_logs")
+        .select("calories, proteins_g, carbs_g, fats_g, logged_at")
+        .eq("user_id", context.userId)
+        .gte("logged_at", since),
+      context.supabase
+        .from("prs")
+        .select("id, created_at, status")
+        .eq("user_id", context.userId)
+        .eq("status", "verified")
+        .gte("created_at", since),
+      context.supabase
+        .from("profiles")
+        .select("age, poids, taille, sexe, niveau_activite, last_pr_at")
+        .eq("user_id", context.userId)
+        .maybeSingle(),
+    ]);
+
+    const sessions = (sessionsQ.data ?? []) as Array<{ muscle_groups: string[] | null; duration_min: number | null; completed_at: string }>;
+    const by_group: Record<string, number> = {};
+    let total_min = 0;
+    for (const s of sessions) {
+      total_min += s.duration_min ?? 0;
+      for (const g of s.muscle_groups ?? []) by_group[g] = (by_group[g] ?? 0) + 1;
+    }
+
+    const foods = (foodQ.data ?? []) as Array<{ calories: number; proteins_g: number; carbs_g: number; fats_g: number; logged_at: string }>;
+    const dayKey = (d: string) => new Date(d).toISOString().slice(0, 10);
+    const daysSet = new Set(foods.map((f) => dayKey(f.logged_at)));
+    const days = Math.max(1, daysSet.size);
+    const sums = foods.reduce(
+      (a, f) => ({
+        kcal: a.kcal + (f.calories ?? 0),
+        prot: a.prot + (f.proteins_g ?? 0),
+        carbs: a.carbs + (f.carbs_g ?? 0),
+        fats: a.fats + (f.fats_g ?? 0),
+      }),
+      { kcal: 0, prot: 0, carbs: 0, fats: 0 },
+    );
+
+    const p = profQ.data as { age: number | null; poids: number | null; taille: number | null; sexe: string | null; niveau_activite: string | null; last_pr_at: string | null } | null;
+    let goals: WeeklyStats["nutrition"]["goals"] = null;
+    if (p?.age && p.poids && p.taille && p.sexe && p.niveau_activite) {
+      const activityFactor: Record<string, number> = {
+        sedentaire: 1.2, leger: 1.375, modere: 1.55, intense: 1.725, tres_intense: 1.9,
+      };
+      const base = 10 * p.poids + 6.25 * p.taille - 5 * p.age;
+      const bmr = p.sexe === "homme" ? base + 5 : base - 161;
+      const kcal = Math.round(bmr * (activityFactor[p.niveau_activite] ?? 1.55));
+      goals = {
+        kcal,
+        prot: Math.round((kcal * 0.3) / 4),
+        carbs: Math.round((kcal * 0.4) / 4),
+        fats: Math.round((kcal * 0.3) / 9),
+      };
+    }
+
+    return {
+      sessions: { count: sessions.length, total_min, by_group },
+      nutrition: {
+        days: daysSet.size,
+        avg_kcal: Math.round(sums.kcal / days),
+        avg_prot: Math.round(sums.prot / days),
+        avg_carbs: Math.round(sums.carbs / days),
+        avg_fats: Math.round(sums.fats / days),
+        goals,
+      },
+      prs: {
+        verified_count: (prsQ.data ?? []).length,
+        last_pr_at: p?.last_pr_at ?? null,
+      },
+    };
+  });
