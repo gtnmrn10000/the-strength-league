@@ -724,13 +724,12 @@ export default function PRFlow({
                     transition={{ delay: 1, type: "spring", damping: 8 }}
                     className="relative z-10 flex flex-col items-center gap-2 rounded-2xl border-2 border-arena-gold bg-arena-gold/10 px-10 py-5"
                   >
-                    <motion.span
+                    <motion.div
                       animate={{ scale: [1, 1.4, 1] }}
                       transition={{ repeat: 3, duration: 0.5, delay: 1.3 }}
-                      className="text-5xl"
                     >
-                      {GRADE_EMOJIS[verifyResult.newGrade]}
-                    </motion.span>
+                      <GradeIcon grade={verifyResult.newGrade} size={48} className="text-arena-gold" />
+                    </motion.div>
                     <p className="font-[Anton] text-xl uppercase tracking-wider text-arena-gold">
                       LEVEL UP !
                     </p>
