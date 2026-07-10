@@ -352,10 +352,10 @@ function InputField({ label, placeholder, value, onChange, suffix, required, err
 
 /* ── Step 4: Goal ── */
 function GoalStep({ selected, onSelect }: { selected: string | null; onSelect: (v: string) => void }) {
-  const goals = [
-    { id: "masse", label: "Prise de masse", desc: "Surplus calorique, programmes hypertrophie, progression de charge.", emoji: "💪" },
-    { id: "seche", label: "Sèche", desc: "Déficit calorique contrôlé, maintien de force, suivi macro.", emoji: "🔥" },
-    { id: "performance", label: "Performance", desc: "Maximise tes PR. Programmation force pure, peaking, ratios.", emoji: "⚡" },
+  const goals: { id: string; label: string; desc: string; icon: LucideIcon }[] = [
+    { id: "masse", label: "Prise de masse", desc: "Surplus calorique, programmes hypertrophie, progression de charge.", icon: Dumbbell },
+    { id: "seche", label: "Sèche", desc: "Déficit calorique contrôlé, maintien de force, suivi macro.", icon: Flame },
+    { id: "performance", label: "Performance", desc: "Maximise tes PR. Programmation force pure, peaking, ratios.", icon: Zap },
   ];
 
   return (
