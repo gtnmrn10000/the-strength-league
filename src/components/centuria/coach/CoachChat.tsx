@@ -169,6 +169,8 @@ export default function CoachChat({ onSessionStarted }: { onSessionStarted?: () 
                     onStart={() => startSession(i, m.workout!)}
                   />
                 )}
+
+                {m.role === "assistant" && m.recipe && <RecipeCard recipe={m.recipe} />}
               </li>
             ))}
             {loading && (
