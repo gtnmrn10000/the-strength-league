@@ -371,7 +371,7 @@ export default function PRFlow({
                       }}
                       className="flex h-[100px] items-center gap-5 rounded-2xl border border-[#262626] bg-[#141414] px-6 text-left transition-all hover:border-arena hover:shadow-[0_0_15px_var(--arena-glow)]"
                     >
-                      <span className="text-5xl">{ex.emoji}</span>
+                      <ex.icon size={44} className="text-arena" strokeWidth={2.2} />
                       <span className="font-[Anton] text-xl uppercase tracking-widest text-foreground">
                         {ex.label}
                       </span>
