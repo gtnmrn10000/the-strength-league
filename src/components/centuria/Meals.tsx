@@ -23,6 +23,7 @@ import {
   tdee,
 } from "@/lib/nutrition";
 import { toast } from "sonner";
+import { useSubscription } from "@/hooks/useSubscription";
 
 export default function Meals() {
   const [showScanner, setShowScanner] = useState(false);
