@@ -359,7 +359,39 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_my_profile: {
+        Args: never
+        Returns: {
+          age: number | null
+          avatar_url: string | null
+          bio: string | null
+          cover_url: string | null
+          created_at: string
+          current_grade: string
+          followers_count: number
+          following_count: number
+          goal: Database["public"]["Enums"]["goal_type"] | null
+          id: string
+          is_premium: boolean
+          last_pr_at: string | null
+          niveau_activite: Database["public"]["Enums"]["activity_level"] | null
+          onboarded: boolean
+          poids: number | null
+          posts_count: number
+          pseudo: string
+          sexe: Database["public"]["Enums"]["sexe_type"] | null
+          taille: number | null
+          updated_at: string
+          user_id: string
+          xp: number
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "profiles"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
     }
     Enums: {
       activity_level:
