@@ -30,8 +30,13 @@ export default function WorkoutLogger({
       setDone({});
       setRestEndsAt(null);
       setStartedAt(null);
+      return;
     }
-  }, [open]);
+    if (sessionOverride) {
+      setTemplate(sessionOverride);
+      setStartedAt(Date.now());
+    }
+  }, [open, sessionOverride]);
 
   useEffect(() => {
     if (!restEndsAt) return;
