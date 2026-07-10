@@ -8,6 +8,8 @@ import Profile from "./Profile";
 import PRFlow from "./PRFlow";
 import BottomNav from "./BottomNav";
 import HeaderLogo from "./HeaderLogo";
+import { SubscriptionProvider } from "@/hooks/useSubscription";
+import Paywall from "./paywall/Paywall";
 
 const ONBOARDED_KEY = "centuria_onboarded";
 
