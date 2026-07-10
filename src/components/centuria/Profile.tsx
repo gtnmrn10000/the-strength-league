@@ -269,7 +269,7 @@ function CombatCard({
           )}
         </div>
         <div className="flex flex-col items-center">
-          <span className="text-2xl">{GRADE_EMOJIS[grade]}</span>
+          <GradeIcon grade={grade} size={28} className="text-arena-gold" />
           <span className="mt-0.5 text-[10px] font-bold text-arena">{GRADE_LABELS[grade]}</span>
         </div>
       </div>
