@@ -59,12 +59,9 @@ function tierFor(intensity: number | undefined): 0 | 1 | 2 | 3 {
 export type MuscleIntensity = Partial<Record<Region, number>>;
 
 // Palette or → rouge sang, indexée par frequency-1
-const HIGHLIGHT_COLORS = [
-  "#8a6a1f", // tier 1 — or sombre
-  "#d4af37", // tier 2 — or franc
-  "#b91c1c", // tier 3 — rouge sang
-];
-const BODY_COLOR = "#1a1a1d";
+// Dégradé or : or sombre → or franc → or clair (F0D875)
+const HIGHLIGHT_COLORS = ["#8a6a1f", "#D4AF37", "#F0D875"];
+const BODY_COLOR = "#1a1a1a";
 
 function buildData(
   intensities: MuscleIntensity | undefined,
@@ -105,10 +102,12 @@ export default function BodyDiagram({
 
   return (
     <div
-      className="relative overflow-hidden rounded-2xl border border-arena-border p-4"
+      className="relative overflow-hidden rounded-2xl p-4"
       style={{
+        border: "1px solid rgba(212,175,55,0.35)",
+        boxShadow: "0 0 0 1px rgba(212,175,55,0.08) inset, 0 8px 30px rgba(0,0,0,0.4)",
         background:
-          "radial-gradient(120% 80% at 50% 0%, rgba(212,175,55,0.08) 0%, rgba(10,10,10,0) 55%), linear-gradient(180deg, #0b0b0d 0%, #060606 100%)",
+          "radial-gradient(120% 80% at 50% 0%, rgba(212,175,55,0.10) 0%, rgba(10,10,10,0) 55%), linear-gradient(180deg, #0b0b0d 0%, #060606 100%)",
       }}
     >
       <div className="mb-3 flex items-center justify-between">

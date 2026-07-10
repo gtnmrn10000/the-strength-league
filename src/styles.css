@@ -126,3 +126,12 @@
 /* Scrollbar hide utility */
 .scrollbar-hide::-webkit-scrollbar { display: none; }
 .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* react-body-highlighter — premium gold theme */
+.rbh polygon {
+  transition: fill 200ms ease, filter 200ms ease;
+  stroke: rgba(212, 175, 55, 0.22);
+  stroke-width: 0.4;
+}
+.rbh polygon:hover { cursor: default; }
+.rbh-wrapper { display: flex; justify-content: center; }
