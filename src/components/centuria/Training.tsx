@@ -1,10 +1,14 @@
-import { useState, useEffect } from "react";
-import { Camera, NotebookPen, Target, Sparkles, ChevronRight, Dumbbell } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Camera, NotebookPen, Target, Sparkles, Dumbbell, Trophy, Plus, Minus, X, Library, Play } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import CoachSheet from "./coach/CoachSheet";
 import PremiumBadge from "./paywall/PremiumBadge";
 import WorkoutLogger from "./WorkoutLogger";
 import GoalEditor from "./GoalEditor";
+import ExerciseLibrary from "./ExerciseLibrary";
+import BodyDiagram, { type MuscleIntensity } from "./BodyDiagram";
+import { TEMPLATES, normalizeMuscle, type Template, type WorkoutExercise } from "@/lib/workoutTemplates";
+import type { LibraryExercise } from "@/lib/exerciseCatalog";
 
 interface VerifiedPR {
   exercise: string;
@@ -13,13 +17,31 @@ interface VerifiedPR {
   created_at: string;
 }
 
+/** Clone profond simple d'un template (assez pour éditions locales). */
+function cloneTemplate(t: Template): Template {
+  return {
+    ...t,
+    muscle_groups: [...t.muscle_groups],
+    exercises: t.exercises.map((e) => ({
+      ...e,
+      muscle_groups: [...e.muscle_groups],
+      sets: e.sets.map((s) => ({ ...s })),
+    })),
+  };
+}
+
 export default function Training({ onPR, refreshKey }: { onPR: () => void; refreshKey?: number }) {
   const [bestPRs, setBestPRs] = useState<Record<string, VerifiedPR>>({});
   const [bodyweight, setBodyweight] = useState<number | null>(null);
   const [coachOpen, setCoachOpen] = useState(false);
   const [workoutOpen, setWorkoutOpen] = useState(false);
   const [goalOpen, setGoalOpen] = useState(false);
+  const [libraryOpen, setLibraryOpen] = useState(false);
   const [localTick, setLocalTick] = useState(0);
+
+  // Séance du jour éditable — on part du template Push par défaut.
+  const [session, setSession] = useState<Template>(() => cloneTemplate(TEMPLATES[0]));
+  const [recentByMuscle, setRecentByMuscle] = useState<Record<string, number>>({});
 
   useEffect(() => {
     let cancelled = false;
@@ -27,7 +49,9 @@ export default function Training({ onPR, refreshKey }: { onPR: () => void; refre
       const { data: { user } } = await supabase.auth.getUser();
       if (!user || cancelled) return;
 
-      const [profileRes, prsRes] = await Promise.all([
+      const since = new Date(Date.now() - 14 * 24 * 3600 * 1000).toISOString();
+
+      const [profileRes, prsRes, sessionsRes] = await Promise.all([
         supabase.rpc("get_my_profile").maybeSingle(),
         supabase
           .from("prs")
@@ -35,10 +59,17 @@ export default function Training({ onPR, refreshKey }: { onPR: () => void; refre
           .eq("user_id", user.id)
           .eq("status", "verified")
           .order("weight_kg", { ascending: false }),
+        supabase
+          .from("workout_sessions")
+          .select("muscle_groups, completed_at")
+          .eq("user_id", user.id)
+          .gte("completed_at", since),
       ]);
 
       if (cancelled) return;
-      if ((profileRes.data as any)?.poids) setBodyweight(Number((profileRes.data as any).poids));
+      if ((profileRes.data as { poids?: number } | null)?.poids) {
+        setBodyweight(Number((profileRes.data as { poids: number }).poids));
+      }
 
       if (prsRes.data) {
         const bests: Record<string, VerifiedPR> = {};
@@ -49,6 +80,17 @@ export default function Training({ onPR, refreshKey }: { onPR: () => void; refre
         }
         setBestPRs(bests);
       }
+
+      if (sessionsRes.data) {
+        const counts: Record<string, number> = {};
+        for (const s of sessionsRes.data as { muscle_groups: string[] | null }[]) {
+          for (const g of s.muscle_groups ?? []) {
+            const k = normalizeMuscle(g);
+            counts[k] = (counts[k] ?? 0) + 1;
+          }
+        }
+        setRecentByMuscle(counts);
+      }
     })();
     return () => { cancelled = true; };
   }, [refreshKey, localTick]);
@@ -56,14 +98,165 @@ export default function Training({ onPR, refreshKey }: { onPR: () => void; refre
   const exerciseLabels: Record<string, string> = { squat: "Squat", bench: "Bench Press", deadlift: "Deadlift" };
   const hasPRs = Object.keys(bestPRs).length > 0;
 
+  // Intensité par muscle pour le diagramme = part du volume relatif de la séance,
+  // rehaussée par le nb récent de séances (>1 boost).
+  const intensities = useMemo<MuscleIntensity>(() => {
+    const counts: Record<string, number> = {};
+    for (const ex of session.exercises) {
+      const setsCount = ex.sets.length;
+      for (const g of ex.muscle_groups) {
+        const k = normalizeMuscle(g);
+        counts[k] = (counts[k] ?? 0) + setsCount;
+      }
+    }
+    const max = Math.max(1, ...Object.values(counts));
+    const out: MuscleIntensity = {};
+    for (const [k, v] of Object.entries(counts)) {
+      const base = v / max; // 0..1 dans la séance
+      const recentBoost = Math.min(0.2, (recentByMuscle[k] ?? 0) * 0.05);
+      out[k as keyof MuscleIntensity] = Math.min(1, base + recentBoost);
+    }
+    return out;
+  }, [session, recentByMuscle]);
+
+  const totalSets = session.exercises.reduce((s, e) => s + e.sets.length, 0);
+  const targetMuscles = Array.from(
+    new Set(session.exercises.flatMap((e) => e.muscle_groups.map(normalizeMuscle))),
+  );
+
+  // ------- Session mutations --------
+  const setExercises = (updater: (list: WorkoutExercise[]) => WorkoutExercise[]) => {
+    setSession((s) => ({ ...s, exercises: updater(s.exercises) }));
+  };
+
+  const addSet = (exIdx: number) => {
+    setExercises((list) => list.map((ex, i) => {
+      if (i !== exIdx) return ex;
+      const last = ex.sets[ex.sets.length - 1] ?? { reps: 8, weight_kg: 0 };
+      return { ...ex, sets: [...ex.sets, { ...last }] };
+    }));
+  };
+
+  const removeSet = (exIdx: number, setIdx: number) => {
+    setExercises((list) => list.map((ex, i) => {
+      if (i !== exIdx) return ex;
+      if (ex.sets.length <= 1) return ex;
+      return { ...ex, sets: ex.sets.filter((_, j) => j !== setIdx) };
+    }));
+  };
+
+  const updateSet = (exIdx: number, setIdx: number, field: "reps" | "weight_kg", value: number) => {
+    setExercises((list) => list.map((ex, i) => {
+      if (i !== exIdx) return ex;
+      return {
+        ...ex,
+        sets: ex.sets.map((s, j) => (j === setIdx ? { ...s, [field]: value } : s)),
+      };
+    }));
+  };
+
+  const removeExercise = (exIdx: number) => {
+    setExercises((list) => list.filter((_, i) => i !== exIdx));
+  };
+
+  const addExerciseFromLibrary = (ex: LibraryExercise) => {
+    setExercises((list) => [
+      ...list,
+      {
+        name: ex.name,
+        muscle_groups: ex.muscles,
+        sets: [
+          { reps: 10, weight_kg: 0 },
+          { reps: 10, weight_kg: 0 },
+          { reps: 8, weight_kg: 0 },
+        ],
+      },
+    ]);
+    setLibraryOpen(false);
+  };
+
+  const switchTemplate = (id: string) => {
+    const t = TEMPLATES.find((x) => x.id === id);
+    if (t) setSession(cloneTemplate(t));
+  };
+
   return (
-    <div className="px-4 pt-2 pb-4">
+    <div className="px-4 pt-2 pb-6">
+      {/* Actions rapides */}
       <div className="mb-4 grid grid-cols-2 gap-3">
         <ActionCard icon={Camera} title="Log un PR" glow onClick={onPR} />
         <ActionCard icon={NotebookPen} title="Log séance" onClick={() => setWorkoutOpen(true)} />
         <ActionCard icon={Target} title="Mes objectifs" onClick={() => setGoalOpen(true)} />
         <ActionCard icon={Sparkles} title="Coach IA" premium onClick={() => setCoachOpen(true)} />
       </div>
+
+      {/* Diagramme corporel */}
+      <BodyDiagram intensities={intensities} targets={targetMuscles} />
+
+      {/* Séance du jour */}
+      <div className="mt-5 flex items-center justify-between">
+        <h3 className="text-xs font-black tracking-widest text-arena-muted">SÉANCE DU JOUR</h3>
+        <button
+          onClick={() => setLibraryOpen(true)}
+          className="flex items-center gap-1 text-[11px] font-black text-arena"
+        >
+          <Library size={12} /> Bibliothèque
+        </button>
+      </div>
+
+      <div className="mt-2 flex gap-1.5 overflow-x-auto scrollbar-hide">
+        {TEMPLATES.map((t) => (
+          <button
+            key={t.id}
+            onClick={() => switchTemplate(t.id)}
+            className={`shrink-0 rounded-full border px-3 py-1 text-[10px] font-black tracking-widest transition ${
+              session.id === t.id
+                ? "border-arena-gold bg-arena-gold text-black"
+                : "border-arena-border bg-arena-surface text-arena-sub"
+            }`}
+          >
+            {t.id.toUpperCase()}
+          </button>
+        ))}
+      </div>
+
+      <p className="mt-2 text-[10px] text-arena-sub">
+        {session.exercises.length} exos · {totalSets} séries · repos {session.restSec}s
+      </p>
+
+      <div className="mt-3 flex flex-col gap-3">
+        {session.exercises.map((ex, exIdx) => (
+          <ExerciseCard
+            key={exIdx}
+            ex={ex}
+            onAddSet={() => addSet(exIdx)}
+            onRemoveSet={(sIdx) => removeSet(exIdx, sIdx)}
+            onUpdateSet={(sIdx, field, value) => updateSet(exIdx, sIdx, field, value)}
+            onRemove={() => removeExercise(exIdx)}
+          />
+        ))}
+        {session.exercises.length === 0 && (
+          <div className="rounded-2xl border border-dashed border-arena-border p-4 text-center">
+            <p className="text-xs text-arena-muted">Ta séance est vide</p>
+            <button
+              onClick={() => setLibraryOpen(true)}
+              className="mt-2 text-xs font-bold text-arena"
+            >
+              Ajouter un exercice
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Démarrer */}
+      <button
+        onClick={() => setWorkoutOpen(true)}
+        disabled={session.exercises.length === 0}
+        className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-arena-gold py-3.5 font-black tracking-widest text-black shadow-[0_0_24px_rgba(212,175,55,0.35)] disabled:opacity-40 disabled:shadow-none active:scale-[0.98] transition"
+      >
+        <Play size={16} strokeWidth={3} /> DÉMARRER LA SÉANCE
+      </button>
+
       <CoachSheet
         open={coachOpen}
         onOpenChange={setCoachOpen}
@@ -73,8 +266,14 @@ export default function Training({ onPR, refreshKey }: { onPR: () => void; refre
         open={workoutOpen}
         onOpenChange={setWorkoutOpen}
         onCompleted={() => setLocalTick((k) => k + 1)}
+        sessionOverride={session}
       />
       <GoalEditor open={goalOpen} onOpenChange={setGoalOpen} onSaved={() => setLocalTick((k) => k + 1)} />
+      <ExerciseLibrary
+        open={libraryOpen}
+        onOpenChange={setLibraryOpen}
+        onAdd={addExerciseFromLibrary}
+      />
 
       <SectionTitle>TES PR ACTUELS</SectionTitle>
       {hasPRs ? (
@@ -97,21 +296,132 @@ export default function Training({ onPR, refreshKey }: { onPR: () => void; refre
       ) : (
         <div className="rounded-2xl border border-arena-border bg-arena-surface p-4 text-center">
           <p className="text-sm text-arena-muted">Aucun PR enregistré</p>
-          <p className="mt-1 flex items-center justify-center gap-1 text-xs text-arena-sub">Log ton premier PR pour commencer <Dumbbell size={12} className="text-arena" /></p>
+          <p className="mt-1 flex items-center justify-center gap-1 text-xs text-arena-sub">
+            Log ton premier PR pour commencer <Trophy size={12} className="text-arena" />
+          </p>
         </div>
       )}
+    </div>
+  );
+}
 
-      <SectionTitle>PROGRAMME IA RECOMMANDÉ</SectionTitle>
-      <div className="rounded-2xl border border-arena-border bg-arena-surface p-4">
-        <p className="font-black text-foreground">Push Force · Grade Spartiate</p>
-        <p className="mt-1 text-xs text-arena-sub">
-          Séance optimisée pour passer Gladiateur Bench sous 21 jours.
-        </p>
-        <button className="mt-3 flex items-center gap-1 text-sm font-bold text-arena">
-          Démarrer <ChevronRight size={16} />
+/* --------- Sub components --------- */
+
+function ExerciseCard({
+  ex,
+  onAddSet,
+  onRemoveSet,
+  onUpdateSet,
+  onRemove,
+}: {
+  ex: WorkoutExercise;
+  onAddSet: () => void;
+  onRemoveSet: (setIdx: number) => void;
+  onUpdateSet: (setIdx: number, field: "reps" | "weight_kg", value: number) => void;
+  onRemove: () => void;
+}) {
+  return (
+    <div className="rounded-2xl border border-arena-border bg-arena-surface p-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-arena-gold/10">
+            <Dumbbell size={18} className="text-arena-gold" />
+          </div>
+          <div>
+            <p className="font-black text-foreground">{ex.name}</p>
+            <div className="mt-1 flex flex-wrap gap-1">
+              {ex.muscle_groups.map((m) => (
+                <span
+                  key={m}
+                  className="rounded-full border border-arena-border bg-secondary px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-arena-sub"
+                >
+                  {m}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+        <button
+          onClick={onRemove}
+          className="flex h-7 w-7 items-center justify-center rounded-full border border-arena-border text-arena-muted active:scale-90 transition"
+          aria-label="Retirer l'exercice"
+        >
+          <X size={14} />
         </button>
       </div>
+
+      <div className="mt-3 flex flex-col gap-1.5">
+        <div className="grid grid-cols-[24px_1fr_1fr_24px] gap-2 text-[9px] font-black tracking-widest text-arena-muted">
+          <span>#</span>
+          <span>REPS</span>
+          <span>KG</span>
+          <span />
+        </div>
+        {ex.sets.map((s, i) => (
+          <div key={i} className="grid grid-cols-[24px_1fr_1fr_24px] items-center gap-2">
+            <span className="text-xs font-black text-arena-sub">{i + 1}</span>
+            <NumberInput
+              value={s.reps}
+              onChange={(v) => onUpdateSet(i, "reps", v)}
+              min={1}
+              max={99}
+            />
+            <NumberInput
+              value={s.weight_kg}
+              onChange={(v) => onUpdateSet(i, "weight_kg", v)}
+              step={2.5}
+              min={0}
+              max={500}
+            />
+            <button
+              onClick={() => onRemoveSet(i)}
+              disabled={ex.sets.length <= 1}
+              className="flex h-6 w-6 items-center justify-center rounded-md text-arena-muted disabled:opacity-30 active:scale-90 transition"
+              aria-label="Retirer la série"
+            >
+              <Minus size={14} />
+            </button>
+          </div>
+        ))}
+      </div>
+
+      <button
+        onClick={onAddSet}
+        className="mt-2 flex w-full items-center justify-center gap-1 rounded-xl border border-dashed border-arena-border py-2 text-[11px] font-black tracking-widest text-arena-sub active:scale-[0.98] transition"
+      >
+        <Plus size={12} /> AJOUTER UNE SÉRIE
+      </button>
     </div>
+  );
+}
+
+function NumberInput({
+  value,
+  onChange,
+  min = 0,
+  max = 999,
+  step = 1,
+}: {
+  value: number;
+  onChange: (v: number) => void;
+  min?: number;
+  max?: number;
+  step?: number;
+}) {
+  return (
+    <input
+      type="number"
+      inputMode="decimal"
+      value={value}
+      min={min}
+      max={max}
+      step={step}
+      onChange={(e) => {
+        const n = Number(e.target.value);
+        if (Number.isFinite(n)) onChange(Math.max(min, Math.min(max, n)));
+      }}
+      className="w-full rounded-lg border border-arena-border bg-secondary px-2 py-1 text-center text-sm font-black text-foreground focus:border-arena focus:outline-none"
+    />
   );
 }
 
