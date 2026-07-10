@@ -57,7 +57,7 @@ export default function Training({ onPR, refreshKey }: { onPR: () => void; refre
         <ActionCard icon={Camera} title="Log un PR" glow onClick={onPR} />
         <ActionCard icon={NotebookPen} title="Log séance" />
         <ActionCard icon={Target} title="Mes objectifs" />
-        <ActionCard icon={Sparkles} title="Coach IA" onClick={() => setCoachOpen(true)} />
+        <ActionCard icon={Sparkles} title="Coach IA" premium onClick={() => setCoachOpen(true)} />
       </div>
       <CoachSheet
         open={coachOpen}
