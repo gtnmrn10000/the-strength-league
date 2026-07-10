@@ -560,7 +560,10 @@ export default function PRFlow({
                 <div className="mt-4 rounded-2xl border border-[#262626] bg-[#141414] p-5">
                   <Row label="Exercice">
                     <span className="flex items-center gap-2 font-bold uppercase text-foreground">
-                      {EXERCISES.find((e) => e.id === exercise)?.emoji}{" "}
+                      {(() => {
+                        const ex = EXERCISES.find((e) => e.id === exercise);
+                        return ex ? <ex.icon size={16} className="text-arena" /> : null;
+                      })()}
                       {EXERCISES.find((e) => e.id === exercise)?.label}
                     </span>
                   </Row>
@@ -584,8 +587,8 @@ export default function PRFlow({
                     <span className="font-bold text-foreground">{ratio}× BW</span>
                   </Row>
                   <Row label="Grade visé" border>
-                    <span className="font-bold text-arena-gold">
-                      {gradeVise && GRADE_EMOJIS[gradeVise]}{" "}
+                    <span className="inline-flex items-center gap-1 font-bold text-arena-gold">
+                      {gradeVise && <GradeIcon grade={gradeVise} size={14} />}
                       {gradeVise && GRADE_LABELS[gradeVise]}
                     </span>
                   </Row>
