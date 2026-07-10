@@ -1,7 +1,16 @@
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { FoodProduct } from "@/lib/openFoodFacts";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Plus, Minus } from "lucide-react";
+
+/** Extrait le nombre de grammes d'une chaîne "serving_size" Open Food Facts (ex: "30 g", "1 portion (25 g)", "250 ml"). */
+function parseServingGrams(s: string | null): number | null {
+  if (!s) return null;
+  const match = s.match(/(\d+(?:[.,]\d+)?)\s*(g|ml)\b/i);
+  if (!match) return null;
+  const n = parseFloat(match[1].replace(",", "."));
+  return Number.isFinite(n) && n > 0 ? Math.round(n) : null;
+}
 
 export default function ProductSheet({
   product,
@@ -15,6 +24,23 @@ export default function ProductSheet({
   onAdd?: (p: FoodProduct, grams: number) => void;
 }) {
   const [grams, setGrams] = useState(100);
+  const [raw, setRaw] = useState("100");
+
+  const servingGrams = useMemo(() => parseServingGrams(product?.serving_size ?? null), [product]);
+
+  // Reset quand on change de produit
+  useEffect(() => {
+    if (!product) return;
+    const init = servingGrams ?? 100;
+    setGrams(init);
+    setRaw(String(init));
+  }, [product, servingGrams]);
+
+  const commit = (n: number) => {
+    const clamped = Math.max(1, Math.min(5000, Math.round(n)));
+    setGrams(clamped);
+    setRaw(String(clamped));
+  };
 
   const scaled = useMemo(() => {
     if (!product) return null;
@@ -32,6 +58,13 @@ export default function ProductSheet({
   }, [product, grams]);
 
   if (!product) return null;
+
+  const shortcuts: { label: string; value: number }[] = [
+    { label: "100 g", value: 100 },
+    ...(servingGrams ? [{ label: `Portion (${servingGrams} g)`, value: servingGrams }] : []),
+    { label: "50 g", value: 50 },
+    { label: "250 g", value: 250 },
+  ];
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -57,27 +90,82 @@ export default function ProductSheet({
             </div>
           </div>
 
+          {/* Bloc quantité — style Yazio */}
           <div className="mb-4 rounded-2xl border border-arena-border bg-arena-surface p-4">
             <div className="mb-3 flex items-center justify-between">
-              <span className="text-xs font-bold tracking-widest text-arena-muted">PORTION</span>
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() => setGrams((g) => Math.max(10, g - 10))}
-                  className="rounded-full border border-arena-border p-1 active:scale-90"
-                >
-                  <Minus size={14} />
-                </button>
-                <span className="min-w-[60px] text-center text-sm font-black text-foreground">{grams} g</span>
-                <button
-                  onClick={() => setGrams((g) => g + 10)}
-                  className="rounded-full border border-arena-border p-1 active:scale-90"
-                >
-                  <Plus size={14} />
-                </button>
-              </div>
+              <span className="text-xs font-bold tracking-widest text-arena-muted">QUANTITÉ</span>
+              <span className="text-[10px] text-arena-sub">1 g de précision</span>
             </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => commit(grams - 1)}
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-arena-border bg-background active:scale-90"
+                aria-label="Retirer 1 gramme"
+              >
+                <Minus size={16} />
+              </button>
+
+              <div className="relative flex-1">
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  min={1}
+                  max={5000}
+                  value={raw}
+                  onChange={(e) => setRaw(e.target.value)}
+                  onBlur={() => {
+                    const n = parseInt(raw, 10);
+                    if (Number.isFinite(n)) commit(n);
+                    else commit(grams);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") (e.currentTarget as HTMLInputElement).blur();
+                  }}
+                  className="h-11 w-full rounded-xl border border-arena-gold/40 bg-background pr-10 text-center text-lg font-black text-foreground focus:border-arena-gold focus:outline-none"
+                />
+                <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm font-bold text-arena-muted">
+                  g
+                </span>
+              </div>
+
+              <button
+                onClick={() => commit(grams + 1)}
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-arena-border bg-background active:scale-90"
+                aria-label="Ajouter 1 gramme"
+              >
+                <Plus size={16} />
+              </button>
+            </div>
+
+            {/* Raccourcis */}
+            <div className="mt-3 flex flex-wrap gap-1.5">
+              {shortcuts.map((s) => {
+                const active = grams === s.value;
+                return (
+                  <button
+                    key={s.label}
+                    onClick={() => commit(s.value)}
+                    className={`rounded-full border px-3 py-1 text-[11px] font-black tracking-wider transition ${
+                      active
+                        ? "border-arena-gold bg-arena-gold text-black"
+                        : "border-arena-border bg-background text-arena-sub hover:border-arena-gold/50"
+                    }`}
+                  >
+                    {s.label}
+                  </button>
+                );
+              })}
+              <button
+                onClick={() => commit(grams + 10)}
+                className="rounded-full border border-arena-border bg-background px-3 py-1 text-[11px] font-black tracking-wider text-arena-sub hover:border-arena-gold/50"
+              >
+                +10 g
+              </button>
+            </div>
+
             {product.serving_size && (
-              <p className="text-[11px] text-arena-sub">Portion suggérée : {product.serving_size}</p>
+              <p className="mt-3 text-[11px] text-arena-sub">Portion suggérée : {product.serving_size}</p>
             )}
           </div>
 
@@ -98,7 +186,7 @@ export default function ProductSheet({
               onClick={() => onAdd(product, grams)}
               className="mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-arena text-sm font-black text-arena-on active:scale-[0.98]"
             >
-              <Plus size={16} /> Ajouter à mon journal
+              <Plus size={16} /> Ajouter {grams} g à mon journal
             </button>
           )}
 
