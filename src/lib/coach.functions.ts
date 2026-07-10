@@ -24,15 +24,34 @@ export type GeneratedWorkout = {
   cooldown: string;
 };
 
+export type GeneratedRecipe = {
+  name: string;
+  prep_min: number;
+  kcal: number;
+  prot_g: number;
+  carbs_g: number;
+  fats_g: number;
+  ingredients: Array<{ name: string; qty: string }>;
+  steps: string[];
+};
+
 export type AssistantContent = {
   reply: string;
   workout?: GeneratedWorkout | null;
+  recipe?: GeneratedRecipe | null;
   warnings?: string[];
 };
 
 export type ChatMsg =
   | { role: "user"; content: string; at?: string }
-  | { role: "assistant"; content: string; workout?: GeneratedWorkout | null; warnings?: string[]; at?: string };
+  | {
+      role: "assistant";
+      content: string;
+      workout?: GeneratedWorkout | null;
+      recipe?: GeneratedRecipe | null;
+      warnings?: string[];
+      at?: string;
+    };
 
 // ---------- Helpers ----------
 type ProfileCtx = {
