@@ -185,9 +185,29 @@ export default function CoachChat({ onSessionStarted }: { onSessionStarted?: () 
         <div ref={bottomRef} />
       </div>
 
+      <div className="flex gap-2 overflow-x-auto border-t border-arena-border bg-background px-3 py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <QuickChip
+          icon={ChefHat}
+          label="Recette express"
+          disabled={loading}
+          onClick={quickAction("Recette express", "Propose-moi une recette rapide qui rentre pile dans mes macros restantes du jour.")}
+        />
+        <QuickChip
+          icon={BarChart3}
+          label="Bilan semaine"
+          disabled={loading}
+          onClick={quickAction("Bilan semaine", "Fais-moi un bilan honnête de ma semaine (séances, groupes travaillés, apports) et donne 3 recommandations concrètes.")}
+        />
+        <QuickChip
+          icon={TrendingUp}
+          label="Analyse PR"
+          disabled={loading}
+          onClick={quickAction("Analyse PR", "Analyse la progression de mes PR (squat/bench/deadlift) et dis-moi si je stagne, sur quoi me concentrer, et un objectif réaliste pour le prochain PR.")}
+        />
+      </div>
+
       <form onSubmit={send} className="flex items-center gap-2 border-t border-arena-border bg-background px-3 py-2">
         {messages.length > 0 && (
-          <button
             type="button"
             onClick={clear}
             aria-label="Effacer"
