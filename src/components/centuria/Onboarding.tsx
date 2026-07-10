@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
-import { Apple, Mail, Lock, ChevronLeft, Sparkles, ShieldCheck, Trophy, Check, Dumbbell, Target, TrendingUp, AlertCircle, Flame } from "lucide-react";
+import { Apple, Mail, Lock, ChevronLeft, Sparkles, ShieldCheck, Trophy, Check, Dumbbell, Target, TrendingUp, AlertCircle, Flame, Swords, Zap, type LucideIcon } from "lucide-react";
 import Logo from "./Logo";
 import { saveUserProfile } from "./userProfile";
 import { track } from "./analytics";
