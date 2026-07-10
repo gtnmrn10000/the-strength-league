@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
-import { MapPin, Trophy, Flame, Dumbbell, Target, Zap } from "lucide-react";
+import { MapPin, Trophy, Flame, Dumbbell, Target, Zap, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
-import { loadUserProfile, goalLabel, goalEmoji } from "./userProfile";
+import { loadUserProfile, goalLabel } from "./userProfile";
 import { supabase } from "@/integrations/supabase/client";
-import { GRADES, GRADE_LABELS, GRADE_EMOJIS, THRESHOLDS, type Grade } from "@/lib/grades";
+import { GRADES, GRADE_LABELS, THRESHOLDS, type Grade } from "@/lib/grades";
+import { GradeIcon, GoalIcon } from "@/lib/gradeIcons";
 
 interface DbProfile {
   xp: number;
@@ -90,11 +91,11 @@ export default function Profile() {
       <div className="rounded-2xl border border-arena-border bg-arena-surface p-4">
         <div className="flex items-center justify-between">
           <span className="flex items-center gap-2 text-sm font-bold text-foreground">
-            {GRADE_EMOJIS[grade]} {GRADE_LABELS[grade]}
+            <GradeIcon grade={grade} size={16} className="text-arena-gold" /> {GRADE_LABELS[grade]}
           </span>
           {!isMaxGrade && (
-            <span className="text-xs text-arena-sub">
-              → {GRADE_EMOJIS[nextGrade]} {GRADE_LABELS[nextGrade]}
+            <span className="flex items-center gap-1 text-xs text-arena-sub">
+              <ArrowRight size={12} /> <GradeIcon grade={nextGrade} size={12} className="text-arena-gold" /> {GRADE_LABELS[nextGrade]}
             </span>
           )}
         </div>
@@ -145,10 +146,16 @@ export default function Profile() {
               <div key={ex} className="rounded-xl border border-arena-border bg-secondary p-3">
                 <div className="flex items-center justify-between text-xs">
                   <span className="font-bold text-foreground">{exLabels[ex]}</span>
-                  <span className="text-arena-sub">
-                    {isMax
-                      ? `${GRADE_EMOJIS[nextGradeForLift]} MAX`
-                      : `→ ${GRADE_EMOJIS[nextGradeForLift]} ${GRADE_LABELS[nextGradeForLift]}`}
+                  <span className="flex items-center gap-1 text-arena-sub">
+                    {isMax ? (
+                      <>
+                        <GradeIcon grade={nextGradeForLift} size={12} className="text-arena-gold" /> MAX
+                      </>
+                    ) : (
+                      <>
+                        <ArrowRight size={10} /> <GradeIcon grade={nextGradeForLift} size={12} className="text-arena-gold" /> {GRADE_LABELS[nextGradeForLift]}
+                      </>
+                    )}
                   </span>
                 </div>
                 <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-background">
@@ -161,7 +168,7 @@ export default function Profile() {
                 </div>
                 <div className="mt-1 flex justify-between text-[10px] text-arena-sub">
                   <span>{currentWeight > 0 ? `${currentWeight}kg (${ratio.toFixed(2)}× BW)` : "Aucun PR"}</span>
-                  <span>{isMax ? "🏆" : `${nextWeightNeeded}kg requis`}</span>
+                  <span className="flex items-center gap-1">{isMax ? <Trophy size={10} className="text-arena-gold" /> : `${nextWeightNeeded}kg requis`}</span>
                 </div>
               </div>
             );
@@ -192,7 +199,7 @@ export default function Profile() {
         <>
           <h3 className="mb-3 mt-6 text-xs font-black tracking-widest text-arena-muted">OBJECTIF ACTUEL</h3>
           <div className="flex items-center gap-3 rounded-2xl border border-arena-border bg-arena-surface p-4">
-            <span className="text-2xl">{goalEmoji(profile.goal)}</span>
+            <GoalIcon goal={profile.goal} size={24} className="text-arena" />
             <div>
               <p className="font-black text-foreground">{goalLabel(profile.goal)}</p>
               <p className="text-xs text-arena-sub">Défini à l'inscription · Modifiable dans les réglages</p>
@@ -262,7 +269,7 @@ function CombatCard({
           )}
         </div>
         <div className="flex flex-col items-center">
-          <span className="text-2xl">{GRADE_EMOJIS[grade]}</span>
+          <GradeIcon grade={grade} size={28} className="text-arena-gold" />
           <span className="mt-0.5 text-[10px] font-bold text-arena">{GRADE_LABELS[grade]}</span>
         </div>
       </div>
@@ -274,8 +281,8 @@ function CombatCard({
       </div>
 
       <div className="mt-3 flex flex-wrap gap-2">
-        <span className="rounded-full bg-arena/10 px-2 py-0.5 text-[10px] font-bold text-arena">
-          {GRADE_EMOJIS[grade]} {GRADE_LABELS[grade].toUpperCase()}
+        <span className="inline-flex items-center gap-1 rounded-full bg-arena/10 px-2 py-0.5 text-[10px] font-bold text-arena">
+          <GradeIcon grade={grade} size={10} /> {GRADE_LABELS[grade].toUpperCase()}
         </span>
       </div>
 
@@ -309,7 +316,7 @@ function CombatCard({
       ) : (
         <div className="rounded-xl bg-secondary p-4 text-center">
           <p className="text-xs text-arena-muted">Aucun PR enregistré pour le moment.</p>
-          <p className="mt-1 text-[10px] text-arena-sub">Log ton premier PR pour commencer 💪</p>
+          <p className="mt-1 flex items-center justify-center gap-1 text-[10px] text-arena-sub">Log ton premier PR pour commencer <Dumbbell size={10} className="text-arena" /></p>
         </div>
       )}
 

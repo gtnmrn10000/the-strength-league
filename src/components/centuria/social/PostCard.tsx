@@ -3,7 +3,8 @@ import { Link } from "@tanstack/react-router";
 import { Flame, ShieldCheck, Zap, Dumbbell, Utensils } from "lucide-react";
 import UserAvatar from "./UserAvatar";
 import { toggleHype, type FeedPost } from "@/lib/social";
-import { GRADE_LABELS, GRADE_EMOJIS, type Grade } from "@/lib/grades";
+import { GRADE_LABELS, type Grade } from "@/lib/grades";
+import { GradeIcon } from "@/lib/gradeIcons";
 
 function timeAgo(iso: string): string {
   const diff = (Date.now() - new Date(iso).getTime()) / 1000;
@@ -42,8 +43,8 @@ export default function PostCard({ post }: { post: FeedPost }) {
         <div className="flex-1">
           <div className="flex items-center gap-2">
             <span className="font-bold text-foreground">{post.author?.pseudo}</span>
-            <span className="text-[10px] font-black tracking-wider text-arena-gold">
-              {GRADE_EMOJIS[grade]} {GRADE_LABELS[grade]?.toUpperCase()}
+            <span className="inline-flex items-center gap-1 text-[10px] font-black tracking-wider text-arena-gold">
+              <GradeIcon grade={grade} size={10} /> {GRADE_LABELS[grade]?.toUpperCase()}
             </span>
           </div>
           <span className="text-xs text-arena-sub">{timeAgo(post.created_at)}</span>

@@ -4,7 +4,8 @@ import { ChevronLeft, Sparkles } from "lucide-react";
 import { fetchSuggestions, type PublicProfile } from "@/lib/social";
 import UserAvatar from "@/components/centuria/social/UserAvatar";
 import FollowButton from "@/components/centuria/social/FollowButton";
-import { GRADE_LABELS, GRADE_EMOJIS, type Grade } from "@/lib/grades";
+import { GRADE_LABELS, type Grade } from "@/lib/grades";
+import { GradeIcon } from "@/lib/gradeIcons";
 
 export const Route = createFileRoute("/discover")({
   component: DiscoverPage,
@@ -62,8 +63,8 @@ function DiscoverPage() {
                   <UserAvatar src={p.avatar_url} pseudo={p.pseudo} size={48} />
                   <div className="flex-1 min-w-0">
                     <p className="truncate font-black text-foreground">{p.pseudo}</p>
-                    <p className="truncate text-[10px] font-black tracking-wider text-arena-gold">
-                      {GRADE_EMOJIS[grade]} {GRADE_LABELS[grade]?.toUpperCase()}
+                    <p className="inline-flex items-center gap-1 truncate text-[10px] font-black tracking-wider text-arena-gold">
+                      <GradeIcon grade={grade} size={10} /> {GRADE_LABELS[grade]?.toUpperCase()}
                     </p>
                     <p className="text-[11px] text-arena-sub">
                       {p.followers_count} followers · {p.posts_count} posts

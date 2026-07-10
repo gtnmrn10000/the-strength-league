@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
-import { Apple, Mail, Lock, ChevronLeft, Sparkles, ShieldCheck, Trophy, Check, Dumbbell, Target, TrendingUp, AlertCircle, Flame } from "lucide-react";
+import { Apple, Mail, Lock, ChevronLeft, Sparkles, ShieldCheck, Trophy, Check, Dumbbell, Target, TrendingUp, AlertCircle, Flame, Swords, Zap, type LucideIcon } from "lucide-react";
 import Logo from "./Logo";
 import { saveUserProfile } from "./userProfile";
 import { track } from "./analytics";
@@ -213,7 +213,9 @@ export default function Onboarding({ onDone }: { onDone: () => void }) {
               : "bg-arena/30 text-arena-foreground/50 cursor-not-allowed"
             }`}
         >
-          {step === TOTAL_STEPS - 1 ? "⚔️ Entrer dans l'arène" : "Continuer"}
+          {step === TOTAL_STEPS - 1 ? (
+            <span className="inline-flex items-center justify-center gap-2"><Swords size={16} /> Entrer dans l'arène</span>
+          ) : "Continuer"}
         </button>
         {step === 0 && (
           <button className="mt-3 w-full text-center text-xs font-semibold text-arena-sub hover:text-foreground transition-colors">
@@ -350,10 +352,10 @@ function InputField({ label, placeholder, value, onChange, suffix, required, err
 
 /* ── Step 4: Goal ── */
 function GoalStep({ selected, onSelect }: { selected: string | null; onSelect: (v: string) => void }) {
-  const goals = [
-    { id: "masse", label: "Prise de masse", desc: "Surplus calorique, programmes hypertrophie, progression de charge.", emoji: "💪" },
-    { id: "seche", label: "Sèche", desc: "Déficit calorique contrôlé, maintien de force, suivi macro.", emoji: "🔥" },
-    { id: "performance", label: "Performance", desc: "Maximise tes PR. Programmation force pure, peaking, ratios.", emoji: "⚡" },
+  const goals: { id: string; label: string; desc: string; icon: LucideIcon }[] = [
+    { id: "masse", label: "Prise de masse", desc: "Surplus calorique, programmes hypertrophie, progression de charge.", icon: Dumbbell },
+    { id: "seche", label: "Sèche", desc: "Déficit calorique contrôlé, maintien de force, suivi macro.", icon: Flame },
+    { id: "performance", label: "Performance", desc: "Maximise tes PR. Programmation force pure, peaking, ratios.", icon: Zap },
   ];
 
   return (
@@ -371,7 +373,7 @@ function GoalStep({ selected, onSelect }: { selected: string | null; onSelect: (
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <span className="text-xl">{g.emoji}</span>
+              <g.icon size={22} className="text-arena" />
               <div>
                 <p className="font-black text-foreground">{g.label}</p>
                 <p className="mt-0.5 text-xs text-arena-sub">{g.desc}</p>

@@ -1,14 +1,28 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Camera, FolderOpen, Check, ChevronLeft, ChevronRight, RotateCcw } from "lucide-react";
+import {
+  Camera,
+  FolderOpen,
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  RotateCcw,
+  AlertTriangle,
+  Flame,
+  CheckCircle2,
+  Footprints,
+  Dumbbell,
+  Weight,
+  type LucideIcon,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { submitPR, mockVerifyPR } from "@/lib/prs.functions";
 import {
   GRADE_LABELS,
-  GRADE_EMOJIS,
   computeGradeForLift,
   type Grade,
 } from "@/lib/grades";
+import { GradeIcon } from "@/lib/gradeIcons";
 import {
   Sheet,
   SheetContent,
@@ -25,10 +39,10 @@ interface VerifyResult {
   leveledUp: boolean;
 }
 
-const EXERCISES: { id: Exercise; emoji: string; label: string }[] = [
-  { id: "squat", emoji: "🦵", label: "SQUAT" },
-  { id: "bench", emoji: "💪", label: "BENCH PRESS" },
-  { id: "deadlift", emoji: "🔴", label: "DEADLIFT" },
+const EXERCISES: { id: Exercise; icon: LucideIcon; label: string }[] = [
+  { id: "squat", icon: Footprints, label: "SQUAT" },
+  { id: "bench", icon: Dumbbell, label: "BENCH PRESS" },
+  { id: "deadlift", icon: Weight, label: "DEADLIFT" },
 ];
 
 const ANALYSIS_TEXTS = [
@@ -357,7 +371,7 @@ export default function PRFlow({
                       }}
                       className="flex h-[100px] items-center gap-5 rounded-2xl border border-[#262626] bg-[#141414] px-6 text-left transition-all hover:border-arena hover:shadow-[0_0_15px_var(--arena-glow)]"
                     >
-                      <span className="text-5xl">{ex.emoji}</span>
+                      <ex.icon size={44} className="text-arena" strokeWidth={2.2} />
                       <span className="font-[Anton] text-xl uppercase tracking-widest text-foreground">
                         {ex.label}
                       </span>
@@ -439,7 +453,7 @@ export default function PRFlow({
 
                 <div className="mt-4 rounded-2xl border border-arena/30 bg-[#1A0F0F] p-4 text-sm">
                   <p className="mb-2 flex items-center gap-2 font-bold text-foreground">
-                    <span>⚠️</span> RÈGLES OBLIGATOIRES
+                    <AlertTriangle size={14} className="text-yellow-500" /> RÈGLES OBLIGATOIRES
                   </p>
                   {[
                     "Plan large (corps entier visible)",
@@ -452,7 +466,7 @@ export default function PRFlow({
                     </p>
                   ))}
                   <p className="mt-2 flex items-start gap-2 text-yellow-500 text-xs">
-                    <span>⚠️</span> Triche détectée = ban définitif
+                    <AlertTriangle size={12} className="mt-0.5 shrink-0" /> Triche détectée = ban définitif
                   </p>
                 </div>
 
@@ -546,7 +560,10 @@ export default function PRFlow({
                 <div className="mt-4 rounded-2xl border border-[#262626] bg-[#141414] p-5">
                   <Row label="Exercice">
                     <span className="flex items-center gap-2 font-bold uppercase text-foreground">
-                      {EXERCISES.find((e) => e.id === exercise)?.emoji}{" "}
+                      {(() => {
+                        const ex = EXERCISES.find((e) => e.id === exercise);
+                        return ex ? <ex.icon size={16} className="text-arena" /> : null;
+                      })()}
                       {EXERCISES.find((e) => e.id === exercise)?.label}
                     </span>
                   </Row>
@@ -570,8 +587,8 @@ export default function PRFlow({
                     <span className="font-bold text-foreground">{ratio}× BW</span>
                   </Row>
                   <Row label="Grade visé" border>
-                    <span className="font-bold text-arena-gold">
-                      {gradeVise && GRADE_EMOJIS[gradeVise]}{" "}
+                    <span className="inline-flex items-center gap-1 font-bold text-arena-gold">
+                      {gradeVise && <GradeIcon grade={gradeVise} size={14} />}
                       {gradeVise && GRADE_LABELS[gradeVise]}
                     </span>
                   </Row>
@@ -584,7 +601,7 @@ export default function PRFlow({
                   onClick={handleSubmit}
                   className="mt-6 h-16 w-full rounded-2xl bg-gradient-to-r from-arena to-[#B91C1C] font-[Anton] text-2xl uppercase tracking-wider text-arena-foreground shadow-[0_0_30px_var(--arena-glow)]"
                 >
-                  🔥 VALIDER MON PR
+                  <span className="inline-flex items-center gap-2"><Flame size={22} /> VALIDER MON PR</span>
                 </motion.button>
               </motion.div>
             )}
@@ -658,15 +675,18 @@ export default function PRFlow({
                       transition={{ repeat: Infinity, duration: 2 }}
                       className="flex h-20 w-20 items-center justify-center rounded-2xl bg-arena-gold/10"
                     >
-                      <span className="text-5xl">✅</span>
+                      <CheckCircle2 size={56} className="text-arena-green" strokeWidth={2.2} />
                     </motion.div>
 
                     <h2 className="font-[Anton] text-3xl uppercase tracking-wider text-foreground">
                       PR VÉRIFIÉ
                     </h2>
 
-                    <p className="text-sm text-arena-sub">
-                      {EXERCISES.find((e) => e.id === exercise)?.emoji}{" "}
+                    <p className="inline-flex items-center gap-2 text-sm text-arena-sub">
+                      {(() => {
+                        const ex = EXERCISES.find((e) => e.id === exercise);
+                        return ex ? <ex.icon size={14} className="text-arena" /> : null;
+                      })()}
                       {EXERCISES.find((e) => e.id === exercise)?.label} — {weight} kg × {reps} rep
                       {reps > 1 ? "s" : ""}
                     </p>
@@ -704,13 +724,12 @@ export default function PRFlow({
                     transition={{ delay: 1, type: "spring", damping: 8 }}
                     className="relative z-10 flex flex-col items-center gap-2 rounded-2xl border-2 border-arena-gold bg-arena-gold/10 px-10 py-5"
                   >
-                    <motion.span
+                    <motion.div
                       animate={{ scale: [1, 1.4, 1] }}
                       transition={{ repeat: 3, duration: 0.5, delay: 1.3 }}
-                      className="text-5xl"
                     >
-                      {GRADE_EMOJIS[verifyResult.newGrade]}
-                    </motion.span>
+                      <GradeIcon grade={verifyResult.newGrade} size={48} className="text-arena-gold" />
+                    </motion.div>
                     <p className="font-[Anton] text-xl uppercase tracking-wider text-arena-gold">
                       LEVEL UP !
                     </p>
@@ -726,9 +745,9 @@ export default function PRFlow({
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.8 }}
-                    className="relative z-10 text-sm text-arena-sub"
+                    className="relative z-10 inline-flex items-center gap-1 text-sm text-arena-sub"
                   >
-                    {GRADE_EMOJIS[verifyResult.newGrade]} Grade :{" "}
+                    <GradeIcon grade={verifyResult.newGrade} size={14} /> Grade :{" "}
                     {GRADE_LABELS[verifyResult.newGrade]}
                   </motion.p>
                 )}

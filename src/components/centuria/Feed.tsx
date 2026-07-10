@@ -3,7 +3,8 @@ import { Link } from "@tanstack/react-router";
 import { Plus, Search, Trophy, Target, Flame } from "lucide-react";
 import PostCard from "./social/PostCard";
 import { fetchFeed, type FeedPost } from "@/lib/social";
-import { loadUserProfile, goalLabel, goalEmoji } from "./userProfile";
+import { loadUserProfile, goalLabel } from "./userProfile";
+import { GoalIcon } from "@/lib/gradeIcons";
 
 export default function Feed({ onCreate }: { onCreate: () => void }) {
   const [posts, setPosts] = useState<FeedPost[]>([]);
@@ -83,8 +84,8 @@ function QuickStats({ goal }: { goal: string | null }) {
       </div>
       {goal && (
         <div className="mt-2 flex flex-wrap gap-2">
-          <span className="rounded-full bg-arena/10 px-2.5 py-1 text-[10px] font-bold text-arena">
-            {goalEmoji(goal)} {goalLabel(goal)}
+          <span className="inline-flex items-center gap-1 rounded-full bg-arena/10 px-2.5 py-1 text-[10px] font-bold text-arena">
+            <GoalIcon goal={goal} size={12} /> {goalLabel(goal)}
           </span>
         </div>
       )}
