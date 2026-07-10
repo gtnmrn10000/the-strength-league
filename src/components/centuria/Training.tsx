@@ -87,7 +87,7 @@ export default function Training({ onPR, refreshKey }: { onPR: () => void; refre
       ) : (
         <div className="rounded-2xl border border-arena-border bg-arena-surface p-4 text-center">
           <p className="text-sm text-arena-muted">Aucun PR enregistré</p>
-          <p className="mt-1 text-xs text-arena-sub">Log ton premier PR pour commencer 💪</p>
+          <p className="mt-1 flex items-center justify-center gap-1 text-xs text-arena-sub">Log ton premier PR pour commencer <Dumbbell size={12} className="text-arena" /></p>
         </div>
       )}
 
