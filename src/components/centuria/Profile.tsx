@@ -118,7 +118,16 @@ export default function Profile() {
             {isMaxGrade ? "Grade maximum atteint !" : `${progressPct}%`}
           </p>
         </div>
+        <button
+          onClick={() => setGalleryOpen(true)}
+          className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-arena-gold/40 bg-arena-gold/5 py-2 text-xs font-black tracking-widest text-arena-gold active:scale-[0.98] transition"
+        >
+          <LayoutGrid size={14} /> VOIR TOUS LES GRADES
+        </button>
       </div>
+
+      <GradeGallery open={galleryOpen} onOpenChange={setGalleryOpen} currentGrade={grade} />
+
 
       {/* Per-exercise progress to next grade */}
       {dbProfile?.poids && dbProfile.poids > 0 && (
