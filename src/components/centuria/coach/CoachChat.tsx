@@ -298,3 +298,75 @@ function WorkoutCard({
     </div>
   );
 }
+
+function QuickChip({
+  icon: Icon,
+  label,
+  onClick,
+  disabled,
+}: {
+  icon: React.ElementType;
+  label: string;
+  onClick: () => void;
+  disabled?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className="flex flex-shrink-0 items-center gap-1.5 rounded-full border border-arena-border bg-arena-surface px-3 py-1.5 text-[11px] font-black tracking-wider text-foreground disabled:opacity-50 active:scale-[0.97]"
+    >
+      <Icon size={12} className="text-arena" />
+      {label}
+    </button>
+  );
+}
+
+function RecipeCard({ recipe }: { recipe: GeneratedRecipe }) {
+  return (
+    <div className="w-full max-w-[95%] rounded-2xl border border-arena-border bg-arena-surface p-3">
+      <div className="mb-2 flex items-start justify-between gap-2">
+        <div>
+          <h4 className="flex items-center gap-1.5 text-sm font-black text-foreground">
+            <ChefHat size={14} className="text-arena" />
+            {recipe.name}
+          </h4>
+          <p className="text-[11px] text-arena-muted">
+            {recipe.prep_min} min · {recipe.kcal} kcal
+          </p>
+        </div>
+        <div className="flex flex-shrink-0 gap-1 text-[10px] font-black">
+          <span className="rounded bg-arena/20 px-1.5 py-0.5 text-arena">P {recipe.prot_g}g</span>
+          <span className="rounded bg-arena/20 px-1.5 py-0.5 text-arena">G {recipe.carbs_g}g</span>
+          <span className="rounded bg-arena/20 px-1.5 py-0.5 text-arena">L {recipe.fats_g}g</span>
+        </div>
+      </div>
+
+      {recipe.ingredients.length > 0 && (
+        <div className="mb-2 rounded-lg border border-arena-border bg-background p-2">
+          <p className="mb-1 text-[9px] font-black tracking-widest text-arena-muted">INGRÉDIENTS</p>
+          <ul className="flex flex-col gap-0.5">
+            {recipe.ingredients.map((ing, i) => (
+              <li key={i} className="flex justify-between gap-2 text-[11px] text-foreground">
+                <span>{ing.name}</span>
+                <span className="text-arena-muted">{ing.qty}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {recipe.steps.length > 0 && (
+        <div className="rounded-lg border border-arena-border bg-background p-2">
+          <p className="mb-1 text-[9px] font-black tracking-widest text-arena-muted">PRÉPARATION</p>
+          <ol className="flex list-decimal flex-col gap-1 pl-4">
+            {recipe.steps.map((s, i) => (
+              <li key={i} className="text-[11px] text-foreground">{s}</li>
+            ))}
+          </ol>
+        </div>
+      )}
+    </div>
+  );
+}
