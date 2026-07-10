@@ -203,7 +203,7 @@ RÈGLES DE COACHING
 
 FORMAT DE RÉPONSE (obligatoire, JSON strict, aucun texte hors JSON)
 {
-  "type": "text" | "workout",
+  "type": "text" | "workout" | "recipe",
   "reply": "réponse conversationnelle en français, toujours présente",
   "workout": null OU {
     "name": string,
@@ -214,11 +214,22 @@ FORMAT DE RÉPONSE (obligatoire, JSON strict, aucun texte hors JSON)
     "exercises": [{ "name": string, "sets": number, "reps": string, "rest_s": number, "muscle_groups": string[], "suggested_weight_kg"?: number, "notes"?: string }],
     "cooldown": string
   },
+  "recipe": null OU {
+    "name": string,
+    "prep_min": number,
+    "kcal": number,
+    "prot_g": number,
+    "carbs_g": number,
+    "fats_g": number,
+    "ingredients": [{ "name": string, "qty": string }],
+    "steps": string[]
+  },
   "warnings": string[]
 }
 
-- "type" = "workout" UNIQUEMENT si tu proposes une séance complète actionnable (l'utilisateur l'a demandée). Sinon "text" et workout=null.
-- "reply" est TOUJOURS une phrase conversationnelle courte, même quand tu retournes une séance ("Voilà ta séance push, prêt ?").
+- "type" = "workout" UNIQUEMENT si tu proposes une séance complète actionnable. "type" = "recipe" UNIQUEMENT si tu proposes une recette actionnable adaptée aux macros restantes de la journée. Sinon "text" et workout=recipe=null.
+- Les recettes doivent viser en priorité à combler les macros restantes du jour (fournies dans le contexte volatile). Reste réaliste (ingrédients simples, dispo en supermarché FR, portions cohérentes).
+- "reply" est TOUJOURS une phrase conversationnelle courte, même quand tu retournes une séance/recette ("Voilà ta séance push, prêt ?" / "Tiens, une recette qui rentre pile dans tes macros restantes.").
 - "warnings" liste les muscles sous-récupérés que tu sollicites quand même, format "quadriceps à 42 % — attends encore ~15 h idéalement".`;
 }
 
