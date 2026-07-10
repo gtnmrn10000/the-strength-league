@@ -3,7 +3,8 @@ import { Link } from "@tanstack/react-router";
 import { Plus, Search, Trophy, Target, Flame } from "lucide-react";
 import PostCard from "./social/PostCard";
 import { fetchFeed, type FeedPost } from "@/lib/social";
-import { loadUserProfile, goalLabel, goalEmoji } from "./userProfile";
+import { loadUserProfile, goalLabel } from "./userProfile";
+import { GoalIcon } from "@/lib/gradeIcons";
 
 export default function Feed({ onCreate }: { onCreate: () => void }) {
   const [posts, setPosts] = useState<FeedPost[]>([]);
