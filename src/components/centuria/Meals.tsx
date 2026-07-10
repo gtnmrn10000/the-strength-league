@@ -160,7 +160,7 @@ export default function Meals() {
 
   const handlePhotoFile = async (file: File) => {
     if (!isPremium) {
-      toast.error("Fonctionnalité réservée aux abonnés Premium.");
+      openPaywall("photo-ia");
       return;
     }
     setPhotoLoading(true);
