@@ -601,7 +601,7 @@ export default function PRFlow({
                   onClick={handleSubmit}
                   className="mt-6 h-16 w-full rounded-2xl bg-gradient-to-r from-arena to-[#B91C1C] font-[Anton] text-2xl uppercase tracking-wider text-arena-foreground shadow-[0_0_30px_var(--arena-glow)]"
                 >
-                  🔥 VALIDER MON PR
+                  <span className="inline-flex items-center gap-2"><Flame size={22} /> VALIDER MON PR</span>
                 </motion.button>
               </motion.div>
             )}
