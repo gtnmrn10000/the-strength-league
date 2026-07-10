@@ -65,12 +65,8 @@ type ProfileCtx = {
   goal: string | null;
 };
 
-async function ensurePremium(supabase: any, userId: string): Promise<ProfileCtx> {
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("is_premium, pseudo, age, poids, taille, sexe, niveau_activite, goal")
-    .eq("user_id", userId)
-    .maybeSingle();
+async function ensurePremium(supabase: any, _userId: string): Promise<ProfileCtx> {
+  const { data, error } = await supabase.rpc("get_my_profile").maybeSingle();
   if (error) throw new Response("Erreur profil", { status: 500 });
   if (!data?.is_premium) throw new Response("PREMIUM_REQUIRED", { status: 402 });
   return data as ProfileCtx;
