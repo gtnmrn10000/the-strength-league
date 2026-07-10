@@ -70,9 +70,9 @@ function QuickStats({ goal }: { goal: string | null }) {
     <div className="flex-1">
       <div className="grid grid-cols-3 gap-2">
         {[
-          { icon: Trophy, label: "Rank", value: "#—", color: "text-arena-gold" },
+          { icon: Trophy, label: "Rang", value: "#—", color: "text-arena-gold" },
           { icon: Target, label: "Grade", value: "RECRUE", color: "text-arena" },
-          { icon: Flame, label: "Streak", value: "1j", color: "text-arena" },
+          { icon: Flame, label: "Série", value: "1j", color: "text-arena" },
         ].map(({ icon: Icon, label, value, color }) => (
           <div key={label} className="flex flex-col items-center gap-1 rounded-2xl border border-arena-border bg-arena-surface p-2.5">
             <Icon size={14} className={color} />
