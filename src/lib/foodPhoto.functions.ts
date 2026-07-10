@@ -24,14 +24,13 @@ export const recognizeFoodPhoto = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => schema.parse(d))
   .handler(async ({ data, context }): Promise<FoodPhotoResult> => {
-    // 1. Gate: subscription check
-    const { data: profile, error: pErr } = await context.supabase
-      .from("profiles")
-      .select("is_premium")
-      .eq("user_id", context.userId)
-      .maybeSingle();
+    // 1. Gate: subscription check via secure RPC (is_premium is not
+    // readable through the public Data API — only through this RPC).
+    const { data: isPremium, error: pErr } = await context.supabase.rpc(
+      "is_current_user_premium"
+    );
     if (pErr) throw new Response("Erreur profil", { status: 500 });
-    if (!profile?.is_premium) {
+    if (!isPremium) {
       throw new Response("PREMIUM_REQUIRED", { status: 402 });
     }
 
