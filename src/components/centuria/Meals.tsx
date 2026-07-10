@@ -23,6 +23,7 @@ import {
   tdee,
 } from "@/lib/nutrition";
 import { toast } from "sonner";
+import { useSubscription } from "@/hooks/useSubscription";
 
 export default function Meals() {
   const [showScanner, setShowScanner] = useState(false);
@@ -36,7 +37,7 @@ export default function Meals() {
   const [results, setResults] = useState<FoodProduct[]>([]);
   const [logs, setLogs] = useState<FoodLog[]>([]);
   const [goals, setGoals] = useState<MacroGoals>(DEFAULT_GOALS);
-  const [isPremium, setIsPremium] = useState(false);
+  const { isPremium, openPaywall } = useSubscription();
   const [photoLoading, setPhotoLoading] = useState(false);
   const photoInputRef = useRef<HTMLInputElement>(null);
   const recognizePhoto = recognizeFoodPhoto;
@@ -61,15 +62,13 @@ export default function Meals() {
         .rpc("get_my_profile")
         .maybeSingle();
       if (!data) return;
-      const { sexe, age, poids, taille, niveau_activite, is_premium } = data as {
+      const { sexe, age, poids, taille, niveau_activite } = data as {
         sexe: Sexe | null;
         age: number | null;
         poids: number | null;
         taille: number | null;
         niveau_activite: ActivityLevel | null;
-        is_premium: boolean | null;
       };
-      setIsPremium(!!is_premium);
       if (sexe && age && poids && taille) {
         const kcal = tdee({
           sexe,
@@ -161,7 +160,7 @@ export default function Meals() {
 
   const handlePhotoFile = async (file: File) => {
     if (!isPremium) {
-      toast.error("Fonctionnalité réservée aux abonnés Premium.");
+      openPaywall("photo-ia");
       return;
     }
     setPhotoLoading(true);
@@ -252,7 +251,7 @@ export default function Meals() {
         <button
           onClick={() => {
             if (!isPremium) {
-              toast.error("Photo réservée aux abonnés Premium.");
+              openPaywall("photo-ia");
               return;
             }
             photoInputRef.current?.click();
