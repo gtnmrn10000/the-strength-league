@@ -199,7 +199,7 @@ export default function Profile() {
         <>
           <h3 className="mb-3 mt-6 text-xs font-black tracking-widest text-arena-muted">OBJECTIF ACTUEL</h3>
           <div className="flex items-center gap-3 rounded-2xl border border-arena-border bg-arena-surface p-4">
-            <span className="text-2xl">{goalEmoji(profile.goal)}</span>
+            <GoalIcon goal={profile.goal} size={24} className="text-arena" />
             <div>
               <p className="font-black text-foreground">{goalLabel(profile.goal)}</p>
               <p className="text-xs text-arena-sub">Défini à l'inscription · Modifiable dans les réglages</p>
