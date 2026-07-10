@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Loader2, Send, Trash2, AlertTriangle, Play } from "lucide-react";
+import { Loader2, Send, Trash2, AlertTriangle, Play, ChefHat, BarChart3, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
 import {
   coachChat,
@@ -8,6 +8,7 @@ import {
   saveWorkoutSession,
   type ChatMsg,
   type GeneratedWorkout,
+  type GeneratedRecipe,
 } from "@/lib/coach.functions";
 
 export default function CoachChat({ onSessionStarted }: { onSessionStarted?: () => void }) {
