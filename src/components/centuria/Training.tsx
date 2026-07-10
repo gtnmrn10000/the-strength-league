@@ -23,7 +23,7 @@ export default function Training({ onPR, refreshKey }: { onPR: () => void; refre
       if (!user || cancelled) return;
 
       const [profileRes, prsRes] = await Promise.all([
-        supabase.from("profiles").select("poids").eq("user_id", user.id).maybeSingle(),
+        supabase.rpc("get_my_profile").maybeSingle(),
         supabase
           .from("prs")
           .select("exercise, weight_kg, reps, created_at")
@@ -33,7 +33,7 @@ export default function Training({ onPR, refreshKey }: { onPR: () => void; refre
       ]);
 
       if (cancelled) return;
-      if (profileRes.data?.poids) setBodyweight(Number(profileRes.data.poids));
+      if ((profileRes.data as any)?.poids) setBodyweight(Number((profileRes.data as any).poids));
 
       if (prsRes.data) {
         const bests: Record<string, VerifiedPR> = {};
