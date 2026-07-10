@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Loader2, Send, Trash2, AlertTriangle, Play } from "lucide-react";
+import { Loader2, Send, Trash2, AlertTriangle, Play, ChefHat, BarChart3, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
 import {
   coachChat,
@@ -8,6 +8,7 @@ import {
   saveWorkoutSession,
   type ChatMsg,
   type GeneratedWorkout,
+  type GeneratedRecipe,
 } from "@/lib/coach.functions";
 
 export default function CoachChat({ onSessionStarted }: { onSessionStarted?: () => void }) {
@@ -35,19 +36,24 @@ export default function CoachChat({ onSessionStarted }: { onSessionStarted?: () 
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
 
-  const send = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const text = input.trim();
+  const runMessage = async (text: string) => {
     if (!text || loading) return;
     const optimistic: ChatMsg = { role: "user", content: text, at: new Date().toISOString() };
     setMessages((m) => [...m, optimistic]);
     setInput("");
     setLoading(true);
     try {
-      const { reply, workout, warnings } = await coachChat({ data: { message: text } });
+      const { reply, workout, recipe, warnings } = await coachChat({ data: { message: text } });
       setMessages((m) => [
         ...m,
-        { role: "assistant", content: reply, workout: workout ?? null, warnings: warnings ?? [], at: new Date().toISOString() },
+        {
+          role: "assistant",
+          content: reply,
+          workout: workout ?? null,
+          recipe: recipe ?? null,
+          warnings: warnings ?? [],
+          at: new Date().toISOString(),
+        },
       ]);
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
@@ -58,6 +64,16 @@ export default function CoachChat({ onSessionStarted }: { onSessionStarted?: () 
     } finally {
       setLoading(false);
     }
+  };
+
+  const send = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await runMessage(input.trim());
+  };
+
+  const quickAction = (label: string, prompt: string) => () => {
+    if (loading) return;
+    runMessage(prompt);
   };
 
   const clear = async () => {
@@ -153,6 +169,8 @@ export default function CoachChat({ onSessionStarted }: { onSessionStarted?: () 
                     onStart={() => startSession(i, m.workout!)}
                   />
                 )}
+
+                {m.role === "assistant" && m.recipe && <RecipeCard recipe={m.recipe} />}
               </li>
             ))}
             {loading && (
@@ -165,6 +183,27 @@ export default function CoachChat({ onSessionStarted }: { onSessionStarted?: () 
           </ul>
         )}
         <div ref={bottomRef} />
+      </div>
+
+      <div className="flex gap-2 overflow-x-auto border-t border-arena-border bg-background px-3 py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <QuickChip
+          icon={ChefHat}
+          label="Recette express"
+          disabled={loading}
+          onClick={quickAction("Recette express", "Propose-moi une recette rapide qui rentre pile dans mes macros restantes du jour.")}
+        />
+        <QuickChip
+          icon={BarChart3}
+          label="Bilan semaine"
+          disabled={loading}
+          onClick={quickAction("Bilan semaine", "Fais-moi un bilan honnête de ma semaine (séances, groupes travaillés, apports) et donne 3 recommandations concrètes.")}
+        />
+        <QuickChip
+          icon={TrendingUp}
+          label="Analyse PR"
+          disabled={loading}
+          onClick={quickAction("Analyse PR", "Analyse la progression de mes PR (squat/bench/deadlift) et dis-moi si je stagne, sur quoi me concentrer, et un objectif réaliste pour le prochain PR.")}
+        />
       </div>
 
       <form onSubmit={send} className="flex items-center gap-2 border-t border-arena-border bg-background px-3 py-2">
@@ -256,6 +295,78 @@ function WorkoutCard({
         {starting ? <Loader2 size={14} className="animate-spin" /> : <Play size={14} />}
         DÉMARRER CETTE SÉANCE
       </button>
+    </div>
+  );
+}
+
+function QuickChip({
+  icon: Icon,
+  label,
+  onClick,
+  disabled,
+}: {
+  icon: React.ElementType;
+  label: string;
+  onClick: () => void;
+  disabled?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className="flex flex-shrink-0 items-center gap-1.5 rounded-full border border-arena-border bg-arena-surface px-3 py-1.5 text-[11px] font-black tracking-wider text-foreground disabled:opacity-50 active:scale-[0.97]"
+    >
+      <Icon size={12} className="text-arena" />
+      {label}
+    </button>
+  );
+}
+
+function RecipeCard({ recipe }: { recipe: GeneratedRecipe }) {
+  return (
+    <div className="w-full max-w-[95%] rounded-2xl border border-arena-border bg-arena-surface p-3">
+      <div className="mb-2 flex items-start justify-between gap-2">
+        <div>
+          <h4 className="flex items-center gap-1.5 text-sm font-black text-foreground">
+            <ChefHat size={14} className="text-arena" />
+            {recipe.name}
+          </h4>
+          <p className="text-[11px] text-arena-muted">
+            {recipe.prep_min} min · {recipe.kcal} kcal
+          </p>
+        </div>
+        <div className="flex flex-shrink-0 gap-1 text-[10px] font-black">
+          <span className="rounded bg-arena/20 px-1.5 py-0.5 text-arena">P {recipe.prot_g}g</span>
+          <span className="rounded bg-arena/20 px-1.5 py-0.5 text-arena">G {recipe.carbs_g}g</span>
+          <span className="rounded bg-arena/20 px-1.5 py-0.5 text-arena">L {recipe.fats_g}g</span>
+        </div>
+      </div>
+
+      {recipe.ingredients.length > 0 && (
+        <div className="mb-2 rounded-lg border border-arena-border bg-background p-2">
+          <p className="mb-1 text-[9px] font-black tracking-widest text-arena-muted">INGRÉDIENTS</p>
+          <ul className="flex flex-col gap-0.5">
+            {recipe.ingredients.map((ing, i) => (
+              <li key={i} className="flex justify-between gap-2 text-[11px] text-foreground">
+                <span>{ing.name}</span>
+                <span className="text-arena-muted">{ing.qty}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {recipe.steps.length > 0 && (
+        <div className="rounded-lg border border-arena-border bg-background p-2">
+          <p className="mb-1 text-[9px] font-black tracking-widest text-arena-muted">PRÉPARATION</p>
+          <ol className="flex list-decimal flex-col gap-1 pl-4">
+            {recipe.steps.map((s, i) => (
+              <li key={i} className="text-[11px] text-foreground">{s}</li>
+            ))}
+          </ol>
+        </div>
+      )}
     </div>
   );
 }

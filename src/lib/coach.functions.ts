@@ -24,15 +24,34 @@ export type GeneratedWorkout = {
   cooldown: string;
 };
 
+export type GeneratedRecipe = {
+  name: string;
+  prep_min: number;
+  kcal: number;
+  prot_g: number;
+  carbs_g: number;
+  fats_g: number;
+  ingredients: Array<{ name: string; qty: string }>;
+  steps: string[];
+};
+
 export type AssistantContent = {
   reply: string;
   workout?: GeneratedWorkout | null;
+  recipe?: GeneratedRecipe | null;
   warnings?: string[];
 };
 
 export type ChatMsg =
   | { role: "user"; content: string; at?: string }
-  | { role: "assistant"; content: string; workout?: GeneratedWorkout | null; warnings?: string[]; at?: string };
+  | {
+      role: "assistant";
+      content: string;
+      workout?: GeneratedWorkout | null;
+      recipe?: GeneratedRecipe | null;
+      warnings?: string[];
+      at?: string;
+    };
 
 // ---------- Helpers ----------
 type ProfileCtx = {
@@ -114,6 +133,48 @@ function sanitizeWorkout(parsed: any, fallbackFocus: string, fallbackDuration: n
   };
 }
 
+function sanitizeRecipe(parsed: any): GeneratedRecipe {
+  return {
+    name: String(parsed?.name ?? "Recette Coach").slice(0, 80),
+    prep_min: Math.max(1, Math.min(240, Number(parsed?.prep_min) || 15)),
+    kcal: Math.max(0, Math.min(4000, Math.round(Number(parsed?.kcal) || 0))),
+    prot_g: Math.max(0, Math.min(400, Math.round(Number(parsed?.prot_g) || 0))),
+    carbs_g: Math.max(0, Math.min(600, Math.round(Number(parsed?.carbs_g) || 0))),
+    fats_g: Math.max(0, Math.min(300, Math.round(Number(parsed?.fats_g) || 0))),
+    ingredients: Array.isArray(parsed?.ingredients)
+      ? parsed.ingredients.slice(0, 20).map((i: any) => ({
+          name: String(i?.name ?? "").slice(0, 60),
+          qty: String(i?.qty ?? "").slice(0, 40),
+        })).filter((i: any) => i.name)
+      : [],
+    steps: Array.isArray(parsed?.steps)
+      ? parsed.steps.slice(0, 12).map((s: any) => String(s).slice(0, 300)).filter(Boolean)
+      : [],
+  };
+}
+
+async function loadTodayNutrition(supabase: any, userId: string) {
+  const start = new Date();
+  start.setHours(0, 0, 0, 0);
+  const { data } = await supabase
+    .from("food_logs")
+    .select("product_name, calories, proteins_g, carbs_g, fats_g")
+    .eq("user_id", userId)
+    .gte("logged_at", start.toISOString())
+    .order("logged_at", { ascending: false });
+  const logs = (data ?? []) as Array<{ product_name: string; calories: number; proteins_g: number; carbs_g: number; fats_g: number }>;
+  const totals = logs.reduce(
+    (acc, l) => ({
+      kcal: acc.kcal + (l.calories ?? 0),
+      prot: acc.prot + (l.proteins_g ?? 0),
+      carbs: acc.carbs + (l.carbs_g ?? 0),
+      fats: acc.fats + (l.fats_g ?? 0),
+    }),
+    { kcal: 0, prot: 0, carbs: 0, fats: 0 },
+  );
+  return { logs, totals };
+}
+
 // ---------- System prompt (bloc stable, cache-friendly) ----------
 function buildStableSystemPrompt(profile: ProfileCtx): string {
   const stats = [
@@ -142,7 +203,7 @@ RÈGLES DE COACHING
 
 FORMAT DE RÉPONSE (obligatoire, JSON strict, aucun texte hors JSON)
 {
-  "type": "text" | "workout",
+  "type": "text" | "workout" | "recipe",
   "reply": "réponse conversationnelle en français, toujours présente",
   "workout": null OU {
     "name": string,
@@ -153,11 +214,22 @@ FORMAT DE RÉPONSE (obligatoire, JSON strict, aucun texte hors JSON)
     "exercises": [{ "name": string, "sets": number, "reps": string, "rest_s": number, "muscle_groups": string[], "suggested_weight_kg"?: number, "notes"?: string }],
     "cooldown": string
   },
+  "recipe": null OU {
+    "name": string,
+    "prep_min": number,
+    "kcal": number,
+    "prot_g": number,
+    "carbs_g": number,
+    "fats_g": number,
+    "ingredients": [{ "name": string, "qty": string }],
+    "steps": string[]
+  },
   "warnings": string[]
 }
 
-- "type" = "workout" UNIQUEMENT si tu proposes une séance complète actionnable (l'utilisateur l'a demandée). Sinon "text" et workout=null.
-- "reply" est TOUJOURS une phrase conversationnelle courte, même quand tu retournes une séance ("Voilà ta séance push, prêt ?").
+- "type" = "workout" UNIQUEMENT si tu proposes une séance complète actionnable. "type" = "recipe" UNIQUEMENT si tu proposes une recette actionnable adaptée aux macros restantes de la journée. Sinon "text" et workout=recipe=null.
+- Les recettes doivent viser en priorité à combler les macros restantes du jour (fournies dans le contexte volatile). Reste réaliste (ingrédients simples, dispo en supermarché FR, portions cohérentes).
+- "reply" est TOUJOURS une phrase conversationnelle courte, même quand tu retournes une séance/recette ("Voilà ta séance push, prêt ?" / "Tiens, une recette qui rentre pile dans tes macros restantes.").
 - "warnings" liste les muscles sous-récupérés que tu sollicites quand même, format "quadriceps à 42 % — attends encore ~15 h idéalement".`;
 }
 
@@ -192,9 +264,10 @@ export const coachChat = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => chatSchema.parse(d))
   .handler(async ({ data, context }): Promise<AssistantContent> => {
     const profile = await ensurePremium(context.supabase, context.userId);
-    const [{ recovery, recent5 }, conv] = await Promise.all([
+    const [{ recovery, recent5 }, conv, nutrition] = await Promise.all([
       loadRecoverySnapshot(context.supabase, context.userId),
       loadOrInitConversation(context.supabase, context.userId),
+      loadTodayNutrition(context.supabase, context.userId),
     ]);
 
     // Contexte volatile injecté juste avant le message utilisateur
@@ -213,15 +286,40 @@ export const coachChat = createServerFn({ method: "POST" })
             .join(" | ")}.`
         : "Aucune séance loggée récemment.";
 
-    const stableSystem = buildStableSystemPrompt(profile);
-    const volatileContext = `Récupération actuelle: ${recoveryLine}. ${undersLine} ${sessionsLine}`;
+    // Objectifs macros (Mifflin-St Jeor split 30/40/30) — reproduit ici côté serveur pour éviter un import client.
+    let goalsLine = "Objectifs macros: non calculables (profil incomplet).";
+    let remainingLine = "";
+    if (profile.age && profile.poids && profile.taille && profile.sexe && profile.niveau_activite) {
+      const activityFactor: Record<string, number> = {
+        sedentaire: 1.2, leger: 1.375, modere: 1.55, intense: 1.725, tres_intense: 1.9,
+      };
+      const base = 10 * profile.poids + 6.25 * profile.taille - 5 * profile.age;
+      const bmr = profile.sexe === "homme" ? base + 5 : base - 161;
+      const kcalGoal = Math.round(bmr * (activityFactor[profile.niveau_activite] ?? 1.55));
+      const protGoal = Math.round((kcalGoal * 0.3) / 4);
+      const carbsGoal = Math.round((kcalGoal * 0.4) / 4);
+      const fatGoal = Math.round((kcalGoal * 0.3) / 9);
+      goalsLine = `Objectifs jour: ${kcalGoal}kcal / ${protGoal}g prot / ${carbsGoal}g gluc / ${fatGoal}g lip.`;
+      const remKcal = Math.max(0, kcalGoal - Math.round(nutrition.totals.kcal));
+      const remProt = Math.max(0, protGoal - Math.round(nutrition.totals.prot));
+      const remCarbs = Math.max(0, carbsGoal - Math.round(nutrition.totals.carbs));
+      const remFat = Math.max(0, fatGoal - Math.round(nutrition.totals.fats));
+      remainingLine = `Restant à couvrir aujourd'hui: ${remKcal}kcal / ${remProt}g prot / ${remCarbs}g gluc / ${remFat}g lip.`;
+    }
+    const consumedLine = `Consommé aujourd'hui: ${Math.round(nutrition.totals.kcal)}kcal / ${Math.round(nutrition.totals.prot)}g prot / ${Math.round(nutrition.totals.carbs)}g gluc / ${Math.round(nutrition.totals.fats)}g lip (${nutrition.logs.length} entrée${nutrition.logs.length > 1 ? "s" : ""}).`;
 
-    // On ne renvoie que le contenu texte des tours précédents (pas le blob workout complet),
-    // ça garde le contexte léger tout en préservant le fil de discussion.
-    const historyForModel = conv.messages.slice(-20).map((m) => ({
-      role: m.role,
-      content: m.role === "assistant" && m.workout ? `${m.content}\n[séance générée: ${m.workout.name}]` : m.content,
-    }));
+    const stableSystem = buildStableSystemPrompt(profile);
+    const volatileContext = `Récupération actuelle: ${recoveryLine}. ${undersLine} ${sessionsLine} ${goalsLine} ${consumedLine} ${remainingLine}`.trim();
+
+    // On ne renvoie que le contenu texte des tours précédents pour garder le contexte léger.
+    const historyForModel = conv.messages.slice(-20).map((m) => {
+      let content = m.content;
+      if (m.role === "assistant") {
+        if (m.workout) content += `\n[séance générée: ${m.workout.name}]`;
+        if (m.recipe) content += `\n[recette générée: ${m.recipe.name}]`;
+      }
+      return { role: m.role, content };
+    });
 
     const res = await callLovableAI({
       model: "google/gemini-2.5-flash",
@@ -241,27 +339,29 @@ export const coachChat = createServerFn({ method: "POST" })
     try {
       parsed = JSON.parse(content);
     } catch {
-      parsed = { type: "text", reply: content?.toString().trim() || "…", workout: null, warnings: [] };
+      parsed = { type: "text", reply: content?.toString().trim() || "…", workout: null, recipe: null, warnings: [] };
     }
 
-    const type = parsed?.type === "workout" ? "workout" : "text";
-    const reply: string = (parsed?.reply ?? "").toString().trim() || (type === "workout" ? "Voici ta séance." : "…");
+    const type = parsed?.type === "workout" ? "workout" : parsed?.type === "recipe" ? "recipe" : "text";
+    const reply: string =
+      (parsed?.reply ?? "").toString().trim() ||
+      (type === "workout" ? "Voici ta séance." : type === "recipe" ? "Voici une recette adaptée." : "…");
     const warnings: string[] = Array.isArray(parsed?.warnings)
       ? parsed.warnings.slice(0, 10).map((w: any) => String(w).slice(0, 200))
       : [];
     const workout = type === "workout" && parsed?.workout ? sanitizeWorkout(parsed.workout, "séance", 60) : null;
+    const recipe = type === "recipe" && parsed?.recipe ? sanitizeRecipe(parsed.recipe) : null;
 
     const nowIso = new Date().toISOString();
     const newMessages: ChatMsg[] = [
       ...conv.messages,
       { role: "user", content: data.message, at: nowIso },
-      { role: "assistant", content: reply, workout, warnings, at: new Date().toISOString() },
+      { role: "assistant", content: reply, workout, recipe, warnings, at: new Date().toISOString() },
     ];
-    // Clamp history to last 200 turns
     const trimmed = newMessages.slice(-200);
     await saveConversation(context.supabase, context.userId, trimmed);
 
-    return { reply, workout, warnings };
+    return { reply, workout, recipe, warnings };
   });
 
 // ---------- Historique ----------
@@ -322,4 +422,102 @@ export const getRecentMuscleWork = createServerFn({ method: "GET" })
       .order("completed_at", { ascending: false });
     if (error) throw new Response("Erreur récup", { status: 500 });
     return (data ?? []) as Array<{ muscle_groups: string[]; completed_at: string; name: string }>;
+  });
+
+// ---------- Bilan hebdomadaire (onglet Analyse) ----------
+export type WeeklyStats = {
+  sessions: { count: number; total_min: number; by_group: Record<string, number> };
+  nutrition: {
+    days: number;
+    avg_kcal: number;
+    avg_prot: number;
+    avg_carbs: number;
+    avg_fats: number;
+    goals: { kcal: number; prot: number; carbs: number; fats: number } | null;
+  };
+  prs: { verified_count: number; last_pr_at: string | null };
+};
+
+export const getWeeklyStats = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<WeeklyStats> => {
+    const since = new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString();
+    const [sessionsQ, foodQ, prsQ, profQ] = await Promise.all([
+      context.supabase
+        .from("workout_sessions")
+        .select("muscle_groups, duration_min, completed_at")
+        .eq("user_id", context.userId)
+        .gte("completed_at", since),
+      context.supabase
+        .from("food_logs")
+        .select("calories, proteins_g, carbs_g, fats_g, logged_at")
+        .eq("user_id", context.userId)
+        .gte("logged_at", since),
+      context.supabase
+        .from("prs")
+        .select("id, created_at, status")
+        .eq("user_id", context.userId)
+        .eq("status", "verified")
+        .gte("created_at", since),
+      context.supabase
+        .from("profiles")
+        .select("age, poids, taille, sexe, niveau_activite, last_pr_at")
+        .eq("user_id", context.userId)
+        .maybeSingle(),
+    ]);
+
+    const sessions = (sessionsQ.data ?? []) as Array<{ muscle_groups: string[] | null; duration_min: number | null; completed_at: string }>;
+    const by_group: Record<string, number> = {};
+    let total_min = 0;
+    for (const s of sessions) {
+      total_min += s.duration_min ?? 0;
+      for (const g of s.muscle_groups ?? []) by_group[g] = (by_group[g] ?? 0) + 1;
+    }
+
+    const foods = (foodQ.data ?? []) as Array<{ calories: number; proteins_g: number; carbs_g: number; fats_g: number; logged_at: string }>;
+    const dayKey = (d: string) => new Date(d).toISOString().slice(0, 10);
+    const daysSet = new Set(foods.map((f) => dayKey(f.logged_at)));
+    const days = Math.max(1, daysSet.size);
+    const sums = foods.reduce(
+      (a, f) => ({
+        kcal: a.kcal + (f.calories ?? 0),
+        prot: a.prot + (f.proteins_g ?? 0),
+        carbs: a.carbs + (f.carbs_g ?? 0),
+        fats: a.fats + (f.fats_g ?? 0),
+      }),
+      { kcal: 0, prot: 0, carbs: 0, fats: 0 },
+    );
+
+    const p = profQ.data as { age: number | null; poids: number | null; taille: number | null; sexe: string | null; niveau_activite: string | null; last_pr_at: string | null } | null;
+    let goals: WeeklyStats["nutrition"]["goals"] = null;
+    if (p?.age && p.poids && p.taille && p.sexe && p.niveau_activite) {
+      const activityFactor: Record<string, number> = {
+        sedentaire: 1.2, leger: 1.375, modere: 1.55, intense: 1.725, tres_intense: 1.9,
+      };
+      const base = 10 * p.poids + 6.25 * p.taille - 5 * p.age;
+      const bmr = p.sexe === "homme" ? base + 5 : base - 161;
+      const kcal = Math.round(bmr * (activityFactor[p.niveau_activite] ?? 1.55));
+      goals = {
+        kcal,
+        prot: Math.round((kcal * 0.3) / 4),
+        carbs: Math.round((kcal * 0.4) / 4),
+        fats: Math.round((kcal * 0.3) / 9),
+      };
+    }
+
+    return {
+      sessions: { count: sessions.length, total_min, by_group },
+      nutrition: {
+        days: daysSet.size,
+        avg_kcal: Math.round(sums.kcal / days),
+        avg_prot: Math.round(sums.prot / days),
+        avg_carbs: Math.round(sums.carbs / days),
+        avg_fats: Math.round(sums.fats / days),
+        goals,
+      },
+      prs: {
+        verified_count: (prsQ.data ?? []).length,
+        last_pr_at: p?.last_pr_at ?? null,
+      },
+    };
   });

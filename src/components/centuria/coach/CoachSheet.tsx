@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { MessageCircle, Activity, Lock } from "lucide-react";
+import { MessageCircle, Activity, BarChart3, Lock } from "lucide-react";
 import CoachChat from "./CoachChat";
 import CoachRecovery from "./CoachRecovery";
+import CoachAnalyse from "./CoachAnalyse";
 import { isCurrentUserPremium } from "@/lib/subscription";
 
-type Tab = "chat" | "recovery";
+type Tab = "chat" | "recovery" | "analyse";
 
 export default function CoachSheet({
   open,
@@ -54,13 +55,15 @@ export default function CoachSheet({
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-2 border-b border-arena-border bg-background">
+            <div className="grid grid-cols-3 border-b border-arena-border bg-background">
               <TabBtn active={tab === "chat"} onClick={() => setTab("chat")} icon={MessageCircle} label="Chat" />
-              <TabBtn active={tab === "recovery"} onClick={() => setTab("recovery")} icon={Activity} label="Récupération" />
+              <TabBtn active={tab === "recovery"} onClick={() => setTab("recovery")} icon={Activity} label="Récup" />
+              <TabBtn active={tab === "analyse"} onClick={() => setTab("analyse")} icon={BarChart3} label="Analyse" />
             </div>
             <div className="flex-1 overflow-hidden">
               {tab === "chat" && <CoachChat onSessionStarted={handleSessionStarted} />}
               {tab === "recovery" && <CoachRecovery refreshKey={refreshKey} />}
+              {tab === "analyse" && <CoachAnalyse refreshKey={refreshKey} />}
             </div>
           </>
         )}
