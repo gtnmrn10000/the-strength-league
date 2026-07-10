@@ -11,14 +11,15 @@ export const GRADES = [
   "centurion",
   "titan",
   "legende",
+  "divin",
 ] as const;
 
 export type Grade = (typeof GRADES)[number];
 
 export const THRESHOLDS: Record<string, number[]> = {
-  squat:    [0, 0.8, 1.2, 1.6, 2.0, 2.3, 2.6, 3.0],
-  bench:    [0, 0.6, 0.9, 1.2, 1.5, 1.8, 2.0, 2.3],
-  deadlift: [0, 1.0, 1.4, 1.8, 2.2, 2.6, 3.0, 3.5],
+  squat:    [0, 0.8, 1.2, 1.6, 2.0, 2.3, 2.6, 3.0, 3.5],
+  bench:    [0, 0.6, 0.9, 1.2, 1.5, 1.8, 2.0, 2.3, 2.6],
+  deadlift: [0, 1.0, 1.4, 1.8, 2.2, 2.6, 3.0, 3.5, 4.0],
 };
 
 export const GRADE_LABELS: Record<Grade, string> = {
@@ -30,6 +31,7 @@ export const GRADE_LABELS: Record<Grade, string> = {
   centurion: "Centurion",
   titan: "Titan",
   legende: "Légende",
+  divin: "Divin",
 };
 
 export const GRADE_EMOJIS: Record<Grade, string> = {
@@ -41,6 +43,7 @@ export const GRADE_EMOJIS: Record<Grade, string> = {
   centurion: "🦅",
   titan: "⚡",
   legende: "👑",
+  divin: "✨",
 };
 
 function gradeIndexForLift(exercise: string, ratio: number): number {

@@ -1,5 +1,4 @@
 import {
-  Award,
   TrendingUp,
   Flame,
   Target,
@@ -14,10 +13,31 @@ import {
 } from "lucide-react";
 import { GRADES, type Grade } from "./grades";
 
+import recrueAsset from "@/assets/grades/recrue.png.asset.json";
+import soldatAsset from "@/assets/grades/soldat.png.asset.json";
+import guerrierAsset from "@/assets/grades/guerrier.png.asset.json";
+import spartiateAsset from "@/assets/grades/spartiate.png.asset.json";
+import gladiateurAsset from "@/assets/grades/gladiateur.png.asset.json";
+import centurionAsset from "@/assets/grades/centurion.png.asset.json";
+import titanAsset from "@/assets/grades/titan.png.asset.json";
+import legendeAsset from "@/assets/grades/legende.png.asset.json";
+import divinAsset from "@/assets/grades/divin.png.asset.json";
+
+export const GRADE_IMAGE: Record<Grade, string> = {
+  recruit: recrueAsset.url,
+  soldat: soldatAsset.url,
+  guerrier: guerrierAsset.url,
+  spartiate: spartiateAsset.url,
+  gladiateur: gladiateurAsset.url,
+  centurion: centurionAsset.url,
+  titan: titanAsset.url,
+  legende: legendeAsset.url,
+  divin: divinAsset.url,
+};
+
 /**
- * Unified grade icon: one shape (Award) for all 8 tiers.
- * Higher tiers get more fill and stronger gold saturation, so the
- * hierarchy is readable at a glance without switching icons.
+ * Circular grade medal image with a gold border that thickens for top tiers.
+ * Replaces the previous single-Award-shape icon system.
  */
 export function GradeIcon({
   grade,
@@ -28,40 +48,41 @@ export function GradeIcon({
   size?: number;
   className?: string;
 }) {
-  const tier = Math.max(0, GRADES.indexOf(grade)); // 0..7
-  // Progressive fill from recruit (none) to legende (full)
-  const fillOpacity = tier / (GRADES.length - 1); // 0 → 1
-  // Neutral gray for the lowest tier, gold from tier 1+
-  const color = tier === 0 ? "var(--arena-muted, #8A8578)" : "var(--arena-gold, #D4AF37)";
+  const tier = Math.max(0, GRADES.indexOf(grade));
+  // Top tiers (Titan, Légende, Divin) get a thicker gold ring.
+  const borderWidth = tier >= 6 ? Math.max(2, Math.round(size * 0.09)) : 1;
+  const glow =
+    tier >= 7
+      ? `0 0 ${Math.round(size * 0.35)}px rgba(212,175,55,0.55)`
+      : tier >= 6
+      ? `0 0 ${Math.round(size * 0.2)}px rgba(212,175,55,0.35)`
+      : "none";
   return (
-    <Award
-      size={size}
+    <img
+      src={GRADE_IMAGE[grade]}
+      alt={grade}
+      width={size}
+      height={size}
       className={className}
-      color={color}
-      fill={color}
-      fillOpacity={fillOpacity}
-      strokeWidth={2}
+      style={{
+        width: size,
+        height: size,
+        borderRadius: "50%",
+        objectFit: "cover",
+        border: `${borderWidth}px solid var(--arena-gold, #D4AF37)`,
+        boxShadow: glow,
+        display: "inline-block",
+        flexShrink: 0,
+      }}
     />
   );
 }
 
-/** Kept for compatibility; single shape now (Award). */
-export const GRADE_ICON: Record<Grade, LucideIcon> = {
-  recruit: Award,
-  soldat: Award,
-  guerrier: Award,
-  spartiate: Award,
-  gladiateur: Award,
-  centurion: Award,
-  titan: Award,
-  legende: Award,
-};
-
 /** Goals — semantic Lucide icons. */
 export const GOAL_ICON: Record<string, LucideIcon> = {
-  masse: TrendingUp,     // prise de masse = progression
-  seche: Flame,          // sèche / perte de gras = brûler
-  performance: Target,   // performance = viser un objectif
+  masse: TrendingUp,
+  seche: Flame,
+  performance: Target,
 };
 
 export function GoalIcon({
@@ -77,14 +98,12 @@ export function GoalIcon({
   return <Icon size={size} className={className} />;
 }
 
-/** PR / achievement icons. */
 export const PR_ICON: LucideIcon = Trophy;
 export const MEDAL_ICON: LucideIcon = Medal;
 export const STREAK_ICON: LucideIcon = Flame;
 export const XP_ICON: LucideIcon = Zap;
 export const PRO_ICON: LucideIcon = Sparkles;
 
-/** Lucide icon for the 3 main PR lifts. */
 export const EXERCISE_ICON: Record<string, LucideIcon> = {
   squat: Footprints,
   bench: Dumbbell,
