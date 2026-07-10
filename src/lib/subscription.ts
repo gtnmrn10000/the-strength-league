@@ -1,24 +1,20 @@
 import { supabase } from "@/integrations/supabase/client";
 
 /**
- * Vérifie le statut d'abonnement d'un utilisateur.
- * Aujourd'hui : lit le flag `is_premium` sur `profiles` (mock).
- * Demain : brancher RevenueCat ici sans changer les call-sites.
+ * Vérifie le statut premium de l'utilisateur connecté via la RPC sécurisée
+ * `is_current_user_premium` (SECURITY DEFINER filtrée par auth.uid()).
+ * Le champ `is_premium` n'est plus lisible via le Data API public.
  */
-export async function checkSubscriptionStatus(userId: string): Promise<boolean> {
-  if (!userId) return false;
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("is_premium")
-    .eq("user_id", userId)
-    .maybeSingle();
+export async function isCurrentUserPremium(): Promise<boolean> {
+  const { data, error } = await supabase.rpc("is_current_user_premium");
   if (error) return false;
-  return !!data?.is_premium;
+  return !!data;
 }
 
-/** Version pratique pour le user courant côté client. */
-export async function isCurrentUserPremium(): Promise<boolean> {
-  const { data: auth } = await supabase.auth.getUser();
-  if (!auth.user) return false;
-  return checkSubscriptionStatus(auth.user.id);
+/**
+ * Compat : on ne peut lire que son propre statut premium.
+ * `userId` est ignoré ; renvoie le statut de l'utilisateur connecté.
+ */
+export async function checkSubscriptionStatus(_userId: string): Promise<boolean> {
+  return isCurrentUserPremium();
 }

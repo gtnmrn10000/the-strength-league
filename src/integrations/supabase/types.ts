@@ -392,6 +392,7 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      is_current_user_premium: { Args: never; Returns: boolean }
     }
     Enums: {
       activity_level:
