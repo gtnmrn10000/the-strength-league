@@ -1,13 +1,15 @@
 import { useState, useEffect } from "react";
-import { MapPin, Trophy, Flame, Dumbbell, Target, Zap, ArrowRight, LayoutGrid, Settings as SettingsIcon, Scale } from "lucide-react";
+import { MapPin, Trophy, Flame, Dumbbell, Target, Zap, ArrowRight, LayoutGrid, Settings as SettingsIcon, Scale, Utensils } from "lucide-react";
 import { motion } from "framer-motion";
 import { loadUserProfile, goalLabel } from "./userProfile";
 import { supabase } from "@/integrations/supabase/client";
 import { GRADES, GRADE_LABELS, THRESHOLDS, type Grade } from "@/lib/grades";
 import { GradeIcon, GoalIcon } from "@/lib/gradeIcons";
+import { fetchNutritionStreak, type NutritionStreak } from "@/lib/foodLogs";
 import GradeGallery from "./GradeGallery";
 import Settings from "./Settings";
 import WeighIns from "./WeighIns";
+
 
 interface DbProfile {
   xp: number;
