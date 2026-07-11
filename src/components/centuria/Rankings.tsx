@@ -1,11 +1,24 @@
 import { useState } from "react";
+import { GRADES, GRADE_LABELS, type Grade } from "@/lib/grades";
 
-const ranking: [number, string, string, string][] = [
-  [1, "Marius", "TITAN", "690 kg"],
-  [2, "Noah", "DEMI-DIEU", "642 kg"],
-  [3, "Enzo", "DEMI-DIEU", "625 kg"],
-  [847, "Toi", "SPARTIATE", "530 kg"],
+// Podium généré à partir des vrais grades Centuria (Recrue → Divin).
+// Positions élevées → grades élevés, décroissant vers "Toi".
+const ranking: { pos: number; name: string; grade: Grade; total: string }[] = [
+  { pos: 1, name: "Marius", grade: "divin", total: "820 kg" },
+  { pos: 2, name: "Noah", grade: "legende", total: "755 kg" },
+  { pos: 3, name: "Enzo", grade: "titan", total: "690 kg" },
+  { pos: 12, name: "Lucas", grade: "centurion", total: "612 kg" },
+  { pos: 47, name: "Théo", grade: "gladiateur", total: "548 kg" },
+  { pos: 847, name: "Toi", grade: "spartiate", total: "530 kg" },
 ];
+
+// Sanity check à la compilation : tous les grades utilisés existent bien.
+ranking.forEach((r) => {
+  if (!GRADES.includes(r.grade)) {
+    // eslint-disable-next-line no-console
+    console.warn("[Rankings] grade inconnu:", r.grade);
+  }
+});
 
 export default function Rankings() {
   const [sub, setSub] = useState("Classements");
@@ -32,12 +45,12 @@ export default function Rankings() {
             ))}
           </div>
           <div className="flex flex-col gap-2">
-            {ranking.map(([pos, name, grade, total]) => (
+            {ranking.map(({ pos, name, grade, total }) => (
               <div key={pos} className="flex items-center gap-3 rounded-2xl border border-arena-border bg-arena-surface p-3">
                 <span className={`text-lg font-black ${pos <= 3 ? "text-arena-gold" : "text-arena-sub"}`}>#{pos}</span>
                 <div className="flex-1">
                   <p className="font-bold text-foreground">{name}</p>
-                  <p className="text-xs text-arena-sub">{grade}</p>
+                  <p className="text-xs uppercase tracking-widest text-arena-sub">{GRADE_LABELS[grade]}</p>
                 </div>
                 <span className="font-black text-foreground">{total}</span>
               </div>
