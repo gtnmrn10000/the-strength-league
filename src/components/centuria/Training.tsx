@@ -176,13 +176,13 @@ export default function Training({ onPR, refreshKey }: { onPR: () => void; refre
       {/* Actions rapides */}
       <div className="mb-4 grid grid-cols-2 gap-3">
         <ActionCard icon={Camera} title="Log un PR" glow onClick={onPR} />
-        <ActionCard icon={NotebookPen} title="Log séance" onClick={() => setWorkoutOpen(true)} />
+        <ActionCard icon={NotebookPen} title="Mon entraînement" onClick={() => setWorkoutOpen(true)} />
         <ActionCard icon={Target} title="Mes objectifs" onClick={() => setGoalOpen(true)} />
         <ActionCard icon={Sparkles} title="Coach IA" premium onClick={() => setCoachOpen(true)} />
       </div>
 
-      {/* Diagramme corporel */}
-      <BodyDiagram intensities={intensities} targets={targetMuscles} />
+      {/* Diagramme corporel — couleurs = état de récup par muscle */}
+      <BodyDiagram recovery={recovery} targets={targetMuscles} />
 
       {/* Séance du jour */}
       <div className="mt-5 flex items-center justify-between">
