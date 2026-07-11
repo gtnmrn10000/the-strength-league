@@ -212,10 +212,44 @@ export default function PRFlow({
 
   const handleVideoLoaded = useCallback(
     (e: React.SyntheticEvent<HTMLVideoElement>) => {
-      const dur = e.currentTarget.duration;
+      const el = e.currentTarget;
+      const dur = el.duration;
+      // iOS/Chrome renvoient parfois Infinity/NaN avant un seek : on force
+      // le calcul en seekant très loin, puis on relit dans onDurationChange.
+      if (!Number.isFinite(dur) || dur === 0) {
+        try {
+          el.currentTime = 1e9;
+        } catch {
+          /* ignore */
+        }
+        return;
+      }
       setVideoDuration(dur);
-      if (dur < 5 || dur > 90) {
-        setError("La vidéo doit durer entre 5 et 90 secondes");
+      if (dur < 3 || dur > 120) {
+        setError("La vidéo doit durer entre 3 et 120 secondes");
+      } else {
+        setError(null);
+      }
+    },
+    []
+  );
+
+  const handleDurationChange = useCallback(
+    (e: React.SyntheticEvent<HTMLVideoElement>) => {
+      const el = e.currentTarget;
+      const dur = el.duration;
+      if (!Number.isFinite(dur) || dur === 0) return;
+      // Remet le curseur au début après le seek "de sondage"
+      if (el.currentTime > dur) {
+        try {
+          el.currentTime = 0;
+        } catch {
+          /* ignore */
+        }
+      }
+      setVideoDuration(dur);
+      if (dur < 3 || dur > 120) {
+        setError("La vidéo doit durer entre 3 et 120 secondes");
       } else {
         setError(null);
       }
