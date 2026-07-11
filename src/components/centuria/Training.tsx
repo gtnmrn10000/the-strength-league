@@ -347,6 +347,54 @@ export default function Training({ onPR, refreshKey }: { onPR: () => void; refre
           </p>
         </div>
       )}
+
+      <SectionTitle>HISTORIQUE DES SÉANCES</SectionTitle>
+      {history.length === 0 ? (
+        <div className="rounded-2xl border border-arena-border bg-arena-surface p-4 text-center">
+          <p className="text-sm text-arena-muted">Aucune séance terminée</p>
+          <p className="mt-1 text-xs text-arena-sub">Termine une séance pour la voir ici.</p>
+        </div>
+      ) : (
+        <ul className="flex flex-col gap-2">
+          {history.map((h) => {
+            const vol = Math.round(totalVolume(h.exercises));
+            const nbEx = Array.isArray(h.exercises) ? h.exercises.length : 0;
+            const d = new Date(h.completed_at);
+            return (
+              <li
+                key={h.id}
+                className="rounded-2xl border border-arena-border bg-arena-surface p-3"
+              >
+                <div className="flex items-baseline justify-between gap-2">
+                  <p className="text-sm font-black text-foreground truncate">
+                    {h.name ?? "Séance"}
+                  </p>
+                  <span className="text-[10px] font-bold text-arena-muted whitespace-nowrap">
+                    {d.toLocaleDateString("fr-FR", { day: "2-digit", month: "short" })}
+                  </span>
+                </div>
+                <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-arena-sub">
+                  <span>{nbEx} exos</span>
+                  {vol > 0 && <span>· {vol.toLocaleString("fr-FR")} kg volume</span>}
+                  {h.duration_min ? <span>· {h.duration_min} min</span> : null}
+                </div>
+                {h.muscle_groups && h.muscle_groups.length > 0 && (
+                  <div className="mt-1.5 flex flex-wrap gap-1">
+                    {h.muscle_groups.slice(0, 5).map((m) => (
+                      <span
+                        key={m}
+                        className="rounded-full border border-arena-border bg-secondary px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-arena-sub"
+                      >
+                        {m}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      )}
     </div>
   );
 }
