@@ -196,6 +196,11 @@ export default function Training({ onPR, refreshKey }: { onPR: () => void; refre
     setLibraryOpen(false);
   };
 
+  const switchTemplate = (id: string) => {
+    const t = TEMPLATES.find((x) => x.id === id);
+    if (t) setSession(cloneTemplate(t));
+  };
+
   const startEmptySession = () => {
     setSession({
       id: "custom",
@@ -206,6 +211,8 @@ export default function Training({ onPR, refreshKey }: { onPR: () => void; refre
     });
     setLibraryOpen(true);
   };
+
+
 
 
   return (
