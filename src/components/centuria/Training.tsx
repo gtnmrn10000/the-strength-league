@@ -255,7 +255,7 @@ export default function Training({ onPR, refreshKey }: { onPR: () => void; refre
               : "border-arena bg-arena/10 text-arena"
           }`}
         >
-          + NOUVELLE
+          + CRÉER UNE SÉANCE
         </button>
         {TEMPLATES.map((t) => (
           <button
