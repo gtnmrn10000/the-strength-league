@@ -245,21 +245,20 @@ export default function WorkoutLogger({
             <div className="border-t border-arena-border p-3">
               <button
                 onClick={finish}
-                disabled={saving}
-                className={`flex w-full items-center justify-center gap-2 rounded-xl py-3 font-black tracking-widest transition ${
+                disabled={saving || doneCount === 0}
+                className={`flex w-full items-center justify-center gap-2 rounded-xl py-3 font-black tracking-widest transition disabled:opacity-40 ${
                   allDone
-                    ? "bg-arena-gold text-black"
-                    : "bg-arena-surface text-arena-sub border border-arena-border"
+                    ? "bg-arena-gold text-black shadow-[0_0_24px_rgba(212,175,55,0.35)]"
+                    : "bg-arena text-arena-on"
                 }`}
               >
                 {saving ? (
                   <Loader2 size={16} className="animate-spin" />
-                ) : allDone ? (
-                  <>
-                    <Trophy size={16} /> TERMINER LA SÉANCE
-                  </>
                 ) : (
-                  "SÉANCE EN COURS…"
+                  <>
+                    <Trophy size={16} />
+                    {allDone ? "TERMINER LA SÉANCE" : `ENREGISTRER (${doneCount}/${totalSets})`}
+                  </>
                 )}
               </button>
             </div>
