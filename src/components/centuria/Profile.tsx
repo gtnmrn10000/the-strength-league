@@ -280,13 +280,62 @@ export default function Profile() {
         </>
       )}
 
+      {/* Streak de régularité alimentaire — distinct du système de grades force. */}
+      <h3 className="mb-3 mt-6 text-xs font-black tracking-widest text-arena-muted">DISCIPLINE ALIMENTAIRE</h3>
+      <div className="rounded-2xl border border-arena-border bg-arena-surface p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-arena-gold/10">
+              <Utensils size={20} className="text-arena-gold" />
+            </div>
+            <div>
+              <p className="text-sm font-black text-foreground">
+                {streak && streak.months > 0
+                  ? `${streak.months} mois d'affilée`
+                  : "Démarre ton streak"}
+              </p>
+              <p className="text-[11px] text-arena-sub">
+                Loggé tes repas · tolérance {streak?.tolerance ?? 5} jours ratés / mois
+              </p>
+            </div>
+          </div>
+          <div className="flex flex-col items-end">
+            <span className="text-lg font-black text-arena-gold">
+              {streak?.daysLoggedThisMonth ?? 0}
+            </span>
+            <span className="text-[9px] text-arena-sub">jours ce mois</span>
+          </div>
+        </div>
+        {streak && (
+          <div className="mt-3">
+            <div className="h-1.5 w-full overflow-hidden rounded-full bg-secondary">
+              <div
+                className={`h-full rounded-full ${streak.currentMonthValid ? "bg-arena-gold" : "bg-red-500"}`}
+                style={{
+                  width: `${Math.min(100, Math.round((streak.missedThisMonth / streak.tolerance) * 100))}%`,
+                }}
+              />
+            </div>
+            <p className="mt-1 text-[10px] text-arena-sub">
+              {streak.currentMonthValid
+                ? `${streak.tolerance - streak.missedThisMonth} jours de tolérance restants ce mois`
+                : "Streak cassé ce mois — repars pour un nouveau cycle"}
+            </p>
+          </div>
+        )}
+      </div>
+
       <h3 className="mb-3 mt-6 text-xs font-black tracking-widest text-arena-muted">BADGES</h3>
       <div className="flex flex-wrap gap-2">
         <Badge label={GRADE_LABELS[grade]} />
         {prCount >= 1 && <Badge label="1er PR" />}
         {prCount >= 5 && <Badge label="5 PRs" />}
         {prCount >= 10 && <Badge label="Décathlon" />}
+        {streak && streak.months >= 1 && <Badge label="Discipline · 1 mois" />}
+        {streak && streak.months >= 3 && <Badge label="Discipline · 3 mois" />}
+        {streak && streak.months >= 6 && <Badge label="Discipline · 6 mois" />}
       </div>
+
 
       <Settings
         open={settingsOpen}
