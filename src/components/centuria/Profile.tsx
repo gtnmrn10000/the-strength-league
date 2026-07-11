@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
-import { MapPin, Trophy, Flame, Dumbbell, Target, Zap, ArrowRight, LayoutGrid } from "lucide-react";
+import { MapPin, Trophy, Flame, Dumbbell, Target, Zap, ArrowRight, LayoutGrid, Settings as SettingsIcon, Scale } from "lucide-react";
 import { motion } from "framer-motion";
 import { loadUserProfile, goalLabel } from "./userProfile";
 import { supabase } from "@/integrations/supabase/client";
 import { GRADES, GRADE_LABELS, THRESHOLDS, type Grade } from "@/lib/grades";
 import { GradeIcon, GoalIcon } from "@/lib/gradeIcons";
 import GradeGallery from "./GradeGallery";
+import Settings from "./Settings";
+import WeighIns from "./WeighIns";
 
 interface DbProfile {
   xp: number;
@@ -29,6 +31,8 @@ export default function Profile() {
   const [verifiedPRs, setVerifiedPRs] = useState<VerifiedPR[]>([]);
   const [prCount, setPrCount] = useState(0);
   const [galleryOpen, setGalleryOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [weighOpen, setWeighOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -79,6 +83,22 @@ export default function Profile() {
 
   return (
     <div className="px-4 pt-2 pb-4">
+      <div className="mb-2 flex items-center justify-end gap-2">
+        <button
+          onClick={() => setWeighOpen(true)}
+          className="flex items-center gap-1.5 rounded-full border border-arena-border bg-arena-surface px-3 py-1.5 text-[10px] font-black tracking-widest text-arena-sub active:scale-95 transition"
+        >
+          <Scale size={12} /> PESÉES
+        </button>
+        <button
+          onClick={() => setSettingsOpen(true)}
+          className="flex h-8 w-8 items-center justify-center rounded-full border border-arena-border bg-arena-surface text-arena-sub active:scale-90 transition"
+          aria-label="Paramètres"
+        >
+          <SettingsIcon size={14} />
+        </button>
+      </div>
+
       <CombatCard
         profile={profile}
         grade={grade}
@@ -87,6 +107,7 @@ export default function Profile() {
         bestPRs={bestPRs}
         bodyweight={dbProfile?.poids ?? null}
       />
+
 
       {/* XP + Grade progression */}
       <h3 className="mb-3 mt-6 text-xs font-black tracking-widest text-arena-muted">PROGRESSION</h3>
@@ -226,6 +247,9 @@ export default function Profile() {
         {prCount >= 5 && <Badge label="5 PRs" />}
         {prCount >= 10 && <Badge label="Décathlon" />}
       </div>
+
+      <Settings open={settingsOpen} onOpenChange={setSettingsOpen} />
+      <WeighIns open={weighOpen} onOpenChange={setWeighOpen} />
     </div>
   );
 }

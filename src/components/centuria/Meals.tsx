@@ -87,6 +87,16 @@ export default function Meals() {
     setShowScanner(false);
     setLoading(true);
     try {
+      // 1. Cherche d'abord dans la base communautaire
+      const { findCommunityByBarcode, upsertCommunityFromProduct } = await import("@/lib/communityFoods");
+      const community = await findCommunityByBarcode(code);
+      if (community) {
+        setProduct(community);
+        setPendingSource("barcode");
+        setSheetOpen(true);
+        return;
+      }
+      // 2. Fallback Open Food Facts
       const p = await fetchProductByBarcode(code);
       if (!p) {
         toast.error("Produit introuvable. Passe en saisie manuelle.");
@@ -96,6 +106,8 @@ export default function Meals() {
         setProduct(p);
         setPendingSource("barcode");
         setSheetOpen(true);
+        // Enrichit la base commune en tâche de fond
+        upsertCommunityFromProduct(p).catch(() => {});
       }
     } catch {
       toast.error("Erreur réseau, réessaie.");
@@ -109,9 +121,21 @@ export default function Meals() {
     if (!query.trim()) return;
     setLoading(true);
     try {
-      const r = await searchProducts(query.trim());
-      setResults(r);
-      if (r.length === 0) toast.info("Aucun résultat.");
+      const { searchCommunity } = await import("@/lib/communityFoods");
+      const [community, off] = await Promise.all([
+        searchCommunity(query.trim(), 10),
+        searchProducts(query.trim()),
+      ]);
+      // Dédoublonnage sommaire par nom
+      const seen = new Set<string>();
+      const merged = [...community, ...off].filter((p) => {
+        const k = (p.name || "").toLowerCase();
+        if (seen.has(k)) return false;
+        seen.add(k);
+        return true;
+      });
+      setResults(merged);
+      if (merged.length === 0) toast.info("Aucun résultat.");
     } catch {
       toast.error("Erreur de recherche.");
     } finally {
@@ -125,7 +149,12 @@ export default function Meals() {
       setSheetOpen(false);
       toast.success(`${p.name} ajouté (${grams} g).`);
       reloadLogs();
-    } catch (e) {
+      // Partage vers la base commune si on a un vrai barcode
+      if (pendingSource === "barcode" && p.barcode && !p.barcode.startsWith("community-")) {
+        const { upsertCommunityFromProduct } = await import("@/lib/communityFoods");
+        upsertCommunityFromProduct(p).catch(() => {});
+      }
+    } catch {
       toast.error("Impossible d'ajouter au journal.");
     }
   };
@@ -143,6 +172,9 @@ export default function Meals() {
       setManualOpen(false);
       toast.success(`${entry.product_name} ajouté.`);
       reloadLogs();
+      // Partage anonyme la fiche vers la base commune (verified=false)
+      const { addCommunityManual } = await import("@/lib/communityFoods");
+      addCommunityManual({ name: entry.product_name, ...entry }).catch(() => {});
     } catch {
       toast.error("Impossible d'ajouter au journal.");
     }

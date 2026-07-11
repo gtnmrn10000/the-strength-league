@@ -53,9 +53,19 @@ export default function WorkoutLogger({
   const allDone = totalSets > 0 && doneCount === totalSets;
 
   const toggleSet = (key: string) => {
-    if (done[key]) return; // one-way validation
-    setDone((d) => ({ ...d, [key]: true }));
-    if (template) setRestEndsAt(Date.now() + template.restSec * 1000);
+    setDone((d) => ({ ...d, [key]: !d[key] }));
+    if (template && !done[key]) setRestEndsAt(Date.now() + template.restSec * 1000);
+  };
+
+  const markAllForExercise = (exIdx: number) => {
+    if (!template) return;
+    const ex = template.exercises[exIdx];
+    setDone((d) => {
+      const next = { ...d };
+      ex.sets.forEach((_, i) => { next[`${exIdx}-${i}`] = true; });
+      return next;
+    });
+    setRestEndsAt(Date.now() + template.restSec * 1000);
   };
 
   const restLeft = restEndsAt ? Math.max(0, Math.ceil((restEndsAt - now) / 1000)) : 0;
@@ -177,9 +187,19 @@ export default function WorkoutLogger({
                         <Dumbbell size={16} className="text-arena" />
                         <p className="font-black text-foreground">{ex.name}</p>
                       </div>
-                      <span className="text-[10px] font-bold text-arena-muted">
-                        {exDoneCount}/{ex.sets.length}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-bold text-arena-muted">
+                          {exDoneCount}/{ex.sets.length}
+                        </span>
+                        {!exAllDone && (
+                          <button
+                            onClick={() => markAllForExercise(exIdx)}
+                            className="rounded-full border border-arena-gold/40 bg-arena-gold/10 px-2 py-0.5 text-[9px] font-black tracking-widest text-arena-gold active:scale-90 transition"
+                          >
+                            TOUT
+                          </button>
+                        )}
+                      </div>
                     </div>
                     <div className="mt-3 grid grid-cols-2 gap-2">
                       {ex.sets.map((s, i) => {
@@ -225,21 +245,20 @@ export default function WorkoutLogger({
             <div className="border-t border-arena-border p-3">
               <button
                 onClick={finish}
-                disabled={saving}
-                className={`flex w-full items-center justify-center gap-2 rounded-xl py-3 font-black tracking-widest transition ${
+                disabled={saving || doneCount === 0}
+                className={`flex w-full items-center justify-center gap-2 rounded-xl py-3 font-black tracking-widest transition disabled:opacity-40 ${
                   allDone
-                    ? "bg-arena-gold text-black"
-                    : "bg-arena-surface text-arena-sub border border-arena-border"
+                    ? "bg-arena-gold text-black shadow-[0_0_24px_rgba(212,175,55,0.35)]"
+                    : "bg-arena text-arena-on"
                 }`}
               >
                 {saving ? (
                   <Loader2 size={16} className="animate-spin" />
-                ) : allDone ? (
-                  <>
-                    <Trophy size={16} /> TERMINER LA SÉANCE
-                  </>
                 ) : (
-                  "SÉANCE EN COURS…"
+                  <>
+                    <Trophy size={16} />
+                    {allDone ? "TERMINER LA SÉANCE" : `ENREGISTRER (${doneCount}/${totalSets})`}
+                  </>
                 )}
               </button>
             </div>

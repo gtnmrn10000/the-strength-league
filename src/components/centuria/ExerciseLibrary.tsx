@@ -1,9 +1,11 @@
 import { useMemo, useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Search, Dumbbell, Plus } from "lucide-react";
+import { Search, Plus } from "lucide-react";
 import {
   EXERCISE_LIBRARY,
   CATEGORY_LABEL,
+  CATEGORY_ICON,
+  CATEGORY_ACCENT,
   type LibraryExercise,
   type MuscleCategory,
 } from "@/lib/exerciseCatalog";
@@ -76,14 +78,20 @@ export default function ExerciseLibrary({
             <p className="mt-8 text-center text-xs text-arena-muted">Aucun exercice trouvé</p>
           ) : (
             <ul className="flex flex-col gap-2">
-              {filtered.map((ex) => (
+              {filtered.map((ex) => {
+                const Icon = CATEGORY_ICON[ex.category];
+                const accent = CATEGORY_ACCENT[ex.category];
+                return (
                 <li
                   key={ex.id}
                   className="flex items-center justify-between rounded-2xl border border-arena-border bg-arena-surface p-3"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-arena-gold/10">
-                      <Dumbbell size={18} className="text-arena-gold" />
+                    <div
+                      className="flex h-11 w-11 items-center justify-center rounded-xl"
+                      style={{ background: `${accent}1a`, boxShadow: `0 0 0 1px ${accent}33 inset` }}
+                    >
+                      <Icon size={18} style={{ color: accent }} />
                     </div>
                     <div>
                       <p className="text-sm font-black text-foreground">{ex.name}</p>
@@ -102,7 +110,8 @@ export default function ExerciseLibrary({
                     </button>
                   )}
                 </li>
-              ))}
+                );
+              })}
             </ul>
           )}
         </div>
