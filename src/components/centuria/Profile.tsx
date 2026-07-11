@@ -31,6 +31,8 @@ export default function Profile() {
   const [verifiedPRs, setVerifiedPRs] = useState<VerifiedPR[]>([]);
   const [prCount, setPrCount] = useState(0);
   const [galleryOpen, setGalleryOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [weighOpen, setWeighOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
