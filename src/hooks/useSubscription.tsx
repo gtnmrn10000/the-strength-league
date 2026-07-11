@@ -11,6 +11,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { paywallProvider, EntitlementStatus } from "@/lib/paywall/provider";
 import type { PlanId } from "@/lib/paywall/plans";
+import { QA_MODE } from "@/lib/qaMode";
 
 type PaywallReason = "coach" | "photo-ia" | "analyse" | "recipes" | "video" | "generic";
 
