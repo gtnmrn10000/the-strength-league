@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Globe, Scale as ScaleIcon, Crown, LogOut, Info, Shield, Loader2 } from "lucide-react";
+import { Globe, Scale as ScaleIcon, Crown, LogOut, Info, Shield, Loader2, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSubscription } from "@/hooks/useSubscription";
 import { toast } from "sonner";
@@ -14,11 +14,19 @@ type Lang = "fr" | "en";
 export default function Settings({
   open,
   onOpenChange,
+  onOpenWeighIns,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
+  onOpenWeighIns?: () => void;
 }) {
-  const { isPremium, openPaywall } = useSubscription();
+  const { isPremium, openPaywall, refresh } = useSubscription();
+
+  // Re-read entitlement chaque fois qu'on ouvre Paramètres — évite d'afficher
+  // "Formule gratuite" si le flag a été flip côté DB pendant la session.
+  useEffect(() => {
+    if (open) refresh();
+  }, [open, refresh]);
   const [units, setUnits] = useState<Units>("metric");
   const [lang, setLang] = useState<Lang>("fr");
   const [signingOut, setSigningOut] = useState(false);
@@ -97,6 +105,31 @@ export default function Settings({
               </div>
             </div>
           </Section>
+
+          {/* Suivi corporel */}
+          {onOpenWeighIns && (
+            <Section title="SUIVI CORPOREL">
+              <button
+                type="button"
+                onClick={() => {
+                  // Ferme Paramètres AVANT d'ouvrir Pesées — sinon les deux
+                  // sheets s'empilent (Radix ne ferme pas automatiquement).
+                  onOpenChange(false);
+                  // Laisse l'animation de fermeture terminer avant d'ouvrir
+                  // le suivant, sinon Radix garde le focus trap du 1er.
+                  setTimeout(() => onOpenWeighIns(), 200);
+                }}
+                className="flex w-full items-center justify-between rounded-2xl border border-arena-border bg-arena-surface p-3 active:scale-[0.99] transition"
+              >
+                <div className="flex items-center gap-2">
+                  <ScaleIcon size={16} className="text-arena" />
+                  <span className="text-sm font-bold text-foreground">Pesées & mensurations</span>
+                </div>
+                <ChevronRight size={16} className="text-arena-sub" />
+              </button>
+            </Section>
+          )}
+
 
           {/* Unités */}
           <Section title="UNITÉS">
