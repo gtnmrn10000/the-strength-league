@@ -53,9 +53,19 @@ export default function WorkoutLogger({
   const allDone = totalSets > 0 && doneCount === totalSets;
 
   const toggleSet = (key: string) => {
-    if (done[key]) return; // one-way validation
-    setDone((d) => ({ ...d, [key]: true }));
-    if (template) setRestEndsAt(Date.now() + template.restSec * 1000);
+    setDone((d) => ({ ...d, [key]: !d[key] }));
+    if (template && !done[key]) setRestEndsAt(Date.now() + template.restSec * 1000);
+  };
+
+  const markAllForExercise = (exIdx: number) => {
+    if (!template) return;
+    const ex = template.exercises[exIdx];
+    setDone((d) => {
+      const next = { ...d };
+      ex.sets.forEach((_, i) => { next[`${exIdx}-${i}`] = true; });
+      return next;
+    });
+    setRestEndsAt(Date.now() + template.restSec * 1000);
   };
 
   const restLeft = restEndsAt ? Math.max(0, Math.ceil((restEndsAt - now) / 1000)) : 0;
