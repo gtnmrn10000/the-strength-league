@@ -210,6 +210,7 @@ export default function Meals() {
       return;
     }
     setPhotoLoading(true);
+    console.log("[photo-ia] step 1: reading file", { size: file.size, type: file.type });
     try {
       const dataUrl: string = await new Promise((resolve, reject) => {
         const r = new FileReader();
@@ -217,30 +218,26 @@ export default function Meals() {
         r.onerror = () => reject(r.error);
         r.readAsDataURL(file);
       });
+      console.log("[photo-ia] step 2: calling recognizeFoodPhoto", { bytes: dataUrl.length });
       const result = await recognizePhoto({ data: { image_data_url: dataUrl } });
-      // Convert to FoodProduct shape for ProductSheet
-      const p: FoodProduct = {
-        barcode: `photo-${Date.now()}`,
-        name: result.name,
-        brand: result.brand,
-        image_url: dataUrl,
-        nutriscore: null,
-        nova_group: null,
-        serving_size: `${result.estimated_grams} g (estimé, ${result.confidence})`,
-        nutriments: {
-          energy_kcal_100g: result.nutriments_100g.energy_kcal_100g,
-          proteins_100g: result.nutriments_100g.proteins_100g,
-          carbs_100g: result.nutriments_100g.carbs_100g,
-          fat_100g: result.nutriments_100g.fat_100g,
-          sugars_100g: null,
-          fiber_100g: null,
-          salt_100g: null,
-        },
-      };
-      setProduct(p);
-      setPendingSource("photo");
-      setSheetOpen(true);
+      console.log("[photo-ia] step 3: got result", result);
+
+      // 6. Auto-add: on log directement dans le journal du jour sélectionné
+      const grams = result.estimated_grams;
+      const factor = grams / 100;
+      await addFoodLog({
+        source: "photo",
+        product_name: result.brand ? `${result.brand} · ${result.name}` : result.name,
+        quantity_g: grams,
+        calories: Math.round(result.nutriments_100g.energy_kcal_100g * factor),
+        proteins_g: Math.round(result.nutriments_100g.proteins_100g * factor * 10) / 10,
+        carbs_g: Math.round(result.nutriments_100g.carbs_100g * factor * 10) / 10,
+        fats_g: Math.round(result.nutriments_100g.fat_100g * factor * 10) / 10,
+      });
+      console.log("[photo-ia] step 4: added to journal");
+      toast.success(`${result.name} ajouté (${grams} g estimés).`);
       if (result.notes) toast.info(result.notes);
+      reloadLogs();
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
       console.error("[photo-ia] error", e);
@@ -257,6 +254,7 @@ export default function Meals() {
       setPhotoLoading(false);
     }
   };
+
 
   const totals = useMemo(
     () =>
