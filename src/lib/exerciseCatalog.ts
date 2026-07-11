@@ -124,7 +124,7 @@ export function exerciseIcon(ex: LibraryExercise): LucideIcon {
   return CATEGORY_ICON[ex.category] ?? Dumbbell;
 }
 
-export const EXERCISE_LIBRARY: LibraryExercise[] = [
+export const EXERCISE_LIBRARY: LibraryExercise[] = ([
   // Pectoraux (8)
   { id: "bench", name: "Bench Press", primary: "pectoraux", muscles: ["pectoraux", "triceps"], category: "pectoraux" },
   { id: "incline-bench", name: "Développé incliné barre", primary: "pectoraux", muscles: ["pectoraux", "epaules"], category: "pectoraux" },
@@ -188,7 +188,7 @@ export const EXERCISE_LIBRARY: LibraryExercise[] = [
   { id: "russian-twist", name: "Russian twist", primary: "abdos", muscles: ["abdos"], category: "abdos" },
   { id: "dead-bug", name: "Dead bug", primary: "abdos", muscles: ["abdos"], category: "abdos" },
   { id: "hollow-hold", name: "Hollow hold", primary: "abdos", muscles: ["abdos"], category: "abdos" },
-].map((e) => ({ ...e, image_url: imageFor(e.id) }));
+] as LibraryExercise[]).map((e) => ({ ...e, image_url: imageFor(e.id) }));
 
 /** Retrouve l'image officielle d'un exercice à partir de son nom d'affichage. */
 export function imageForExerciseName(name: string): string | undefined {
