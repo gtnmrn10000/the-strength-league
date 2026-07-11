@@ -44,14 +44,25 @@ export default function Meals() {
   const [photoLoading, setPhotoLoading] = useState(false);
   const photoInputRef = useRef<HTMLInputElement>(null);
   const recognizePhoto = recognizeFoodPhoto;
+  const [selectedDate, setSelectedDate] = useState<Date>(() => new Date());
+  const [datePopoverOpen, setDatePopoverOpen] = useState(false);
+
+  const isToday = useMemo(() => {
+    const t = new Date();
+    return (
+      selectedDate.getDate() === t.getDate() &&
+      selectedDate.getMonth() === t.getMonth() &&
+      selectedDate.getFullYear() === t.getFullYear()
+    );
+  }, [selectedDate]);
 
   const reloadLogs = useCallback(async () => {
     try {
-      setLogs(await fetchTodayLogs());
+      setLogs(await fetchLogsForDate(selectedDate));
     } catch {
       // silent
     }
-  }, []);
+  }, [selectedDate]);
 
   useEffect(() => {
     reloadLogs();
