@@ -38,6 +38,57 @@ export type Database = {
         }
         Relationships: []
       }
+      community_foods: {
+        Row: {
+          barcode: string | null
+          brand: string | null
+          carbs_100g: number
+          created_at: string
+          created_by: string | null
+          fat_100g: number
+          id: string
+          image_url: string | null
+          kcal_100g: number
+          name: string
+          protein_100g: number
+          serving_size: string | null
+          updated_at: string
+          verified: boolean
+        }
+        Insert: {
+          barcode?: string | null
+          brand?: string | null
+          carbs_100g?: number
+          created_at?: string
+          created_by?: string | null
+          fat_100g?: number
+          id?: string
+          image_url?: string | null
+          kcal_100g: number
+          name: string
+          protein_100g?: number
+          serving_size?: string | null
+          updated_at?: string
+          verified?: boolean
+        }
+        Update: {
+          barcode?: string | null
+          brand?: string | null
+          carbs_100g?: number
+          created_at?: string
+          created_by?: string | null
+          fat_100g?: number
+          id?: string
+          image_url?: string | null
+          kcal_100g?: number
+          name?: string
+          protein_100g?: number
+          serving_size?: string | null
+          updated_at?: string
+          verified?: boolean
+        }
+        Relationships: []
+      }
       exercises: {
         Row: {
           created_at: string
@@ -314,6 +365,39 @@ export type Database = {
           status?: string
           user_id?: string
           video_url?: string | null
+          weight_kg?: number
+        }
+        Relationships: []
+      }
+      weigh_ins: {
+        Row: {
+          bodyfat_pct: number | null
+          created_at: string
+          id: string
+          measured_at: string
+          note: string | null
+          user_id: string
+          waist_cm: number | null
+          weight_kg: number
+        }
+        Insert: {
+          bodyfat_pct?: number | null
+          created_at?: string
+          id?: string
+          measured_at?: string
+          note?: string | null
+          user_id: string
+          waist_cm?: number | null
+          weight_kg: number
+        }
+        Update: {
+          bodyfat_pct?: number | null
+          created_at?: string
+          id?: string
+          measured_at?: string
+          note?: string | null
+          user_id?: string
+          waist_cm?: number | null
           weight_kg?: number
         }
         Relationships: []
