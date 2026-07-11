@@ -44,18 +44,102 @@ export interface SuggestedProfile extends PublicProfile {
   recent_hype: number;
 }
 
+type PostRow = {
+  id: string;
+  user_id: string;
+  type: PostType;
+  media_url: string | null;
+  caption: string | null;
+  muscle_groups: string[] | null;
+  macros: Record<string, number> | null;
+  pr_id: string | null;
+  hype_count: number;
+  created_at: string;
+};
+
+type ProfilePreview = {
+  user_id: string;
+  pseudo: string | null;
+  avatar_url: string | null;
+  current_grade: string | null;
+};
+
+type PrPreview = {
+  id: string;
+  exercise: string;
+  weight_kg: number;
+  reps: number;
+};
+
+function fallbackAuthor(userId: string): FeedPost["author"] {
+  return {
+    user_id: userId,
+    pseudo: "Athlète Centuria",
+    avatar_url: null,
+    current_grade: "recruit",
+  };
+}
+
+async function attachFeedRelations(rows: PostRow[], hypedSet = new Set<string>()): Promise<FeedPost[]> {
+  if (rows.length === 0) return [];
+
+  const userIds = [...new Set(rows.map((p) => p.user_id))];
+  const prIds = [...new Set(rows.map((p) => p.pr_id).filter(Boolean) as string[])];
+
+  const [profilesRes, prsRes] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("user_id, pseudo, avatar_url, current_grade")
+      .in("user_id", userIds),
+    prIds.length > 0
+      ? supabase
+          .from("prs")
+          .select("id, exercise, weight_kg, reps")
+          .in("id", prIds)
+      : Promise.resolve({ data: [], error: null }),
+  ]);
+
+  const profilesByUser = new Map<string, ProfilePreview>();
+  if (!profilesRes.error) {
+    (profilesRes.data ?? []).forEach((profile: any) => {
+      profilesByUser.set(profile.user_id, profile as ProfilePreview);
+    });
+  }
+
+  const prsById = new Map<string, PrPreview>();
+  if (!prsRes.error) {
+    (prsRes.data ?? []).forEach((pr: any) => {
+      prsById.set(pr.id, pr as PrPreview);
+    });
+  }
+
+  return rows.map((post) => {
+    const profile = profilesByUser.get(post.user_id);
+    const author = profile
+      ? {
+          user_id: profile.user_id,
+          pseudo: profile.pseudo ?? "Athlète Centuria",
+          avatar_url: profile.avatar_url,
+          current_grade: profile.current_grade ?? "recruit",
+        }
+      : fallbackAuthor(post.user_id);
+
+    return {
+      ...post,
+      author,
+      hyped_by_me: hypedSet.has(post.id),
+      pr: post.pr_id ? prsById.get(post.pr_id) ?? null : null,
+    };
+  });
+}
+
 /* ── Feed with mix algorithm ── */
 export async function fetchFeed(): Promise<FeedPost[]> {
   const { data: { user } } = await supabase.auth.getUser();
 
-  // Load recent posts + author + optional PR data
   const { data: posts, error } = await supabase
     .from("posts")
-    .select(`
-      id, user_id, type, media_url, caption, muscle_groups, macros, pr_id, hype_count, created_at,
-      author:profiles!posts_user_id_fkey(user_id, pseudo, avatar_url, current_grade),
-      pr:prs(exercise, weight_kg, reps)
-    `)
+    .select("id, user_id, type, media_url, caption, muscle_groups, macros, pr_id, hype_count, created_at")
     .order("created_at", { ascending: false })
     .limit(100);
 
@@ -77,7 +161,8 @@ export async function fetchFeed(): Promise<FeedPost[]> {
   // Score: 0.5*recency + 0.3*hype_norm + 0.2*follow_bonus
   const maxHype = Math.max(1, ...posts.map((p: any) => p.hype_count));
   const now = Date.now();
-  const scored = posts.map((p: any) => {
+  const feedPosts = await attachFeedRelations(posts as PostRow[], hypedSet);
+  const scored = feedPosts.map((p) => {
     const ageHours = (now - new Date(p.created_at).getTime()) / 3_600_000;
     const recency = Math.exp(-ageHours / 24);
     const hypeNorm = p.hype_count / (maxHype + 1);
@@ -108,15 +193,11 @@ export async function fetchPublicProfile(userId: string): Promise<PublicProfile 
 export async function fetchUserPosts(userId: string): Promise<FeedPost[]> {
   const { data, error } = await supabase
     .from("posts")
-    .select(`
-      id, user_id, type, media_url, caption, muscle_groups, macros, pr_id, hype_count, created_at,
-      author:profiles!posts_user_id_fkey(user_id, pseudo, avatar_url, current_grade),
-      pr:prs(exercise, weight_kg, reps)
-    `)
+    .select("id, user_id, type, media_url, caption, muscle_groups, macros, pr_id, hype_count, created_at")
     .eq("user_id", userId)
     .order("created_at", { ascending: false });
   if (error) throw error;
-  return (data ?? []).map((p: any) => ({ ...p, hyped_by_me: false })) as FeedPost[];
+  return attachFeedRelations((data ?? []) as PostRow[]);
 }
 
 /* ── Follows ── */

@@ -9,13 +9,29 @@ import { GoalIcon } from "@/lib/gradeIcons";
 export default function Feed({ onCreate }: { onCreate: () => void }) {
   const [posts, setPosts] = useState<FeedPost[]>([]);
   const [loading, setLoading] = useState(true);
+  const [feedError, setFeedError] = useState(false);
   const profile = loadUserProfile();
 
   useEffect(() => {
+    let active = true;
+    setLoading(true);
+    setFeedError(false);
     fetchFeed()
-      .then((r) => setPosts(r))
-      .catch((e) => console.error("feed error", e))
-      .finally(() => setLoading(false));
+      .then((r) => {
+        if (!active) return;
+        setPosts(r);
+      })
+      .catch(() => {
+        if (!active) return;
+        setPosts([]);
+        setFeedError(true);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
   }, []);
 
   return (
@@ -39,7 +55,9 @@ export default function Feed({ onCreate }: { onCreate: () => void }) {
 
       {!loading && posts.length === 0 && (
         <div className="rounded-2xl border border-dashed border-arena-border p-6 text-center">
-          <p className="text-sm text-arena-muted">Le feed est encore vide.</p>
+          <p className="text-sm text-arena-muted">
+            {feedError ? "Le feed est temporairement indisponible." : "Le feed est encore vide."}
+          </p>
           <Link
             to="/discover"
             className="mt-3 inline-flex items-center gap-1.5 text-xs font-black text-arena underline"
