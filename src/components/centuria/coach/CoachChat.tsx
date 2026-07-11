@@ -186,8 +186,8 @@ export default function CoachChat({ onSessionStarted }: { onSessionStarted?: () 
                 {m.role === "assistant" && m.workout && (
                   <WorkoutCard
                     workout={m.workout}
-                    starting={startingIdx === i}
-                    onStart={() => startSession(i, m.workout!)}
+                    startingMode={startingIdx?.i === i ? startingIdx.mode : null}
+                    onStart={(mode, date) => startSession(i, m.workout!, mode, date)}
                   />
                 )}
 
