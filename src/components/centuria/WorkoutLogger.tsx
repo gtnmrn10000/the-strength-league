@@ -187,9 +187,19 @@ export default function WorkoutLogger({
                         <Dumbbell size={16} className="text-arena" />
                         <p className="font-black text-foreground">{ex.name}</p>
                       </div>
-                      <span className="text-[10px] font-bold text-arena-muted">
-                        {exDoneCount}/{ex.sets.length}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-bold text-arena-muted">
+                          {exDoneCount}/{ex.sets.length}
+                        </span>
+                        {!exAllDone && (
+                          <button
+                            onClick={() => markAllForExercise(exIdx)}
+                            className="rounded-full border border-arena-gold/40 bg-arena-gold/10 px-2 py-0.5 text-[9px] font-black tracking-widest text-arena-gold active:scale-90 transition"
+                          >
+                            TOUT
+                          </button>
+                        )}
+                      </div>
                     </div>
                     <div className="mt-3 grid grid-cols-2 gap-2">
                       {ex.sets.map((s, i) => {
