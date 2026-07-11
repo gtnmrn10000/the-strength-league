@@ -501,7 +501,7 @@ export default function PRFlow({
                     "Plan large (corps entier visible)",
                     "Charges visibles (plaques nettes)",
                     "Une seule prise (pas de coupe)",
-                    "Durée 15 à 60 secondes",
+                    "Durée entre 3 et 120 secondes",
                   ].map((r, i) => (
                     <p key={i} className="flex items-start gap-2 py-0.5 text-arena-sub">
                       <Check size={14} className="mt-0.5 shrink-0 text-arena-green" /> {r}
