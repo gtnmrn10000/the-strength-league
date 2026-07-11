@@ -272,8 +272,21 @@ export default function Training({ onPR, refreshKey }: { onPR: () => void; refre
     setLibraryOpen(true);
   };
 
+  const startPlanned = async (row: PlannedRow) => {
+    setSession(plannedToTemplate(row));
+    // On supprime la ligne planifiée pour éviter les doublons ; la séance terminée sera resauvegardée par le WorkoutLogger.
+    await supabase.from("workout_sessions").delete().eq("id", row.id);
+    setPlanned((p) => p.filter((x) => x.id !== row.id));
+    setWorkoutOpen(true);
+  };
 
-
+  const deletePlanned = async (id: string) => {
+    if (!confirm("Supprimer cette séance programmée ?")) return;
+    const prev = planned;
+    setPlanned((p) => p.filter((x) => x.id !== id));
+    const { error } = await supabase.from("workout_sessions").delete().eq("id", id);
+    if (error) setPlanned(prev);
+  };
 
 
   return (
