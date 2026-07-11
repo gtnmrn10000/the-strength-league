@@ -230,7 +230,10 @@ export default function Meals() {
       if (result.notes) toast.info(result.notes);
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
-      if (msg.includes("PREMIUM_REQUIRED") || msg.includes("402")) {
+      console.error("[photo-ia] error", e);
+      if (msg.includes("401") || msg.toLowerCase().includes("unauthorized")) {
+        toast.error("Session expirée, recharge la page pour te reconnecter.");
+      } else if (msg.includes("PREMIUM_REQUIRED") || msg.includes("402")) {
         toast.error("Fonctionnalité réservée aux abonnés Premium.");
       } else if (msg.includes("429")) {
         toast.error("Trop de requêtes, réessaie dans un instant.");
