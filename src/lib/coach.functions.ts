@@ -432,10 +432,12 @@ export const listPlannedWorkouts = createServerFn({ method: "GET" })
       name: string;
       muscle_groups: string[];
       duration_min: number | null;
-      exercises: unknown;
+      // Json from supabase types — kept loose for the client which casts to WorkoutExercise[]
+      exercises: any;
       scheduled_for: string;
     }>;
-  }) as unknown as ReturnType<typeof createServerFn>;
+  });
+
 
 
 const idSchema = z.object({ id: z.string().uuid() });
