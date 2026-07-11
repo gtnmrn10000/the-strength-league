@@ -88,7 +88,7 @@ export default function Settings({
                 </div>
                 {!isPremium && (
                   <button
-                    onClick={() => openPaywall("settings")}
+                    onClick={() => openPaywall("generic")}
                     className="rounded-full bg-arena-gold px-3 py-1.5 text-[10px] font-black tracking-widest text-black active:scale-95 transition"
                   >
                     UPGRADE
