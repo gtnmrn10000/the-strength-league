@@ -404,20 +404,20 @@ export default function PRFlow({
                 </p>
                 <div className="mt-4 flex flex-col gap-4">
                   {EXERCISES.map((ex) => (
-                    <motion.button
+                    <button
                       key={ex.id}
-                      whileTap={{ scale: 0.98 }}
+                      type="button"
                       onClick={() => {
                         setExercise(ex.id);
                         setStep(2);
                       }}
-                      className="flex h-[100px] items-center gap-5 rounded-2xl border border-[#262626] bg-[#141414] px-6 text-left transition-all hover:border-arena hover:shadow-[0_0_15px_var(--arena-glow)]"
+                      className="flex h-[100px] items-center gap-5 rounded-2xl border border-[#262626] bg-[#141414] px-6 text-left transition-all hover:border-arena hover:shadow-[0_0_15px_var(--arena-glow)] active:scale-[0.98]"
                     >
                       <ex.icon size={44} className="text-arena" strokeWidth={2.2} />
                       <span className="font-[Anton] text-xl uppercase tracking-widest text-foreground">
                         {ex.label}
                       </span>
-                    </motion.button>
+                    </button>
                   ))}
                 </div>
               </motion.div>
