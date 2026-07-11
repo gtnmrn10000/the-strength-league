@@ -1,10 +1,11 @@
 import { Plus, ScanLine, Search, Loader2, Trash2, PackageX, Sparkles, Lock, ChevronLeft, ChevronRight, CalendarDays } from "lucide-react";
 import PremiumBadge from "./paywall/PremiumBadge";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { recognizeFoodPhoto } from "@/lib/foodPhoto.functions";
+import { recognizeFoodPhoto, type FoodPhotoResult } from "@/lib/foodPhoto.functions";
 import BarcodeScanner from "./food/BarcodeScanner";
 import ProductSheet from "./food/ProductSheet";
 import ManualEntrySheet from "./food/ManualEntrySheet";
+import PhotoAdjustSheet from "./food/PhotoAdjustSheet";
 import { FoodProduct, fetchProductByBarcode, searchProducts } from "@/lib/openFoodFacts";
 import {
   FoodLog,
