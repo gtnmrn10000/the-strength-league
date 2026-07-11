@@ -422,6 +422,61 @@ export default function Training({ onPR, refreshKey }: { onPR: () => void; refre
         </div>
       )}
 
+      {planned.length > 0 && (
+        <>
+          <SectionTitle>SÉANCES PROGRAMMÉES</SectionTitle>
+          <ul className="mb-4 flex flex-col gap-2">
+            {planned.map((p) => {
+              const d = new Date(p.scheduled_for + "T00:00:00");
+              const today = new Date();
+              today.setHours(0, 0, 0, 0);
+              const isToday = d.getTime() === today.getTime();
+              const label = isToday
+                ? "Aujourd'hui"
+                : d.toLocaleDateString("fr-FR", { weekday: "long", day: "2-digit", month: "short" });
+              const nbEx = Array.isArray(p.exercises) ? p.exercises.length : 0;
+              return (
+                <li
+                  key={p.id}
+                  className="flex items-center gap-2 rounded-2xl border border-arena-border bg-arena-surface p-3"
+                >
+                  <CalendarClock size={18} className="text-arena flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-baseline justify-between gap-2">
+                      <p className="text-sm font-black text-foreground truncate">{p.name ?? "Séance"}</p>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-arena whitespace-nowrap">
+                        {label}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-arena-sub">
+                      {nbEx} exos
+                      {p.duration_min ? ` · ${p.duration_min} min` : ""}
+                      {p.muscle_groups && p.muscle_groups.length > 0
+                        ? ` · ${p.muscle_groups.slice(0, 3).join(", ")}`
+                        : ""}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => startPlanned(p)}
+                    aria-label="Démarrer"
+                    className="flex h-9 w-9 items-center justify-center rounded-xl bg-arena text-arena-on active:scale-95"
+                  >
+                    <Play size={14} />
+                  </button>
+                  <button
+                    onClick={() => deletePlanned(p.id)}
+                    aria-label="Supprimer"
+                    className="flex h-9 w-9 items-center justify-center rounded-xl border border-arena-border text-arena-muted active:scale-95"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </>
+      )}
+
       <SectionTitle>HISTORIQUE DES SÉANCES</SectionTitle>
       {history.length === 0 ? (
         <div className="rounded-2xl border border-arena-border bg-arena-surface p-4 text-center">
