@@ -547,8 +547,11 @@ export default function PRFlow({
                     <video
                       src={videoUrl!}
                       controls
+                      playsInline
+                      preload="metadata"
                       className="w-full rounded-2xl border border-[#262626]"
                       onLoadedMetadata={handleVideoLoaded}
+                      onDurationChange={handleDurationChange}
                     />
                     <div className="flex justify-between text-xs text-arena-sub">
                       <span>
