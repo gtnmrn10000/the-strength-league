@@ -83,6 +83,22 @@ export default function Profile() {
 
   return (
     <div className="px-4 pt-2 pb-4">
+      <div className="mb-2 flex items-center justify-end gap-2">
+        <button
+          onClick={() => setWeighOpen(true)}
+          className="flex items-center gap-1.5 rounded-full border border-arena-border bg-arena-surface px-3 py-1.5 text-[10px] font-black tracking-widest text-arena-sub active:scale-95 transition"
+        >
+          <Scale size={12} /> PESÉES
+        </button>
+        <button
+          onClick={() => setSettingsOpen(true)}
+          className="flex h-8 w-8 items-center justify-center rounded-full border border-arena-border bg-arena-surface text-arena-sub active:scale-90 transition"
+          aria-label="Paramètres"
+        >
+          <SettingsIcon size={14} />
+        </button>
+      </div>
+
       <CombatCard
         profile={profile}
         grade={grade}
@@ -91,6 +107,7 @@ export default function Profile() {
         bestPRs={bestPRs}
         bodyweight={dbProfile?.poids ?? null}
       />
+
 
       {/* XP + Grade progression */}
       <h3 className="mb-3 mt-6 text-xs font-black tracking-widest text-arena-muted">PROGRESSION</h3>
