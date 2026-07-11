@@ -25,8 +25,12 @@ export default function CoachChat({ onSessionStarted }: { onSessionStarted?: () 
       try {
         const h = await getCoachHistory();
         if (!cancelled) setMessages(Array.isArray(h) ? h : []);
-      } catch {
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
         if (!cancelled) setMessages([]);
+        if (msg.includes("401") || msg.toLowerCase().includes("unauthorized")) {
+          toast.error("Session expirée, recharge la page pour te reconnecter.");
+        }
       } finally {
         if (!cancelled) setBooting(false);
       }
