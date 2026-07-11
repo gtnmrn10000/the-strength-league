@@ -188,4 +188,23 @@ export const EXERCISE_LIBRARY: LibraryExercise[] = [
   { id: "russian-twist", name: "Russian twist", primary: "abdos", muscles: ["abdos"], category: "abdos" },
   { id: "dead-bug", name: "Dead bug", primary: "abdos", muscles: ["abdos"], category: "abdos" },
   { id: "hollow-hold", name: "Hollow hold", primary: "abdos", muscles: ["abdos"], category: "abdos" },
-];
+].map((e) => ({ ...e, image_url: imageFor(e.id) }));
+
+/** Retrouve l'image officielle d'un exercice à partir de son nom d'affichage. */
+export function imageForExerciseName(name: string): string | undefined {
+  const norm = name.trim().toLowerCase();
+  const hit = EXERCISE_LIBRARY.find((e) => e.name.toLowerCase() === norm);
+  if (hit?.image_url) return hit.image_url;
+  // fallback: contains
+  const loose = EXERCISE_LIBRARY.find(
+    (e) => norm.includes(e.name.toLowerCase()) || e.name.toLowerCase().includes(norm),
+  );
+  return loose?.image_url;
+}
+
+/** Image officielle pour les 3 exercices du log de PR. */
+export const PR_EXERCISE_IMAGE: Record<"squat" | "bench" | "deadlift", string> = {
+  squat: FREE_EXDB + IMG["squat"],
+  bench: FREE_EXDB + IMG["bench"],
+  deadlift: FREE_EXDB + IMG["deadlift"],
+};
