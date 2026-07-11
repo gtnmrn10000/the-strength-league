@@ -435,7 +435,8 @@ export const listPlannedWorkouts = createServerFn({ method: "GET" })
       exercises: unknown;
       scheduled_for: string;
     }>;
-  });
+  }) as unknown as ReturnType<typeof createServerFn>;
+
 
 const idSchema = z.object({ id: z.string().uuid() });
 
