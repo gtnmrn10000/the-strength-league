@@ -18,6 +18,25 @@ interface VerifiedPR {
   created_at: string;
 }
 
+interface WorkoutHistoryRow {
+  id: string;
+  name: string | null;
+  muscle_groups: string[] | null;
+  duration_min: number | null;
+  completed_at: string;
+  exercises: unknown;
+}
+
+function totalVolume(exercises: unknown): number {
+  if (!Array.isArray(exercises)) return 0;
+  let v = 0;
+  for (const ex of exercises as WorkoutExercise[]) {
+    for (const s of ex.sets ?? []) v += (s.reps || 0) * (s.weight_kg || 0);
+  }
+  return v;
+}
+
+
 /** Clone profond simple d'un template (assez pour éditions locales). */
 function cloneTemplate(t: Template): Template {
   return {
