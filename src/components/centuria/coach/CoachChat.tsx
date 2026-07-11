@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Loader2, Send, Trash2, AlertTriangle, Play, ChefHat, BarChart3, TrendingUp } from "lucide-react";
+import { Loader2, Send, Trash2, AlertTriangle, Play, ChefHat, BarChart3, TrendingUp, CalendarClock } from "lucide-react";
 import { toast } from "sonner";
 import {
   coachChat,
@@ -16,7 +16,7 @@ export default function CoachChat({ onSessionStarted }: { onSessionStarted?: () 
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [booting, setBooting] = useState(true);
-  const [startingIdx, setStartingIdx] = useState<number | null>(null);
+  const [startingIdx, setStartingIdx] = useState<{ i: number; mode: "start" | "schedule" } | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -96,8 +96,13 @@ export default function CoachChat({ onSessionStarted }: { onSessionStarted?: () 
     }
   };
 
-  const startSession = async (idx: number, w: GeneratedWorkout) => {
-    setStartingIdx(idx);
+  const startSession = async (
+    idx: number,
+    w: GeneratedWorkout,
+    mode: "start" | "schedule",
+    scheduledFor: string | null,
+  ) => {
+    setStartingIdx({ i: idx, mode });
     try {
       await saveWorkoutSession({
         data: {
@@ -105,12 +110,18 @@ export default function CoachChat({ onSessionStarted }: { onSessionStarted?: () 
           duration_min: w.duration_min,
           muscle_groups: w.muscle_groups,
           exercises: w.exercises,
+          mode,
+          scheduled_for: mode === "schedule" ? scheduledFor : null,
         },
       });
-      toast.success("Séance envoyée dans Training ✅");
+      if (mode === "start") {
+        toast.success("Séance envoyée dans Training ✅");
+      } else {
+        toast.success(`Séance programmée pour le ${scheduledFor} 📅`);
+      }
       onSessionStarted?.();
     } catch {
-      toast.error("Impossible d'envoyer la séance.");
+      toast.error(mode === "start" ? "Impossible d'envoyer la séance." : "Impossible de programmer la séance.");
     } finally {
       setStartingIdx(null);
     }
@@ -175,8 +186,10 @@ export default function CoachChat({ onSessionStarted }: { onSessionStarted?: () 
                 {m.role === "assistant" && m.workout && (
                   <WorkoutCard
                     workout={m.workout}
-                    starting={startingIdx === i}
-                    onStart={() => startSession(i, m.workout!)}
+                    startingMode={startingIdx?.i === i ? startingIdx.mode : null}
+                    onStart={(mode, date) => {
+                      void startSession(i, m.workout!, mode, date);
+                    }}
                   />
                 )}
 
@@ -247,20 +260,34 @@ export default function CoachChat({ onSessionStarted }: { onSessionStarted?: () 
 
 function WorkoutCard({
   workout,
-  starting,
+  startingMode,
   onStart,
 }: {
   workout: GeneratedWorkout;
-  starting: boolean;
-  onStart: () => void;
+  startingMode: "start" | "schedule" | null;
+  onStart: (mode: "start" | "schedule", date: string | null) => void;
 }) {
+  const todayIso = new Date().toISOString().slice(0, 10);
+  const suggested = workout.scheduled_for && /^\d{4}-\d{2}-\d{2}$/.test(workout.scheduled_for)
+    ? workout.scheduled_for
+    : todayIso;
+  const [date, setDate] = useState<string>(suggested);
+  const busy = startingMode !== null;
+
   return (
     <div className="w-full max-w-[95%] rounded-2xl border border-arena-border bg-arena-surface p-3">
-      <div className="mb-2">
-        <h4 className="text-sm font-black text-foreground">{workout.name}</h4>
-        <p className="text-[11px] text-arena-muted">
-          {workout.focus} · {workout.duration_min} min · {workout.muscle_groups.join(", ")}
-        </p>
+      <div className="mb-2 flex items-start justify-between gap-2">
+        <div>
+          <h4 className="text-sm font-black text-foreground">{workout.name}</h4>
+          <p className="text-[11px] text-arena-muted">
+            {workout.focus} · {workout.duration_min} min · {workout.muscle_groups.join(", ")}
+          </p>
+        </div>
+        {workout.scheduled_for && (
+          <span className="whitespace-nowrap rounded-full border border-arena-border bg-background px-2 py-0.5 text-[10px] font-black text-arena">
+            {workout.scheduled_for}
+          </span>
+        )}
       </div>
 
       {workout.warmup && (
@@ -297,17 +324,41 @@ function WorkoutCard({
         </div>
       )}
 
-      <button
-        onClick={onStart}
-        disabled={starting}
-        className="flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-arena text-xs font-black tracking-widest text-arena-on disabled:opacity-50"
-      >
-        {starting ? <Loader2 size={14} className="animate-spin" /> : <Play size={14} />}
-        DÉMARRER CETTE SÉANCE
-      </button>
+      <div className="flex flex-col gap-2">
+        <button
+          onClick={() => onStart("start", null)}
+          disabled={busy}
+          className="flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-arena text-xs font-black tracking-widest text-arena-on disabled:opacity-50"
+        >
+          {startingMode === "start" ? <Loader2 size={14} className="animate-spin" /> : <Play size={14} />}
+          DÉMARRER MAINTENANT
+        </button>
+        <div className="flex items-stretch gap-2">
+          <input
+            type="date"
+            value={date}
+            min={todayIso}
+            onChange={(e) => setDate(e.target.value)}
+            className="h-10 flex-1 rounded-xl border border-arena-border bg-background px-3 text-xs text-foreground outline-none"
+          />
+          <button
+            onClick={() => onStart("schedule", date)}
+            disabled={busy || !date}
+            className="flex h-10 items-center justify-center gap-2 rounded-xl border border-arena-border bg-arena-surface px-3 text-xs font-black tracking-widest text-foreground disabled:opacity-50"
+          >
+            {startingMode === "schedule" ? (
+              <Loader2 size={14} className="animate-spin" />
+            ) : (
+              <CalendarClock size={14} />
+            )}
+            PROGRAMMER
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
+
 
 function QuickChip({
   icon: Icon,

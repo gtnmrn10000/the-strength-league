@@ -22,6 +22,8 @@ export type GeneratedWorkout = {
   warmup: string;
   exercises: GeneratedExercise[];
   cooldown: string;
+  /** Date ISO YYYY-MM-DD suggérée par l'IA (peut être null si "maintenant"). */
+  scheduled_for?: string | null;
 };
 
 export type GeneratedRecipe = {
@@ -129,6 +131,10 @@ function sanitizeWorkout(parsed: any, fallbackFocus: string, fallbackDuration: n
           notes: e?.notes ? String(e.notes).slice(0, 200) : undefined,
         }))
       : [],
+    scheduled_for:
+      typeof parsed?.scheduled_for === "string" && /^\d{4}-\d{2}-\d{2}$/.test(parsed.scheduled_for)
+        ? parsed.scheduled_for
+        : null,
   };
 }
 
@@ -200,6 +206,11 @@ RÈGLES DE COACHING
 - Tu NE proposes PAS d'exercice qui cible un muscle sous-récupéré, sauf si l'utilisateur insiste ou si tu l'avertis EXPLICITEMENT dans "warnings" avec le muscle + le % actuel.
 - Groupes musculaires acceptés: ${groupsList}. Utilise EXCLUSIVEMENT ces libellés (jamais "jambes" seul, découpe en quadriceps/ischios/fessiers).
 
+PLANIFICATION (IMPORTANT)
+- Quand l'utilisateur demande de générer/proposer une séance SANS préciser QUAND (mots comme "aujourd'hui", "maintenant", "demain", "vendredi", "le 12/03"…), TU NE GÉNÈRES PAS ENCORE la séance. Tu réponds type="text" avec workout=null et reply = une question courte : "Pour quand veux-tu cette séance ? (aujourd'hui, demain, ou une date précise 📅)". Attends sa réponse.
+- Quand la date est précisée (ou déjà donnée dans un tour précédent), génère la séance ET renseigne le champ workout.scheduled_for au format ISO YYYY-MM-DD (utilise la date d'aujourd'hui fournie dans le contexte volatile comme référence pour résoudre "aujourd'hui"/"demain"/jour de semaine).
+- Si l'utilisateur a explicitement dit "maintenant" ou "démarrons", laisse workout.scheduled_for=null (l'app comprendra qu'il veut démarrer tout de suite).
+
 FORMAT DE RÉPONSE (obligatoire, JSON strict, aucun texte hors JSON)
 {
   "type": "text" | "workout" | "recipe",
@@ -211,7 +222,8 @@ FORMAT DE RÉPONSE (obligatoire, JSON strict, aucun texte hors JSON)
     "muscle_groups": string[],
     "warmup": string,
     "exercises": [{ "name": string, "sets": number, "reps": string, "rest_s": number, "muscle_groups": string[], "suggested_weight_kg"?: number, "notes"?: string }],
-    "cooldown": string
+    "cooldown": string,
+    "scheduled_for": string | null
   },
   "recipe": null OU {
     "name": string,
@@ -226,9 +238,9 @@ FORMAT DE RÉPONSE (obligatoire, JSON strict, aucun texte hors JSON)
   "warnings": string[]
 }
 
-- "type" = "workout" UNIQUEMENT si tu proposes une séance complète actionnable. "type" = "recipe" UNIQUEMENT si tu proposes une recette actionnable adaptée aux macros restantes de la journée. Sinon "text" et workout=recipe=null.
+- "type" = "workout" UNIQUEMENT si tu proposes une séance complète actionnable ET que la date est claire. "type" = "recipe" UNIQUEMENT si tu proposes une recette actionnable adaptée aux macros restantes de la journée. Sinon "text" et workout=recipe=null.
 - Les recettes doivent viser en priorité à combler les macros restantes du jour (fournies dans le contexte volatile). Reste réaliste (ingrédients simples, dispo en supermarché FR, portions cohérentes).
-- "reply" est TOUJOURS une phrase conversationnelle courte, même quand tu retournes une séance/recette ("Voilà ta séance push, prêt ?" / "Tiens, une recette qui rentre pile dans tes macros restantes.").
+- "reply" est TOUJOURS une phrase conversationnelle courte, même quand tu retournes une séance/recette ("Voilà ta séance push pour demain, prête ?" / "Tiens, une recette qui rentre pile dans tes macros restantes.").
 - "warnings" liste les muscles sous-récupérés que tu sollicites quand même, format "quadriceps à 42 % — attends encore ~15 h idéalement".`;
 }
 
@@ -308,7 +320,11 @@ export const coachChat = createServerFn({ method: "POST" })
     const consumedLine = `Consommé aujourd'hui: ${Math.round(nutrition.totals.kcal)}kcal / ${Math.round(nutrition.totals.prot)}g prot / ${Math.round(nutrition.totals.carbs)}g gluc / ${Math.round(nutrition.totals.fats)}g lip (${nutrition.logs.length} entrée${nutrition.logs.length > 1 ? "s" : ""}).`;
 
     const stableSystem = buildStableSystemPrompt(profile);
-    const volatileContext = `Récupération actuelle: ${recoveryLine}. ${undersLine} ${sessionsLine} ${goalsLine} ${consumedLine} ${remainingLine}`.trim();
+    const now = new Date();
+    const todayIso = now.toISOString().slice(0, 10);
+    const weekday = now.toLocaleDateString("fr-FR", { weekday: "long" });
+    const dateLine = `Aujourd'hui: ${weekday} ${todayIso}.`;
+    const volatileContext = `${dateLine} Récupération actuelle: ${recoveryLine}. ${undersLine} ${sessionsLine} ${goalsLine} ${consumedLine} ${remainingLine}`.trim();
 
     // On ne renvoie que le contenu texte des tours précédents pour garder le contexte léger.
     const historyForModel = conv.messages.slice(-20).map((m) => {
@@ -378,19 +394,22 @@ export const clearCoachHistory = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-// ---------- Sauvegarde d'une séance ----------
+// ---------- Sauvegarde d'une séance (démarrée maintenant ou programmée) ----------
 const saveSchema = z.object({
   name: z.string().min(1).max(120),
   duration_min: z.number().int().min(1).max(360).optional(),
   muscle_groups: z.array(z.string()).max(10),
   exercises: z.array(z.any()).max(20),
   notes: z.string().max(1000).optional(),
+  mode: z.enum(["start", "schedule"]).default("start"),
+  scheduled_for: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
 });
 
 export const saveWorkoutSession = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => saveSchema.parse(d))
   .handler(async ({ data, context }) => {
+    const isSchedule = data.mode === "schedule";
     const { data: row, error } = await context.supabase
       .from("workout_sessions")
       .insert({
@@ -400,13 +419,59 @@ export const saveWorkoutSession = createServerFn({ method: "POST" })
         muscle_groups: data.muscle_groups,
         exercises: data.exercises,
         notes: data.notes ?? null,
-        completed_at: new Date().toISOString(),
+        completed_at: isSchedule ? null : new Date().toISOString(),
+        scheduled_for: isSchedule ? (data.scheduled_for ?? null) : null,
       })
-      .select("id, completed_at")
+      .select("id, completed_at, scheduled_for")
       .single();
     if (error) throw new Response(error.message, { status: 500 });
     return row;
   });
+
+// ---------- Séances programmées à venir ----------
+export const listPlannedWorkouts = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const today = new Date().toISOString().slice(0, 10);
+    const { data, error } = await context.supabase
+      .from("workout_sessions")
+      .select("id, name, muscle_groups, duration_min, exercises, scheduled_for")
+      .eq("user_id", context.userId)
+      .is("completed_at", null)
+      .not("scheduled_for", "is", null)
+      .gte("scheduled_for", today)
+      .order("scheduled_for", { ascending: true })
+      .limit(20);
+    if (error) throw new Response(error.message, { status: 500 });
+    return (data ?? []) as Array<{
+      id: string;
+      name: string;
+      muscle_groups: string[];
+      duration_min: number | null;
+      // Json from supabase types — kept loose for the client which casts to WorkoutExercise[]
+      exercises: any;
+      scheduled_for: string;
+    }>;
+  });
+
+
+
+const idSchema = z.object({ id: z.string().uuid() });
+
+export const deletePlannedWorkout = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => idSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase
+      .from("workout_sessions")
+      .delete()
+      .eq("id", data.id)
+      .eq("user_id", context.userId)
+      .is("completed_at", null);
+    if (error) throw new Response(error.message, { status: 500 });
+    return { ok: true };
+  });
+
 
 // ---------- Récup pour widget ----------
 export const getRecentMuscleWork = createServerFn({ method: "GET" })

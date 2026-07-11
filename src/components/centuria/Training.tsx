@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Camera, NotebookPen, Target, Sparkles, Dumbbell, Trophy, Plus, Minus, X, Library, Play } from "lucide-react";
+import { Camera, NotebookPen, Target, Sparkles, Dumbbell, Trophy, Plus, Minus, X, Library, Play, CalendarClock, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import CoachSheet from "./coach/CoachSheet";
 import PremiumBadge from "./paywall/PremiumBadge";
@@ -25,6 +25,45 @@ interface WorkoutHistoryRow {
   duration_min: number | null;
   completed_at: string;
   exercises: unknown;
+}
+
+interface PlannedRow {
+  id: string;
+  name: string | null;
+  muscle_groups: string[] | null;
+  duration_min: number | null;
+  scheduled_for: string;
+  exercises: unknown;
+}
+
+type CoachExercise = {
+  name?: string;
+  sets?: number;
+  reps?: string;
+  suggested_weight_kg?: number;
+  muscle_groups?: string[];
+};
+
+/** Convertit une séance générée par le Coach IA (sets=number, reps=string) en Template éditable. */
+function plannedToTemplate(row: PlannedRow): Template {
+  const raw = Array.isArray(row.exercises) ? (row.exercises as CoachExercise[]) : [];
+  const exercises: WorkoutExercise[] = raw.map((e) => {
+    const nSets = Math.max(1, Math.min(10, Number(e?.sets) || 3));
+    const repsNum = parseInt(String(e?.reps ?? "8"), 10) || 8;
+    const w = typeof e?.suggested_weight_kg === "number" ? e.suggested_weight_kg : 0;
+    return {
+      name: String(e?.name ?? "Exercice"),
+      muscle_groups: Array.isArray(e?.muscle_groups) ? e.muscle_groups.map(String) : [],
+      sets: Array.from({ length: nSets }, () => ({ reps: repsNum, weight_kg: w })),
+    };
+  });
+  return {
+    id: "planned",
+    name: row.name ?? "Séance programmée",
+    muscle_groups: row.muscle_groups ?? [],
+    restSec: 90,
+    exercises,
+  };
 }
 
 function totalVolume(exercises: unknown): number {
@@ -63,6 +102,7 @@ export default function Training({ onPR, refreshKey }: { onPR: () => void; refre
   const [session, setSession] = useState<Template>(() => cloneTemplate(TEMPLATES[0]));
   const [recentSessions, setRecentSessions] = useState<Array<{ muscle_groups: string[] | null; completed_at: string }>>([]);
   const [history, setHistory] = useState<WorkoutHistoryRow[]>([]);
+  const [planned, setPlanned] = useState<PlannedRow[]>([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -72,7 +112,7 @@ export default function Training({ onPR, refreshKey }: { onPR: () => void; refre
 
       const since = new Date(Date.now() - 14 * 24 * 3600 * 1000).toISOString();
 
-      const [profileRes, prsRes, sessionsRes, historyRes] = await Promise.all([
+      const [profileRes, prsRes, sessionsRes, historyRes, plannedRes] = await Promise.all([
         supabase.rpc("get_my_profile").maybeSingle(),
         supabase
           .from("prs")
@@ -89,7 +129,17 @@ export default function Training({ onPR, refreshKey }: { onPR: () => void; refre
           .from("workout_sessions")
           .select("id, name, muscle_groups, duration_min, completed_at, exercises")
           .eq("user_id", user.id)
+          .not("completed_at", "is", null)
           .order("completed_at", { ascending: false })
+          .limit(20),
+        supabase
+          .from("workout_sessions")
+          .select("id, name, muscle_groups, duration_min, scheduled_for, exercises")
+          .eq("user_id", user.id)
+          .is("completed_at", null)
+          .not("scheduled_for", "is", null)
+          .gte("scheduled_for", new Date().toISOString().slice(0, 10))
+          .order("scheduled_for", { ascending: true })
           .limit(20),
       ]);
 
@@ -116,6 +166,10 @@ export default function Training({ onPR, refreshKey }: { onPR: () => void; refre
 
       if (historyRes.data) {
         setHistory(historyRes.data as WorkoutHistoryRow[]);
+      }
+
+      if (plannedRes.data) {
+        setPlanned(plannedRes.data as PlannedRow[]);
       }
     })();
     return () => { cancelled = true; };
@@ -218,8 +272,21 @@ export default function Training({ onPR, refreshKey }: { onPR: () => void; refre
     setLibraryOpen(true);
   };
 
+  const startPlanned = async (row: PlannedRow) => {
+    setSession(plannedToTemplate(row));
+    // On supprime la ligne planifiée pour éviter les doublons ; la séance terminée sera resauvegardée par le WorkoutLogger.
+    await supabase.from("workout_sessions").delete().eq("id", row.id);
+    setPlanned((p) => p.filter((x) => x.id !== row.id));
+    setWorkoutOpen(true);
+  };
 
-
+  const deletePlanned = async (id: string) => {
+    if (!confirm("Supprimer cette séance programmée ?")) return;
+    const prev = planned;
+    setPlanned((p) => p.filter((x) => x.id !== id));
+    const { error } = await supabase.from("workout_sessions").delete().eq("id", id);
+    if (error) setPlanned(prev);
+  };
 
 
   return (
@@ -353,6 +420,61 @@ export default function Training({ onPR, refreshKey }: { onPR: () => void; refre
             Log ton premier PR pour commencer <Trophy size={12} className="text-arena" />
           </p>
         </div>
+      )}
+
+      {planned.length > 0 && (
+        <>
+          <SectionTitle>SÉANCES PROGRAMMÉES</SectionTitle>
+          <ul className="mb-4 flex flex-col gap-2">
+            {planned.map((p) => {
+              const d = new Date(p.scheduled_for + "T00:00:00");
+              const today = new Date();
+              today.setHours(0, 0, 0, 0);
+              const isToday = d.getTime() === today.getTime();
+              const label = isToday
+                ? "Aujourd'hui"
+                : d.toLocaleDateString("fr-FR", { weekday: "long", day: "2-digit", month: "short" });
+              const nbEx = Array.isArray(p.exercises) ? p.exercises.length : 0;
+              return (
+                <li
+                  key={p.id}
+                  className="flex items-center gap-2 rounded-2xl border border-arena-border bg-arena-surface p-3"
+                >
+                  <CalendarClock size={18} className="text-arena flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-baseline justify-between gap-2">
+                      <p className="text-sm font-black text-foreground truncate">{p.name ?? "Séance"}</p>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-arena whitespace-nowrap">
+                        {label}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-arena-sub">
+                      {nbEx} exos
+                      {p.duration_min ? ` · ${p.duration_min} min` : ""}
+                      {p.muscle_groups && p.muscle_groups.length > 0
+                        ? ` · ${p.muscle_groups.slice(0, 3).join(", ")}`
+                        : ""}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => startPlanned(p)}
+                    aria-label="Démarrer"
+                    className="flex h-9 w-9 items-center justify-center rounded-xl bg-arena text-arena-on active:scale-95"
+                  >
+                    <Play size={14} />
+                  </button>
+                  <button
+                    onClick={() => deletePlanned(p.id)}
+                    aria-label="Supprimer"
+                    className="flex h-9 w-9 items-center justify-center rounded-xl border border-arena-border text-arena-muted active:scale-95"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </>
       )}
 
       <SectionTitle>HISTORIQUE DES SÉANCES</SectionTitle>

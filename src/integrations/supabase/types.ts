@@ -404,7 +404,7 @@ export type Database = {
       }
       workout_sessions: {
         Row: {
-          completed_at: string
+          completed_at: string | null
           created_at: string
           duration_min: number | null
           exercises: Json
@@ -412,10 +412,11 @@ export type Database = {
           muscle_groups: string[]
           name: string
           notes: string | null
+          scheduled_for: string | null
           user_id: string
         }
         Insert: {
-          completed_at?: string
+          completed_at?: string | null
           created_at?: string
           duration_min?: number | null
           exercises?: Json
@@ -423,10 +424,11 @@ export type Database = {
           muscle_groups?: string[]
           name: string
           notes?: string | null
+          scheduled_for?: string | null
           user_id: string
         }
         Update: {
-          completed_at?: string
+          completed_at?: string | null
           created_at?: string
           duration_min?: number | null
           exercises?: Json
@@ -434,6 +436,7 @@ export type Database = {
           muscle_groups?: string[]
           name?: string
           notes?: string | null
+          scheduled_for?: string | null
           user_id?: string
         }
         Relationships: []
