@@ -498,6 +498,38 @@ export default function Meals() {
         onSubmit={handleManualSubmit}
         defaultName={manualDefaultName}
       />
+      <PhotoAdjustSheet
+        open={photoAdjustOpen}
+        onOpenChange={(o) => {
+          setPhotoAdjustOpen(o);
+          if (!o) setPhotoResult(null);
+        }}
+        result={photoResult}
+        onConfirm={async (grams) => {
+          if (!photoResult) return;
+          const factor = grams / 100;
+          try {
+            await addFoodLog({
+              source: "photo",
+              product_name: photoResult.brand
+                ? `${photoResult.brand} · ${photoResult.name}`
+                : photoResult.name,
+              quantity_g: grams,
+              calories: Math.round(photoResult.nutriments_100g.energy_kcal_100g * factor),
+              proteins_g: Math.round(photoResult.nutriments_100g.proteins_100g * factor * 10) / 10,
+              carbs_g: Math.round(photoResult.nutriments_100g.carbs_100g * factor * 10) / 10,
+              fats_g: Math.round(photoResult.nutriments_100g.fat_100g * factor * 10) / 10,
+            });
+            toast.success(`${photoResult.name} ajouté (${grams} g).`);
+            reloadLogs();
+          } catch {
+            toast.error("Ajout impossible.");
+          } finally {
+            setPhotoAdjustOpen(false);
+            setPhotoResult(null);
+          }
+        }}
+      />
     </div>
   );
 }
