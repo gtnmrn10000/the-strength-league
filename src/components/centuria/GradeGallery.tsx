@@ -36,7 +36,8 @@ export default function GradeGallery({
           <div className="flex flex-col gap-3">
             {GRADES.map((g, idx) => {
               const isCurrent = idx === currentIdx;
-              const isUnlocked = idx <= currentIdx;
+              // QA/preview: tous les grades sont visibles en clair pour les testeurs.
+              const isUnlocked = true;
               const xpRequired = idx * XP_PER_GRADE;
               const squatRatio = THRESHOLDS.squat[idx];
               const benchRatio = THRESHOLDS.bench[idx];
