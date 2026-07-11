@@ -62,8 +62,10 @@ export default function Profile() {
         }
       }
     })();
+    fetchNutritionStreak().then((s) => setStreak(s)).catch(() => {});
     return () => { cancelled = true; };
   }, []);
+
 
   const grade = (dbProfile?.current_grade || "recruit") as Grade;
   const xp = dbProfile?.xp ?? 0;
