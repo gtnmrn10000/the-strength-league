@@ -1,4 +1,5 @@
 import { Component, type ReactNode, useEffect, useState } from "react";
+import { toast } from "sonner";
 import Onboarding from "./Onboarding";
 import Feed from "./Feed";
 import Training from "./Training";
@@ -10,6 +11,7 @@ import BottomNav from "./BottomNav";
 import HeaderLogo from "./HeaderLogo";
 import { SubscriptionProvider } from "@/hooks/useSubscription";
 import Paywall from "./paywall/Paywall";
+import { supabase } from "@/integrations/supabase/client";
 
 const ONBOARDED_KEY = "centuria_onboarded";
 
