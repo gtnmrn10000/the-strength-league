@@ -72,7 +72,7 @@ export default function Training({ onPR, refreshKey }: { onPR: () => void; refre
 
       const since = new Date(Date.now() - 14 * 24 * 3600 * 1000).toISOString();
 
-      const [profileRes, prsRes, sessionsRes] = await Promise.all([
+      const [profileRes, prsRes, sessionsRes, historyRes] = await Promise.all([
         supabase.rpc("get_my_profile").maybeSingle(),
         supabase
           .from("prs")
@@ -85,6 +85,12 @@ export default function Training({ onPR, refreshKey }: { onPR: () => void; refre
           .select("muscle_groups, completed_at")
           .eq("user_id", user.id)
           .gte("completed_at", since),
+        supabase
+          .from("workout_sessions")
+          .select("id, name, muscle_groups, duration_min, completed_at, exercises")
+          .eq("user_id", user.id)
+          .order("completed_at", { ascending: false })
+          .limit(20),
       ]);
 
       if (cancelled) return;
