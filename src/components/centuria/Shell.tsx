@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { Component, type ReactNode, useEffect, useState } from "react";
 import Onboarding from "./Onboarding";
 import Feed from "./Feed";
 import Training from "./Training";
@@ -12,6 +12,39 @@ import { SubscriptionProvider } from "@/hooks/useSubscription";
 import Paywall from "./paywall/Paywall";
 
 const ONBOARDED_KEY = "centuria_onboarded";
+
+class TabErrorBoundary extends Component<
+  { resetKey: string; children: ReactNode },
+  { hasError: boolean }
+> {
+  state = { hasError: false };
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidUpdate(prevProps: { resetKey: string }) {
+    if (prevProps.resetKey !== this.props.resetKey && this.state.hasError) {
+      this.setState({ hasError: false });
+    }
+  }
+
+  componentDidCatch(error: unknown) {
+    console.warn("tab render failed", error);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="m-4 rounded-2xl border border-arena-border bg-arena-surface p-6 text-center">
+          <p className="text-sm font-bold text-foreground">Cette section n’a pas pu se charger.</p>
+          <p className="mt-2 text-xs text-arena-muted">Change d’onglet ou réessaie dans un instant.</p>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 export default function Shell() {
   const [hydrated, setHydrated] = useState(false);
@@ -49,11 +82,13 @@ export default function Shell() {
       <div className="relative mx-auto flex h-dvh max-w-md flex-col overflow-hidden bg-background">
         <HeaderLogo />
         <div className="flex-1 overflow-y-auto scrollbar-hide pb-20">
-          {tab === "feed" && <Feed onCreate={() => setShowPR(true)} />}
-          {tab === "training" && <Training onPR={() => setShowPR(true)} refreshKey={refreshKey} />}
-          {tab === "meals" && <Meals />}
-          {tab === "rank" && <Rankings />}
-          {tab === "profile" && <Profile key={refreshKey} />}
+          <TabErrorBoundary resetKey={tab}>
+            {tab === "feed" && <Feed onCreate={() => setShowPR(true)} />}
+            {tab === "training" && <Training onPR={() => setShowPR(true)} refreshKey={refreshKey} />}
+            {tab === "meals" && <Meals />}
+            {tab === "rank" && <Rankings />}
+            {tab === "profile" && <Profile key={refreshKey} />}
+          </TabErrorBoundary>
         </div>
         <BottomNav active={tab} setActive={setTab} />
         <PRFlow open={showPR} onOpenChange={handlePROpenChange} />
