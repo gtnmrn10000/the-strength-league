@@ -284,32 +284,39 @@ export default function PRFlow({
       } = await supabase.auth.getUser();
       if (!user) throw new Error("Non authentifié");
 
-      const ext = videoFile.name.split(".").pop() || "mp4";
-      const path = `${user.id}/${exercise}/${Date.now()}.${ext}`;
+      // Sanitize extension : certains iPhones renvoient "video/quicktime" → .mov
+      const guessedExt =
+        (videoFile.type.split("/")[1] || videoFile.name.split(".").pop() || "mp4")
+          .toLowerCase()
+          .replace(/[^a-z0-9]/g, "")
+          .slice(0, 5) || "mp4";
+      const path = `${user.id}/${exercise}/${Date.now()}.${guessedExt}`;
 
       setUploadProgress(20);
       const { error: uploadErr } = await supabase.storage
         .from("pr-videos")
-        .upload(path, videoFile, { contentType: videoFile.type });
-      if (uploadErr) throw uploadErr;
+        .upload(path, videoFile, {
+          contentType: videoFile.type || "video/mp4",
+          upsert: false,
+        });
+      if (uploadErr) {
+        // Erreurs Storage typiques : "Payload too large", RLS, quota…
+        throw new Error(`Upload vidéo : ${uploadErr.message}`);
+      }
 
-      setUploadProgress(50);
-      const { data: urlData } = supabase.storage
-        .from("pr-videos")
-        .getPublicUrl(path);
-
-      setUploadProgress(70);
+      setUploadProgress(60);
+      // Bucket privé : on stocke le path pour générer un signedURL plus tard.
       const pr = await submitPR({
         data: {
           exercise,
           weight_kg: Number(weight),
           reps,
-          video_url: urlData.publicUrl,
+          video_url: path,
         },
       });
 
       setUploadProgress(85);
-      await new Promise((r) => setTimeout(r, 5000));
+      await new Promise((r) => setTimeout(r, 3000));
       const result = await mockVerifyPR({ data: { prId: pr.id } });
       setVerifyResult(result);
 
@@ -317,6 +324,7 @@ export default function PRFlow({
       setStep("victory");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Erreur inconnue";
+      console.error("[PRFlow] submit failed:", err);
       setError(msg);
       setStep(4);
     }
