@@ -240,6 +240,16 @@ export default function Training({ onPR, refreshKey }: { onPR: () => void; refre
       </div>
 
       <div className="mt-2 flex gap-1.5 overflow-x-auto scrollbar-hide">
+        <button
+          onClick={startEmptySession}
+          className={`shrink-0 rounded-full border px-3 py-1 text-[10px] font-black tracking-widest transition ${
+            session.id === "custom"
+              ? "border-arena-gold bg-arena-gold text-black"
+              : "border-arena bg-arena/10 text-arena"
+          }`}
+        >
+          + NOUVELLE
+        </button>
         {TEMPLATES.map((t) => (
           <button
             key={t.id}
@@ -254,6 +264,7 @@ export default function Training({ onPR, refreshKey }: { onPR: () => void; refre
           </button>
         ))}
       </div>
+
 
       <p className="mt-2 text-[10px] text-arena-sub">
         {session.exercises.length} exos · {totalSets} séries · repos {session.restSec}s
