@@ -1,4 +1,4 @@
-import { Plus, ScanLine, Search, Loader2, Trash2, PackageX, Sparkles, Lock } from "lucide-react";
+import { Plus, ScanLine, Search, Loader2, Trash2, PackageX, Sparkles, Lock, ChevronLeft, ChevronRight, CalendarDays } from "lucide-react";
 import PremiumBadge from "./paywall/PremiumBadge";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { recognizeFoodPhoto } from "@/lib/foodPhoto.functions";
@@ -12,9 +12,11 @@ import {
   addFoodLog,
   addFoodLogFromProduct,
   deleteFoodLog,
-  fetchTodayLogs,
+  fetchLogsForDate,
 } from "@/lib/foodLogs";
 import { supabase } from "@/integrations/supabase/client";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 import {
   ActivityLevel,
   DEFAULT_GOALS,
@@ -42,14 +44,25 @@ export default function Meals() {
   const [photoLoading, setPhotoLoading] = useState(false);
   const photoInputRef = useRef<HTMLInputElement>(null);
   const recognizePhoto = recognizeFoodPhoto;
+  const [selectedDate, setSelectedDate] = useState<Date>(() => new Date());
+  const [datePopoverOpen, setDatePopoverOpen] = useState(false);
+
+  const isToday = useMemo(() => {
+    const t = new Date();
+    return (
+      selectedDate.getDate() === t.getDate() &&
+      selectedDate.getMonth() === t.getMonth() &&
+      selectedDate.getFullYear() === t.getFullYear()
+    );
+  }, [selectedDate]);
 
   const reloadLogs = useCallback(async () => {
     try {
-      setLogs(await fetchTodayLogs());
+      setLogs(await fetchLogsForDate(selectedDate));
     } catch {
       // silent
     }
-  }, []);
+  }, [selectedDate]);
 
   useEffect(() => {
     reloadLogs();
@@ -197,6 +210,7 @@ export default function Meals() {
       return;
     }
     setPhotoLoading(true);
+    console.log("[photo-ia] step 1: reading file", { size: file.size, type: file.type });
     try {
       const dataUrl: string = await new Promise((resolve, reject) => {
         const r = new FileReader();
@@ -204,30 +218,26 @@ export default function Meals() {
         r.onerror = () => reject(r.error);
         r.readAsDataURL(file);
       });
+      console.log("[photo-ia] step 2: calling recognizeFoodPhoto", { bytes: dataUrl.length });
       const result = await recognizePhoto({ data: { image_data_url: dataUrl } });
-      // Convert to FoodProduct shape for ProductSheet
-      const p: FoodProduct = {
-        barcode: `photo-${Date.now()}`,
-        name: result.name,
-        brand: result.brand,
-        image_url: dataUrl,
-        nutriscore: null,
-        nova_group: null,
-        serving_size: `${result.estimated_grams} g (estimé, ${result.confidence})`,
-        nutriments: {
-          energy_kcal_100g: result.nutriments_100g.energy_kcal_100g,
-          proteins_100g: result.nutriments_100g.proteins_100g,
-          carbs_100g: result.nutriments_100g.carbs_100g,
-          fat_100g: result.nutriments_100g.fat_100g,
-          sugars_100g: null,
-          fiber_100g: null,
-          salt_100g: null,
-        },
-      };
-      setProduct(p);
-      setPendingSource("photo");
-      setSheetOpen(true);
+      console.log("[photo-ia] step 3: got result", result);
+
+      // 6. Auto-add: on log directement dans le journal du jour sélectionné
+      const grams = result.estimated_grams;
+      const factor = grams / 100;
+      await addFoodLog({
+        source: "photo",
+        product_name: result.brand ? `${result.brand} · ${result.name}` : result.name,
+        quantity_g: grams,
+        calories: Math.round(result.nutriments_100g.energy_kcal_100g * factor),
+        proteins_g: Math.round(result.nutriments_100g.proteins_100g * factor * 10) / 10,
+        carbs_g: Math.round(result.nutriments_100g.carbs_100g * factor * 10) / 10,
+        fats_g: Math.round(result.nutriments_100g.fat_100g * factor * 10) / 10,
+      });
+      console.log("[photo-ia] step 4: added to journal");
+      toast.success(`${result.name} ajouté (${grams} g estimés).`);
       if (result.notes) toast.info(result.notes);
+      reloadLogs();
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
       console.error("[photo-ia] error", e);
@@ -245,6 +255,7 @@ export default function Meals() {
     }
   };
 
+
   const totals = useMemo(
     () =>
       logs.reduce(
@@ -259,11 +270,64 @@ export default function Meals() {
     [logs],
   );
 
+  const shiftDay = (delta: number) => {
+    const d = new Date(selectedDate);
+    d.setDate(d.getDate() + delta);
+    // Ne pas aller dans le futur
+    if (d > new Date()) return;
+    setSelectedDate(d);
+  };
+
+  const dateLabel = isToday
+    ? "AUJOURD'HUI"
+    : selectedDate.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" }).toUpperCase();
+
   return (
     <div className="px-4 pt-2 pb-4">
+      <div className="mb-3 flex items-center gap-2">
+        <button
+          onClick={() => shiftDay(-1)}
+          className="flex h-9 w-9 items-center justify-center rounded-xl border border-arena-border bg-arena-surface active:scale-90"
+          aria-label="Jour précédent"
+        >
+          <ChevronLeft size={16} />
+        </button>
+        <Popover open={datePopoverOpen} onOpenChange={setDatePopoverOpen}>
+          <PopoverTrigger asChild>
+            <button className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-arena-border bg-arena-surface px-3 py-2 text-xs font-black tracking-widest text-foreground active:scale-[0.98]">
+              <CalendarDays size={14} className="text-arena" />
+              {dateLabel}
+            </button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0 pointer-events-auto" align="center">
+            <Calendar
+              mode="single"
+              selected={selectedDate}
+              onSelect={(d) => {
+                if (d) {
+                  setSelectedDate(d);
+                  setDatePopoverOpen(false);
+                }
+              }}
+              disabled={(d) => d > new Date()}
+              initialFocus
+              className="pointer-events-auto"
+            />
+          </PopoverContent>
+        </Popover>
+        <button
+          onClick={() => shiftDay(1)}
+          disabled={isToday}
+          className="flex h-9 w-9 items-center justify-center rounded-xl border border-arena-border bg-arena-surface active:scale-90 disabled:opacity-30"
+          aria-label="Jour suivant"
+        >
+          <ChevronRight size={16} />
+        </button>
+      </div>
+
       <div className="mb-4 rounded-2xl border border-arena-border bg-arena-surface p-4">
         <div className="mb-3 flex items-baseline justify-between">
-          <span className="text-xs font-black tracking-widest text-arena-muted">AUJOURD'HUI</span>
+          <span className="text-xs font-black tracking-widest text-arena-muted">MACROS</span>
           <span className="text-[11px] text-arena-muted">
             {Math.round(totals.kcal)} / {goals.kcal} kcal
           </span>

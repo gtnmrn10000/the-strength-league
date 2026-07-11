@@ -18,6 +18,25 @@ interface VerifiedPR {
   created_at: string;
 }
 
+interface WorkoutHistoryRow {
+  id: string;
+  name: string | null;
+  muscle_groups: string[] | null;
+  duration_min: number | null;
+  completed_at: string;
+  exercises: unknown;
+}
+
+function totalVolume(exercises: unknown): number {
+  if (!Array.isArray(exercises)) return 0;
+  let v = 0;
+  for (const ex of exercises as WorkoutExercise[]) {
+    for (const s of ex.sets ?? []) v += (s.reps || 0) * (s.weight_kg || 0);
+  }
+  return v;
+}
+
+
 /** Clone profond simple d'un template (assez pour éditions locales). */
 function cloneTemplate(t: Template): Template {
   return {
@@ -43,6 +62,7 @@ export default function Training({ onPR, refreshKey }: { onPR: () => void; refre
   // Séance du jour éditable — on part du template Push par défaut.
   const [session, setSession] = useState<Template>(() => cloneTemplate(TEMPLATES[0]));
   const [recentSessions, setRecentSessions] = useState<Array<{ muscle_groups: string[] | null; completed_at: string }>>([]);
+  const [history, setHistory] = useState<WorkoutHistoryRow[]>([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -52,7 +72,7 @@ export default function Training({ onPR, refreshKey }: { onPR: () => void; refre
 
       const since = new Date(Date.now() - 14 * 24 * 3600 * 1000).toISOString();
 
-      const [profileRes, prsRes, sessionsRes] = await Promise.all([
+      const [profileRes, prsRes, sessionsRes, historyRes] = await Promise.all([
         supabase.rpc("get_my_profile").maybeSingle(),
         supabase
           .from("prs")
@@ -65,6 +85,12 @@ export default function Training({ onPR, refreshKey }: { onPR: () => void; refre
           .select("muscle_groups, completed_at")
           .eq("user_id", user.id)
           .gte("completed_at", since),
+        supabase
+          .from("workout_sessions")
+          .select("id, name, muscle_groups, duration_min, completed_at, exercises")
+          .eq("user_id", user.id)
+          .order("completed_at", { ascending: false })
+          .limit(20),
       ]);
 
       if (cancelled) return;
@@ -86,6 +112,10 @@ export default function Training({ onPR, refreshKey }: { onPR: () => void; refre
         setRecentSessions(
           (sessionsRes.data as Array<{ muscle_groups: string[] | null; completed_at: string }>) ?? [],
         );
+      }
+
+      if (historyRes.data) {
+        setHistory(historyRes.data as WorkoutHistoryRow[]);
       }
     })();
     return () => { cancelled = true; };
@@ -171,6 +201,20 @@ export default function Training({ onPR, refreshKey }: { onPR: () => void; refre
     if (t) setSession(cloneTemplate(t));
   };
 
+  const startEmptySession = () => {
+    setSession({
+      id: "custom",
+      name: "Ma séance",
+      muscle_groups: [],
+      restSec: 90,
+      exercises: [],
+    });
+    setLibraryOpen(true);
+  };
+
+
+
+
   return (
     <div className="px-4 pt-2 pb-6">
       {/* Actions rapides */}
@@ -196,6 +240,16 @@ export default function Training({ onPR, refreshKey }: { onPR: () => void; refre
       </div>
 
       <div className="mt-2 flex gap-1.5 overflow-x-auto scrollbar-hide">
+        <button
+          onClick={startEmptySession}
+          className={`shrink-0 rounded-full border px-3 py-1 text-[10px] font-black tracking-widest transition ${
+            session.id === "custom"
+              ? "border-arena-gold bg-arena-gold text-black"
+              : "border-arena bg-arena/10 text-arena"
+          }`}
+        >
+          + NOUVELLE
+        </button>
         {TEMPLATES.map((t) => (
           <button
             key={t.id}
@@ -210,6 +264,7 @@ export default function Training({ onPR, refreshKey }: { onPR: () => void; refre
           </button>
         ))}
       </div>
+
 
       <p className="mt-2 text-[10px] text-arena-sub">
         {session.exercises.length} exos · {totalSets} séries · repos {session.restSec}s
@@ -291,6 +346,54 @@ export default function Training({ onPR, refreshKey }: { onPR: () => void; refre
             Log ton premier PR pour commencer <Trophy size={12} className="text-arena" />
           </p>
         </div>
+      )}
+
+      <SectionTitle>HISTORIQUE DES SÉANCES</SectionTitle>
+      {history.length === 0 ? (
+        <div className="rounded-2xl border border-arena-border bg-arena-surface p-4 text-center">
+          <p className="text-sm text-arena-muted">Aucune séance terminée</p>
+          <p className="mt-1 text-xs text-arena-sub">Termine une séance pour la voir ici.</p>
+        </div>
+      ) : (
+        <ul className="flex flex-col gap-2">
+          {history.map((h) => {
+            const vol = Math.round(totalVolume(h.exercises));
+            const nbEx = Array.isArray(h.exercises) ? h.exercises.length : 0;
+            const d = new Date(h.completed_at);
+            return (
+              <li
+                key={h.id}
+                className="rounded-2xl border border-arena-border bg-arena-surface p-3"
+              >
+                <div className="flex items-baseline justify-between gap-2">
+                  <p className="text-sm font-black text-foreground truncate">
+                    {h.name ?? "Séance"}
+                  </p>
+                  <span className="text-[10px] font-bold text-arena-muted whitespace-nowrap">
+                    {d.toLocaleDateString("fr-FR", { day: "2-digit", month: "short" })}
+                  </span>
+                </div>
+                <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-arena-sub">
+                  <span>{nbEx} exos</span>
+                  {vol > 0 && <span>· {vol.toLocaleString("fr-FR")} kg volume</span>}
+                  {h.duration_min ? <span>· {h.duration_min} min</span> : null}
+                </div>
+                {h.muscle_groups && h.muscle_groups.length > 0 && (
+                  <div className="mt-1.5 flex flex-wrap gap-1">
+                    {h.muscle_groups.slice(0, 5).map((m) => (
+                      <span
+                        key={m}
+                        className="rounded-full border border-arena-border bg-secondary px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-arena-sub"
+                      >
+                        {m}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </li>
+            );
+          })}
+        </ul>
       )}
     </div>
   );
