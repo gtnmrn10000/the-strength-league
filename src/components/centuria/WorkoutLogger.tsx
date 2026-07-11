@@ -204,9 +204,22 @@ export default function WorkoutLogger({
                     }`}
                   >
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Dumbbell size={16} className="text-arena" />
-                        <p className="font-black text-foreground">{ex.name}</p>
+                      <div className="flex items-center gap-2 min-w-0">
+                        {(() => {
+                          const img = imageForExerciseName(ex.name);
+                          return img ? (
+                            <img
+                              src={img}
+                              alt={ex.name}
+                              loading="lazy"
+                              className="h-9 w-9 shrink-0 rounded-lg object-cover border border-arena-border bg-black"
+                              onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+                            />
+                          ) : (
+                            <Dumbbell size={16} className="text-arena" />
+                          );
+                        })()}
+                        <p className="font-black text-foreground truncate">{ex.name}</p>
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="text-[10px] font-bold text-arena-muted">
@@ -266,7 +279,7 @@ export default function WorkoutLogger({
             <div className="border-t border-arena-border p-3">
               <button
                 onClick={finish}
-                disabled={saving || doneCount === 0}
+                disabled={saving}
                 className={`flex w-full items-center justify-center gap-2 rounded-xl py-3 font-black tracking-widest transition disabled:opacity-40 ${
                   allDone
                     ? "bg-arena-gold text-black shadow-[0_0_24px_rgba(212,175,55,0.35)]"
@@ -278,7 +291,11 @@ export default function WorkoutLogger({
                 ) : (
                   <>
                     <Trophy size={16} />
-                    {allDone ? "TERMINER LA SÉANCE" : `ENREGISTRER (${doneCount}/${totalSets})`}
+                    {allDone
+                      ? "TERMINER LA SÉANCE"
+                      : doneCount === 0
+                        ? "TERMINER (SANS SÉRIES COCHÉES)"
+                        : `TERMINER (${doneCount}/${totalSets})`}
                   </>
                 )}
               </button>
