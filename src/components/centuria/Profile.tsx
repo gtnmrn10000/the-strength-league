@@ -85,13 +85,20 @@ export default function Profile() {
     <div className="px-4 pt-2 pb-4">
       <div className="mb-2 flex items-center justify-end gap-2">
         <button
-          onClick={() => setWeighOpen(true)}
+          onClick={() => {
+            // Un seul sheet à la fois — évite l'empilage Paramètres + Pesées.
+            setSettingsOpen(false);
+            setWeighOpen(true);
+          }}
           className="flex items-center gap-1.5 rounded-full border border-arena-border bg-arena-surface px-3 py-1.5 text-[10px] font-black tracking-widest text-arena-sub active:scale-95 transition"
         >
           <Scale size={12} /> PESÉES
         </button>
         <button
-          onClick={() => setSettingsOpen(true)}
+          onClick={() => {
+            setWeighOpen(false);
+            setSettingsOpen(true);
+          }}
           className="flex h-8 w-8 items-center justify-center rounded-full border border-arena-border bg-arena-surface text-arena-sub active:scale-90 transition"
           aria-label="Paramètres"
         >
