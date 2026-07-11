@@ -35,6 +35,8 @@ export default function Profile() {
   const [galleryOpen, setGalleryOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [weighOpen, setWeighOpen] = useState(false);
+  const [streak, setStreak] = useState<NutritionStreak | null>(null);
+
 
   useEffect(() => {
     let cancelled = false;
