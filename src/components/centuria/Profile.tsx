@@ -160,7 +160,34 @@ export default function Profile() {
         </button>
       </div>
 
+      {/* Charges requises pour passer au grade suivant (résumé compact). */}
+      {!isMaxGrade && dbProfile?.poids && dbProfile.poids > 0 && (
+        <div className="mt-3 rounded-2xl border border-arena-gold/20 bg-arena-gold/5 p-3">
+          <p className="text-[10px] font-black tracking-widest text-arena-gold">
+            POUR PASSER {GRADE_LABELS[nextGrade].toUpperCase()} — UN LIFT SUFFIT
+          </p>
+          <div className="mt-1.5 grid grid-cols-3 gap-2 text-center">
+            {(["squat", "bench", "deadlift"] as const).map((ex) => {
+              const thr = THRESHOLDS[ex]?.[nextGradeIdx] ?? 0;
+              const need = Math.ceil(thr * dbProfile.poids!);
+              const cur = bestPRs[ex]?.weight_kg ?? 0;
+              const done = cur >= need;
+              const exLabels: Record<string, string> = { squat: "Squat", bench: "Bench", deadlift: "DL" };
+              return (
+                <div key={ex} className={`rounded-lg border px-2 py-1.5 ${done ? "border-arena-gold bg-arena-gold/10" : "border-arena-border bg-secondary"}`}>
+                  <p className="text-[9px] font-bold text-arena-sub">{exLabels[ex]}</p>
+                  <p className={`text-sm font-black ${done ? "text-arena-gold" : "text-foreground"}`}>{need}kg</p>
+                  <p className="text-[9px] text-arena-sub">{cur > 0 ? `${cur}kg` : "—"}</p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       <GradeGallery open={galleryOpen} onOpenChange={setGalleryOpen} currentGrade={grade} />
+
+
 
 
       {/* Per-exercise progress to next grade */}
