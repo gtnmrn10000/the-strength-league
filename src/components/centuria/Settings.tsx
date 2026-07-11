@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Globe, Scale as ScaleIcon, Crown, LogOut, Info, Shield, Loader2 } from "lucide-react";
+import { Globe, Scale as ScaleIcon, Crown, LogOut, Info, Shield, Loader2, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSubscription } from "@/hooks/useSubscription";
 import { toast } from "sonner";
@@ -14,11 +14,19 @@ type Lang = "fr" | "en";
 export default function Settings({
   open,
   onOpenChange,
+  onOpenWeighIns,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
+  onOpenWeighIns?: () => void;
 }) {
-  const { isPremium, openPaywall } = useSubscription();
+  const { isPremium, openPaywall, refresh } = useSubscription();
+
+  // Re-read entitlement chaque fois qu'on ouvre Paramètres — évite d'afficher
+  // "Formule gratuite" si le flag a été flip côté DB pendant la session.
+  useEffect(() => {
+    if (open) refresh();
+  }, [open, refresh]);
   const [units, setUnits] = useState<Units>("metric");
   const [lang, setLang] = useState<Lang>("fr");
   const [signingOut, setSigningOut] = useState(false);
