@@ -99,8 +99,8 @@ export default function Shell() {
     }
   };
 
-  // Render nothing until hydrated to avoid mismatch
-  if (!hydrated) {
+  // Render nothing until hydrated + session bootstrapped to avoid 401 on server fns
+  if (!hydrated || !sessionReady) {
     return <div className="mx-auto flex h-dvh max-w-md items-center justify-center bg-background" />;
   }
 
