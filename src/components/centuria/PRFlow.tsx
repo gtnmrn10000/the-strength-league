@@ -212,10 +212,44 @@ export default function PRFlow({
 
   const handleVideoLoaded = useCallback(
     (e: React.SyntheticEvent<HTMLVideoElement>) => {
-      const dur = e.currentTarget.duration;
+      const el = e.currentTarget;
+      const dur = el.duration;
+      // iOS/Chrome renvoient parfois Infinity/NaN avant un seek : on force
+      // le calcul en seekant très loin, puis on relit dans onDurationChange.
+      if (!Number.isFinite(dur) || dur === 0) {
+        try {
+          el.currentTime = 1e9;
+        } catch {
+          /* ignore */
+        }
+        return;
+      }
       setVideoDuration(dur);
-      if (dur < 5 || dur > 90) {
-        setError("La vidéo doit durer entre 5 et 90 secondes");
+      if (dur < 3 || dur > 120) {
+        setError("La vidéo doit durer entre 3 et 120 secondes");
+      } else {
+        setError(null);
+      }
+    },
+    []
+  );
+
+  const handleDurationChange = useCallback(
+    (e: React.SyntheticEvent<HTMLVideoElement>) => {
+      const el = e.currentTarget;
+      const dur = el.duration;
+      if (!Number.isFinite(dur) || dur === 0) return;
+      // Remet le curseur au début après le seek "de sondage"
+      if (el.currentTime > dur) {
+        try {
+          el.currentTime = 0;
+        } catch {
+          /* ignore */
+        }
+      }
+      setVideoDuration(dur);
+      if (dur < 3 || dur > 120) {
+        setError("La vidéo doit durer entre 3 et 120 secondes");
       } else {
         setError(null);
       }
@@ -250,32 +284,39 @@ export default function PRFlow({
       } = await supabase.auth.getUser();
       if (!user) throw new Error("Non authentifié");
 
-      const ext = videoFile.name.split(".").pop() || "mp4";
-      const path = `${user.id}/${exercise}/${Date.now()}.${ext}`;
+      // Sanitize extension : certains iPhones renvoient "video/quicktime" → .mov
+      const guessedExt =
+        (videoFile.type.split("/")[1] || videoFile.name.split(".").pop() || "mp4")
+          .toLowerCase()
+          .replace(/[^a-z0-9]/g, "")
+          .slice(0, 5) || "mp4";
+      const path = `${user.id}/${exercise}/${Date.now()}.${guessedExt}`;
 
       setUploadProgress(20);
       const { error: uploadErr } = await supabase.storage
         .from("pr-videos")
-        .upload(path, videoFile, { contentType: videoFile.type });
-      if (uploadErr) throw uploadErr;
+        .upload(path, videoFile, {
+          contentType: videoFile.type || "video/mp4",
+          upsert: false,
+        });
+      if (uploadErr) {
+        // Erreurs Storage typiques : "Payload too large", RLS, quota…
+        throw new Error(`Upload vidéo : ${uploadErr.message}`);
+      }
 
-      setUploadProgress(50);
-      const { data: urlData } = supabase.storage
-        .from("pr-videos")
-        .getPublicUrl(path);
-
-      setUploadProgress(70);
+      setUploadProgress(60);
+      // Bucket privé : on stocke le path pour générer un signedURL plus tard.
       const pr = await submitPR({
         data: {
           exercise,
           weight_kg: Number(weight),
           reps,
-          video_url: urlData.publicUrl,
+          video_url: path,
         },
       });
 
       setUploadProgress(85);
-      await new Promise((r) => setTimeout(r, 5000));
+      await new Promise((r) => setTimeout(r, 3000));
       const result = await mockVerifyPR({ data: { prId: pr.id } });
       setVerifyResult(result);
 
@@ -283,6 +324,7 @@ export default function PRFlow({
       setStep("victory");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Erreur inconnue";
+      console.error("[PRFlow] submit failed:", err);
       setError(msg);
       setStep(4);
     }
@@ -459,7 +501,7 @@ export default function PRFlow({
                     "Plan large (corps entier visible)",
                     "Charges visibles (plaques nettes)",
                     "Une seule prise (pas de coupe)",
-                    "Durée 15 à 60 secondes",
+                    "Durée entre 3 et 120 secondes",
                   ].map((r, i) => (
                     <p key={i} className="flex items-start gap-2 py-0.5 text-arena-sub">
                       <Check size={14} className="mt-0.5 shrink-0 text-arena-green" /> {r}
@@ -513,8 +555,11 @@ export default function PRFlow({
                     <video
                       src={videoUrl!}
                       controls
+                      playsInline
+                      preload="metadata"
                       className="w-full rounded-2xl border border-[#262626]"
                       onLoadedMetadata={handleVideoLoaded}
+                      onDurationChange={handleDurationChange}
                     />
                     <div className="flex justify-between text-xs text-arena-sub">
                       <span>
