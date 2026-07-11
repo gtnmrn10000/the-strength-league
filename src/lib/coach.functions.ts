@@ -320,7 +320,11 @@ export const coachChat = createServerFn({ method: "POST" })
     const consumedLine = `Consommé aujourd'hui: ${Math.round(nutrition.totals.kcal)}kcal / ${Math.round(nutrition.totals.prot)}g prot / ${Math.round(nutrition.totals.carbs)}g gluc / ${Math.round(nutrition.totals.fats)}g lip (${nutrition.logs.length} entrée${nutrition.logs.length > 1 ? "s" : ""}).`;
 
     const stableSystem = buildStableSystemPrompt(profile);
-    const volatileContext = `Récupération actuelle: ${recoveryLine}. ${undersLine} ${sessionsLine} ${goalsLine} ${consumedLine} ${remainingLine}`.trim();
+    const now = new Date();
+    const todayIso = now.toISOString().slice(0, 10);
+    const weekday = now.toLocaleDateString("fr-FR", { weekday: "long" });
+    const dateLine = `Aujourd'hui: ${weekday} ${todayIso}.`;
+    const volatileContext = `${dateLine} Récupération actuelle: ${recoveryLine}. ${undersLine} ${sessionsLine} ${goalsLine} ${consumedLine} ${remainingLine}`.trim();
 
     // On ne renvoie que le contenu texte des tours précédents pour garder le contexte léger.
     const historyForModel = conv.messages.slice(-20).map((m) => {
