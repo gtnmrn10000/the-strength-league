@@ -1,13 +1,15 @@
 import { useState, useEffect } from "react";
-import { MapPin, Trophy, Flame, Dumbbell, Target, Zap, ArrowRight, LayoutGrid, Settings as SettingsIcon, Scale } from "lucide-react";
+import { MapPin, Trophy, Flame, Dumbbell, Target, Zap, ArrowRight, LayoutGrid, Settings as SettingsIcon, Scale, Utensils } from "lucide-react";
 import { motion } from "framer-motion";
 import { loadUserProfile, goalLabel } from "./userProfile";
 import { supabase } from "@/integrations/supabase/client";
 import { GRADES, GRADE_LABELS, THRESHOLDS, type Grade } from "@/lib/grades";
 import { GradeIcon, GoalIcon } from "@/lib/gradeIcons";
+import { fetchNutritionStreak, type NutritionStreak } from "@/lib/foodLogs";
 import GradeGallery from "./GradeGallery";
 import Settings from "./Settings";
 import WeighIns from "./WeighIns";
+
 
 interface DbProfile {
   xp: number;
@@ -33,6 +35,8 @@ export default function Profile() {
   const [galleryOpen, setGalleryOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [weighOpen, setWeighOpen] = useState(false);
+  const [streak, setStreak] = useState<NutritionStreak | null>(null);
+
 
   useEffect(() => {
     let cancelled = false;
@@ -58,8 +62,10 @@ export default function Profile() {
         }
       }
     })();
+    fetchNutritionStreak().then((s) => setStreak(s)).catch(() => {});
     return () => { cancelled = true; };
   }, []);
+
 
   const grade = (dbProfile?.current_grade || "recruit") as Grade;
   const xp = dbProfile?.xp ?? 0;
@@ -154,7 +160,34 @@ export default function Profile() {
         </button>
       </div>
 
+      {/* Charges requises pour passer au grade suivant (résumé compact). */}
+      {!isMaxGrade && dbProfile?.poids && dbProfile.poids > 0 && (
+        <div className="mt-3 rounded-2xl border border-arena-gold/20 bg-arena-gold/5 p-3">
+          <p className="text-[10px] font-black tracking-widest text-arena-gold">
+            POUR PASSER {GRADE_LABELS[nextGrade].toUpperCase()} — UN LIFT SUFFIT
+          </p>
+          <div className="mt-1.5 grid grid-cols-3 gap-2 text-center">
+            {(["squat", "bench", "deadlift"] as const).map((ex) => {
+              const thr = THRESHOLDS[ex]?.[nextGradeIdx] ?? 0;
+              const need = Math.ceil(thr * dbProfile.poids!);
+              const cur = bestPRs[ex]?.weight_kg ?? 0;
+              const done = cur >= need;
+              const exLabels: Record<string, string> = { squat: "Squat", bench: "Bench", deadlift: "DL" };
+              return (
+                <div key={ex} className={`rounded-lg border px-2 py-1.5 ${done ? "border-arena-gold bg-arena-gold/10" : "border-arena-border bg-secondary"}`}>
+                  <p className="text-[9px] font-bold text-arena-sub">{exLabels[ex]}</p>
+                  <p className={`text-sm font-black ${done ? "text-arena-gold" : "text-foreground"}`}>{need}kg</p>
+                  <p className="text-[9px] text-arena-sub">{cur > 0 ? `${cur}kg` : "—"}</p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       <GradeGallery open={galleryOpen} onOpenChange={setGalleryOpen} currentGrade={grade} />
+
+
 
 
       {/* Per-exercise progress to next grade */}
@@ -247,13 +280,62 @@ export default function Profile() {
         </>
       )}
 
+      {/* Streak de régularité alimentaire — distinct du système de grades force. */}
+      <h3 className="mb-3 mt-6 text-xs font-black tracking-widest text-arena-muted">DISCIPLINE ALIMENTAIRE</h3>
+      <div className="rounded-2xl border border-arena-border bg-arena-surface p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-arena-gold/10">
+              <Utensils size={20} className="text-arena-gold" />
+            </div>
+            <div>
+              <p className="text-sm font-black text-foreground">
+                {streak && streak.months > 0
+                  ? `${streak.months} mois d'affilée`
+                  : "Démarre ton streak"}
+              </p>
+              <p className="text-[11px] text-arena-sub">
+                Loggé tes repas · tolérance {streak?.tolerance ?? 5} jours ratés / mois
+              </p>
+            </div>
+          </div>
+          <div className="flex flex-col items-end">
+            <span className="text-lg font-black text-arena-gold">
+              {streak?.daysLoggedThisMonth ?? 0}
+            </span>
+            <span className="text-[9px] text-arena-sub">jours ce mois</span>
+          </div>
+        </div>
+        {streak && (
+          <div className="mt-3">
+            <div className="h-1.5 w-full overflow-hidden rounded-full bg-secondary">
+              <div
+                className={`h-full rounded-full ${streak.currentMonthValid ? "bg-arena-gold" : "bg-red-500"}`}
+                style={{
+                  width: `${Math.min(100, Math.round((streak.missedThisMonth / streak.tolerance) * 100))}%`,
+                }}
+              />
+            </div>
+            <p className="mt-1 text-[10px] text-arena-sub">
+              {streak.currentMonthValid
+                ? `${streak.tolerance - streak.missedThisMonth} jours de tolérance restants ce mois`
+                : "Streak cassé ce mois — repars pour un nouveau cycle"}
+            </p>
+          </div>
+        )}
+      </div>
+
       <h3 className="mb-3 mt-6 text-xs font-black tracking-widest text-arena-muted">BADGES</h3>
       <div className="flex flex-wrap gap-2">
         <Badge label={GRADE_LABELS[grade]} />
         {prCount >= 1 && <Badge label="1er PR" />}
         {prCount >= 5 && <Badge label="5 PRs" />}
         {prCount >= 10 && <Badge label="Décathlon" />}
+        {streak && streak.months >= 1 && <Badge label="Discipline · 1 mois" />}
+        {streak && streak.months >= 3 && <Badge label="Discipline · 3 mois" />}
+        {streak && streak.months >= 6 && <Badge label="Discipline · 6 mois" />}
       </div>
+
 
       <Settings
         open={settingsOpen}

@@ -23,11 +23,18 @@ export async function updateProfileAfterPR(
   leveledUp: boolean;
 }> {
   // 1. Get profile (via SECURITY DEFINER RPC to access sensitive `poids`)
-  const { data: profile, error: pErr } = await supabase
+  const { data: profile } = await supabase
     .rpc("get_my_profile")
     .maybeSingle();
-  if (pErr || !profile) throw new Error("Profile not found");
-  const p = profile as { poids: number | null; xp: number | null; current_grade: string | null };
+
+  // Auto-create a minimal profile if missing (e.g. QA/anonymous users)
+  if (!profile) {
+    await supabase.from("profiles").upsert(
+      { user_id: userId, pseudo: `athlete_${userId.slice(0, 6)}`, onboarded: true, updated_at: new Date().toISOString() },
+      { onConflict: "user_id" }
+    );
+  }
+  const p = (profile ?? {}) as { poids: number | null; xp: number | null; current_grade: string | null };
 
   const bodyweight = Number(p.poids) || 80;
   const previousGrade = (p.current_grade || "recruit") as Grade;

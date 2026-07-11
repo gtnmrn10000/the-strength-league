@@ -202,6 +202,12 @@ export default function Training({ onPR, refreshKey }: { onPR: () => void; refre
   };
 
   const startEmptySession = () => {
+    // Si on est déjà sur une séance custom non vide, ne pas effacer :
+    // ouvrir simplement la bibliothèque pour ajouter un exercice de plus.
+    if (session.id === "custom" && session.exercises.length > 0) {
+      setLibraryOpen(true);
+      return;
+    }
     setSession({
       id: "custom",
       name: "Ma séance",
@@ -211,6 +217,7 @@ export default function Training({ onPR, refreshKey }: { onPR: () => void; refre
     });
     setLibraryOpen(true);
   };
+
 
 
 
@@ -248,7 +255,7 @@ export default function Training({ onPR, refreshKey }: { onPR: () => void; refre
               : "border-arena bg-arena/10 text-arena"
           }`}
         >
-          + NOUVELLE
+          + CRÉER UNE SÉANCE
         </button>
         {TEMPLATES.map((t) => (
           <button

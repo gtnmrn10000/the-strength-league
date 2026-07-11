@@ -28,7 +28,7 @@ export default function CoachRecovery({ refreshKey }: { refreshKey?: number }) {
   const rows = useMemo(() => computeRecovery(sessions), [sessions]);
 
   return (
-    <div className="overflow-y-auto px-4 py-3">
+    <div className="h-full overflow-y-auto px-4 py-3 pb-6">
       <p className="mb-3 text-xs text-arena-muted">
         % de récupération = min(100, heures écoulées / fenêtre de récup du groupe). Rouge &lt; 50 %, orange 50-80 %, vert &gt; 80 %.
       </p>

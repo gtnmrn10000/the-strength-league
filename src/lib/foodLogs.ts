@@ -102,3 +102,87 @@ export async function deleteFoodLog(id: string) {
   const { error } = await supabase.from("food_logs").delete().eq("id", id);
   if (error) throw error;
 }
+
+export type NutritionStreak = {
+  /** Nombre de mois consécutifs (mois courant inclus s'il est encore valide) sans dépasser 5 jours ratés. */
+  months: number;
+  /** Jours loggés sur le mois courant. */
+  daysLoggedThisMonth: number;
+  /** Jours ratés sur le mois courant (jusqu'à aujourd'hui). */
+  missedThisMonth: number;
+  /** Jours ratés max autorisés avant de casser le streak (5). */
+  tolerance: number;
+  /** True tant que le mois courant reste dans la tolérance. */
+  currentMonthValid: boolean;
+};
+
+/**
+ * Calcule un streak mensuel de régularité alimentaire :
+ * un mois compte s'il n'a pas plus de 5 jours "non loggés" (aucun food_log).
+ * Le mois courant est comptabilisé jusqu'à aujourd'hui seulement.
+ */
+export async function fetchNutritionStreak(): Promise<NutritionStreak> {
+  const tolerance = 5;
+  const empty: NutritionStreak = {
+    months: 0,
+    daysLoggedThisMonth: 0,
+    missedThisMonth: 0,
+    tolerance,
+    currentMonthValid: false,
+  };
+  const { data: auth } = await supabase.auth.getUser();
+  if (!auth.user) return empty;
+
+  // Regarde jusqu'à 12 mois d'historique.
+  const since = new Date();
+  since.setMonth(since.getMonth() - 12);
+  since.setDate(1);
+  since.setHours(0, 0, 0, 0);
+
+  const { data, error } = await supabase
+    .from("food_logs")
+    .select("logged_at")
+    .eq("user_id", auth.user.id)
+    .gte("logged_at", since.toISOString());
+  if (error || !data) return empty;
+
+  // Regroupe les jours loggés par clé mois "YYYY-MM" -> Set<jour>.
+  const byMonth = new Map<string, Set<number>>();
+  for (const row of data as Array<{ logged_at: string }>) {
+    const d = new Date(row.logged_at);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    if (!byMonth.has(key)) byMonth.set(key, new Set());
+    byMonth.get(key)!.add(d.getDate());
+  }
+
+  const today = new Date();
+  const missedForMonth = (year: number, month0: number, upToDay?: number) => {
+    const key = `${year}-${String(month0 + 1).padStart(2, "0")}`;
+    const daysInMonth = upToDay ?? new Date(year, month0 + 1, 0).getDate();
+    const logged = byMonth.get(key)?.size ?? 0;
+    return { missed: Math.max(0, daysInMonth - logged), daysInMonth, logged };
+  };
+
+  // Mois courant, comptabilisé jusqu'à aujourd'hui.
+  const cur = missedForMonth(today.getFullYear(), today.getMonth(), today.getDate());
+  const currentMonthValid = cur.missed <= tolerance;
+
+  let months = currentMonthValid ? 1 : 0;
+  // Remonte mois par mois.
+  const cursor = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+  for (let i = 0; i < 12; i++) {
+    const info = missedForMonth(cursor.getFullYear(), cursor.getMonth());
+    if (info.missed <= tolerance && info.logged > 0) months += 1;
+    else break;
+    cursor.setMonth(cursor.getMonth() - 1);
+  }
+
+  return {
+    months,
+    daysLoggedThisMonth: cur.logged,
+    missedThisMonth: cur.missed,
+    tolerance,
+    currentMonthValid,
+  };
+}
+
