@@ -131,6 +131,10 @@ function sanitizeWorkout(parsed: any, fallbackFocus: string, fallbackDuration: n
           notes: e?.notes ? String(e.notes).slice(0, 200) : undefined,
         }))
       : [],
+    scheduled_for:
+      typeof parsed?.scheduled_for === "string" && /^\d{4}-\d{2}-\d{2}$/.test(parsed.scheduled_for)
+        ? parsed.scheduled_for
+        : null,
   };
 }
 
