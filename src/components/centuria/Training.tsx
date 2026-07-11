@@ -132,6 +132,15 @@ export default function Training({ onPR, refreshKey }: { onPR: () => void; refre
           .not("completed_at", "is", null)
           .order("completed_at", { ascending: false })
           .limit(20),
+        supabase
+          .from("workout_sessions")
+          .select("id, name, muscle_groups, duration_min, scheduled_for, exercises")
+          .eq("user_id", user.id)
+          .is("completed_at", null)
+          .not("scheduled_for", "is", null)
+          .gte("scheduled_for", new Date().toISOString().slice(0, 10))
+          .order("scheduled_for", { ascending: true })
+          .limit(20),
       ]);
 
       if (cancelled) return;
