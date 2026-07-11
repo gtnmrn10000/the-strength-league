@@ -106,6 +106,31 @@ export default function Settings({
             </div>
           </Section>
 
+          {/* Suivi corporel */}
+          {onOpenWeighIns && (
+            <Section title="SUIVI CORPOREL">
+              <button
+                type="button"
+                onClick={() => {
+                  // Ferme Paramètres AVANT d'ouvrir Pesées — sinon les deux
+                  // sheets s'empilent (Radix ne ferme pas automatiquement).
+                  onOpenChange(false);
+                  // Laisse l'animation de fermeture terminer avant d'ouvrir
+                  // le suivant, sinon Radix garde le focus trap du 1er.
+                  setTimeout(() => onOpenWeighIns(), 200);
+                }}
+                className="flex w-full items-center justify-between rounded-2xl border border-arena-border bg-arena-surface p-3 active:scale-[0.99] transition"
+              >
+                <div className="flex items-center gap-2">
+                  <ScaleIcon size={16} className="text-arena" />
+                  <span className="text-sm font-bold text-foreground">Pesées & mensurations</span>
+                </div>
+                <ChevronRight size={16} className="text-arena-sub" />
+              </button>
+            </Section>
+          )}
+
+
           {/* Unités */}
           <Section title="UNITÉS">
             <ToggleRow icon={ScaleIcon} label="Système">
