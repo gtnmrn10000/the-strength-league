@@ -63,6 +63,7 @@ export default function Training({ onPR, refreshKey }: { onPR: () => void; refre
   const [session, setSession] = useState<Template>(() => cloneTemplate(TEMPLATES[0]));
   const [recentSessions, setRecentSessions] = useState<Array<{ muscle_groups: string[] | null; completed_at: string }>>([]);
   const [history, setHistory] = useState<WorkoutHistoryRow[]>([]);
+  const [planned, setPlanned] = useState<PlannedRow[]>([]);
 
   useEffect(() => {
     let cancelled = false;
