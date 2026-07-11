@@ -16,7 +16,7 @@ export default function CoachChat({ onSessionStarted }: { onSessionStarted?: () 
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [booting, setBooting] = useState(true);
-  const [startingIdx, setStartingIdx] = useState<number | null>(null);
+  const [startingIdx, setStartingIdx] = useState<{ i: number; mode: "start" | "schedule" } | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
