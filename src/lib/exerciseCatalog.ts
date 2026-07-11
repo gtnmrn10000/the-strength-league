@@ -17,7 +17,72 @@ export type LibraryExercise = {
   primary: string; // muscle principal (clé normalisée)
   muscles: string[]; // muscles secondaires inclus
   category: MuscleCategory;
+  image_url?: string; // photo officielle (free-exercise-db, domaine public)
 };
+
+/**
+ * Images officielles issues du dataset public free-exercise-db
+ * (https://github.com/yuhonas/free-exercise-db, licence Unlicense).
+ * Une entrée par id d'exercice de la bibliothèque ci-dessous.
+ */
+const FREE_EXDB = "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/";
+const IMG: Record<string, string> = {
+  "bench": "Barbell_Bench_Press_-_Medium_Grip/0.jpg",
+  "incline-bench": "Barbell_Incline_Bench_Press_-_Medium_Grip/0.jpg",
+  "incline-db": "Incline_Dumbbell_Press/0.jpg",
+  "decline-bench": "Decline_Barbell_Bench_Press/0.jpg",
+  "dumbbell-fly": "Dumbbell_Flyes/0.jpg",
+  "cable-crossover": "Cable_Crossover/0.jpg",
+  "dips": "Dips_-_Chest_Version/0.jpg",
+  "push-up": "Pushups/0.jpg",
+  "deadlift": "Barbell_Deadlift/0.jpg",
+  "pull-up": "Pullups/0.jpg",
+  "chin-up": "Chin-Up/0.jpg",
+  "row-barbell": "Bent_Over_Barbell_Row/0.jpg",
+  "row-dumbbell": "One-Arm_Dumbbell_Row/0.jpg",
+  "t-bar-row": "T-Bar_Row_with_Handle/0.jpg",
+  "lat-pulldown": "Wide-Grip_Lat_Pulldown/0.jpg",
+  "seated-row": "Seated_Cable_Rows/0.jpg",
+  "shrugs": "Barbell_Shrug/0.jpg",
+  "squat": "Barbell_Squat/0.jpg",
+  "front-squat": "Front_Squat_Clean_Grip/0.jpg",
+  "bulgarian": "Split_Squat_with_Dumbbells/0.jpg",
+  "walking-lunge": "Dumbbell_Lunges/0.jpg",
+  "leg-press": "Leg_Press/0.jpg",
+  "leg-extension": "Leg_Extensions/0.jpg",
+  "hip-thrust": "Barbell_Hip_Thrust/0.jpg",
+  "leg-curl": "Lying_Leg_Curls/0.jpg",
+  "rdl": "Romanian_Deadlift/0.jpg",
+  "calf-raise": "Standing_Calf_Raises/0.jpg",
+  "ohp": "Standing_Military_Press/0.jpg",
+  "db-press": "Seated_Dumbbell_Press/0.jpg",
+  "arnold": "Arnold_Dumbbell_Press/0.jpg",
+  "lateral-raise": "Side_Lateral_Raise/0.jpg",
+  "front-raise": "Front_Dumbbell_Raise/0.jpg",
+  "rear-delt-fly": "Reverse_Flyes/0.jpg",
+  "face-pull": "Face_Pull/0.jpg",
+  "upright-row": "Upright_Barbell_Row/0.jpg",
+  "curl-barbell": "Barbell_Curl/0.jpg",
+  "curl-dumbbell": "Dumbbell_Bicep_Curl/0.jpg",
+  "hammer-curl": "Hammer_Curls/0.jpg",
+  "preacher-curl": "Preacher_Curl/0.jpg",
+  "tricep-pushdown": "Triceps_Pushdown/0.jpg",
+  "tricep-extension": "Standing_Dumbbell_Triceps_Extension/0.jpg",
+  "skullcrusher": "EZ-Bar_Skullcrusher/0.jpg",
+  "close-grip-bench": "Close-Grip_Barbell_Bench_Press/0.jpg",
+  "forearm-curl": "Palms-Up_Barbell_Wrist_Curl_Over_A_Bench/0.jpg",
+  "plank": "Plank/0.jpg",
+  "side-plank": "Side_Bridge/0.jpg",
+  "hanging-leg-raise": "Hanging_Leg_Raise/0.jpg",
+  "cable-crunch": "Cable_Crunch/0.jpg",
+  "ab-wheel": "Ab_Roller/0.jpg",
+  "russian-twist": "Russian_Twist/0.jpg",
+  "dead-bug": "Dead_Bug/0.jpg",
+  "hollow-hold": "Plank/0.jpg",
+};
+
+const imageFor = (id: string): string | undefined =>
+  IMG[id] ? FREE_EXDB + IMG[id] : undefined;
 
 export type MuscleCategory =
   | "pectoraux"
