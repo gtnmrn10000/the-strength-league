@@ -66,10 +66,13 @@ type ProfileCtx = {
 };
 
 async function ensurePremium(supabase: any, _userId: string): Promise<ProfileCtx> {
-  const { data, error } = await supabase.rpc("get_my_profile").maybeSingle();
-  if (error) throw new Response("Erreur profil", { status: 500 });
-  if (!data?.is_premium) throw new Response("PREMIUM_REQUIRED", { status: 402 });
-  return data as ProfileCtx;
+  const { data: premium } = await supabase.rpc("is_current_user_premium");
+  if (!premium) throw new Response("PREMIUM_REQUIRED", { status: 402 });
+  const { data } = await supabase.rpc("get_my_profile").maybeSingle();
+  return (data ?? {
+    is_premium: true, pseudo: null, age: null, poids: null, taille: null,
+    sexe: null, niveau_activite: null, goal: null,
+  }) as ProfileCtx;
 }
 
 function callLovableAI(body: unknown) {
