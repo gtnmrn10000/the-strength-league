@@ -113,6 +113,10 @@ export default function Training({ onPR, refreshKey }: { onPR: () => void; refre
           (sessionsRes.data as Array<{ muscle_groups: string[] | null; completed_at: string }>) ?? [],
         );
       }
+
+      if (historyRes.data) {
+        setHistory(historyRes.data as WorkoutHistoryRow[]);
+      }
     })();
     return () => { cancelled = true; };
   }, [refreshKey, localTick]);
