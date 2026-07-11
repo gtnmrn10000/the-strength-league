@@ -225,22 +225,10 @@ export default function Meals() {
       const result = await recognizePhoto({ data: { image_data_url: dataUrl } });
       console.log("[photo-ia] step 3: got result", result);
 
-      // 6. Auto-add: on log directement dans le journal du jour sélectionné
-      const grams = result.estimated_grams;
-      const factor = grams / 100;
-      await addFoodLog({
-        source: "photo",
-        product_name: result.brand ? `${result.brand} · ${result.name}` : result.name,
-        quantity_g: grams,
-        calories: Math.round(result.nutriments_100g.energy_kcal_100g * factor),
-        proteins_g: Math.round(result.nutriments_100g.proteins_100g * factor * 10) / 10,
-        carbs_g: Math.round(result.nutriments_100g.carbs_100g * factor * 10) / 10,
-        fats_g: Math.round(result.nutriments_100g.fat_100g * factor * 10) / 10,
-      });
-      console.log("[photo-ia] step 4: added to journal");
-      toast.success(`${result.name} ajouté (${grams} g estimés).`);
-      if (result.notes) toast.info(result.notes);
-      reloadLogs();
+      // Ouvre le sheet d'ajustement — l'IA est peu fiable pour estimer un
+      // poids à l'oeil sans référence d'échelle, l'utilisateur confirme.
+      setPhotoResult(result);
+      setPhotoAdjustOpen(true);
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
       console.error("[photo-ia] error", e);
