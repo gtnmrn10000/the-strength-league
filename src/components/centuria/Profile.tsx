@@ -247,6 +247,9 @@ export default function Profile() {
         {prCount >= 5 && <Badge label="5 PRs" />}
         {prCount >= 10 && <Badge label="Décathlon" />}
       </div>
+
+      <Settings open={settingsOpen} onOpenChange={setSettingsOpen} />
+      <WeighIns open={weighOpen} onOpenChange={setWeighOpen} />
     </div>
   );
 }
