@@ -8,7 +8,7 @@ import GoalEditor from "./GoalEditor";
 import ExerciseLibrary from "./ExerciseLibrary";
 import BodyDiagram, { type MuscleRecovery } from "./BodyDiagram";
 import { TEMPLATES, normalizeMuscle, type Template, type WorkoutExercise } from "@/lib/workoutTemplates";
-import type { LibraryExercise } from "@/lib/exerciseCatalog";
+import { imageForExerciseName, type LibraryExercise } from "@/lib/exerciseCatalog";
 import { computeRecovery, type MuscleGroup } from "@/lib/recovery";
 
 interface VerifiedPR {
@@ -311,15 +311,26 @@ function ExerciseCard({
   onUpdateSet: (setIdx: number, field: "reps" | "weight_kg", value: number) => void;
   onRemove: () => void;
 }) {
+  const img = imageForExerciseName(ex.name);
   return (
     <div className="rounded-2xl border border-arena-border bg-arena-surface p-4">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-arena-gold/10">
-            <Dumbbell size={18} className="text-arena-gold" />
-          </div>
-          <div>
-            <p className="font-black text-foreground">{ex.name}</p>
+        <div className="flex items-center gap-3 min-w-0">
+          {img ? (
+            <img
+              src={img}
+              alt={ex.name}
+              loading="lazy"
+              className="h-11 w-11 shrink-0 rounded-xl object-cover border border-arena-border bg-black"
+              onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+            />
+          ) : (
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-arena-gold/10">
+              <Dumbbell size={18} className="text-arena-gold" />
+            </div>
+          )}
+          <div className="min-w-0">
+            <p className="font-black text-foreground truncate">{ex.name}</p>
             <div className="mt-1 flex flex-wrap gap-1">
               {ex.muscle_groups.map((m) => (
                 <span

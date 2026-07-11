@@ -86,16 +86,28 @@ export default function ExerciseLibrary({
                   key={ex.id}
                   className="flex items-center justify-between rounded-2xl border border-arena-border bg-arena-surface p-3"
                 >
-                  <div className="flex items-center gap-3">
-                    <div
-                      className="flex h-11 w-11 items-center justify-center rounded-xl"
-                      style={{ background: `${accent}1a`, boxShadow: `0 0 0 1px ${accent}33 inset` }}
-                    >
-                      <Icon size={18} style={{ color: accent }} />
-                    </div>
-                    <div>
-                      <p className="text-sm font-black text-foreground">{ex.name}</p>
-                      <p className="mt-0.5 text-[10px] text-arena-sub">
+                  <div className="flex items-center gap-3 min-w-0">
+                    {ex.image_url ? (
+                      <img
+                        src={ex.image_url}
+                        alt={ex.name}
+                        loading="lazy"
+                        className="h-14 w-14 shrink-0 rounded-xl object-cover border border-arena-border bg-black"
+                        onError={(e) => {
+                          (e.currentTarget as HTMLImageElement).style.display = "none";
+                        }}
+                      />
+                    ) : (
+                      <div
+                        className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl"
+                        style={{ background: `${accent}1a`, boxShadow: `0 0 0 1px ${accent}33 inset` }}
+                      >
+                        <Icon size={22} style={{ color: accent }} />
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <p className="text-sm font-black text-foreground truncate">{ex.name}</p>
+                      <p className="mt-0.5 text-[10px] text-arena-sub truncate">
                         {CATEGORY_LABEL[ex.category]} · {ex.muscles.join(" · ")}
                       </p>
                     </div>
@@ -103,7 +115,7 @@ export default function ExerciseLibrary({
                   {onAdd && (
                     <button
                       onClick={() => onAdd(ex)}
-                      className="flex h-8 w-8 items-center justify-center rounded-full bg-arena-gold text-black active:scale-90 transition"
+                      className="ml-2 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-arena-gold text-black active:scale-90 transition"
                       aria-label="Ajouter à la séance"
                     >
                       <Plus size={16} strokeWidth={3} />

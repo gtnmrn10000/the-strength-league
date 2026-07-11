@@ -5,6 +5,7 @@ import { Check, Timer, ChevronRight, Dumbbell, Trophy, Loader2 } from "lucide-re
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { TEMPLATES, type Template } from "@/lib/workoutTemplates";
+import { imageForExerciseName } from "@/lib/exerciseCatalog";
 
 export default function WorkoutLogger({
   open,
@@ -74,25 +75,45 @@ export default function WorkoutLogger({
     if (!template || saving) return;
     setSaving(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: userData, error: userErr } = await supabase.auth.getUser();
+      if (userErr) throw userErr;
+      const user = userData.user;
       if (!user) throw new Error("Non authentifié");
       const durationMin = startedAt ? Math.max(1, Math.round((Date.now() - startedAt) / 60000)) : null;
 
-      const { error } = await supabase.from("workout_sessions").insert([{
+      // Ne conserve dans exercises que les séries réellement cochées ;
+      // si aucune n'est cochée, on garde le template complet pour ne pas
+      // insérer un tableau vide (contrainte NOT NULL sur exercises).
+      const filteredExercises = template.exercises.map((ex, exIdx) => {
+        const doneSets = ex.sets.filter((_, i) => done[`${exIdx}-${i}`]);
+        return { ...ex, sets: doneSets.length ? doneSets : ex.sets };
+      });
+
+      const payload = {
         user_id: user.id,
         name: template.name,
-        exercises: template.exercises as unknown as import("@/integrations/supabase/types").Json,
-        muscle_groups: template.muscle_groups,
+        exercises: filteredExercises as unknown as import("@/integrations/supabase/types").Json,
+        muscle_groups: template.muscle_groups ?? [],
         duration_min: durationMin,
         completed_at: new Date().toISOString(),
-      }]);
-      if (error) throw error;
+      };
+
+      const { error } = await supabase.from("workout_sessions").insert([payload]);
+      if (error) {
+        console.error("[WorkoutLogger] insert error:", error);
+        throw error;
+      }
 
       toast.success("Séance enregistrée 💪");
       onCompleted?.();
       onOpenChange(false);
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Impossible d'enregistrer la séance");
+      console.error("[WorkoutLogger] finish failed:", e);
+      const msg =
+        e && typeof e === "object" && "message" in e
+          ? String((e as { message: unknown }).message)
+          : "Impossible d'enregistrer la séance";
+      toast.error(msg);
     } finally {
       setSaving(false);
     }
@@ -183,9 +204,22 @@ export default function WorkoutLogger({
                     }`}
                   >
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Dumbbell size={16} className="text-arena" />
-                        <p className="font-black text-foreground">{ex.name}</p>
+                      <div className="flex items-center gap-2 min-w-0">
+                        {(() => {
+                          const img = imageForExerciseName(ex.name);
+                          return img ? (
+                            <img
+                              src={img}
+                              alt={ex.name}
+                              loading="lazy"
+                              className="h-9 w-9 shrink-0 rounded-lg object-cover border border-arena-border bg-black"
+                              onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+                            />
+                          ) : (
+                            <Dumbbell size={16} className="text-arena" />
+                          );
+                        })()}
+                        <p className="font-black text-foreground truncate">{ex.name}</p>
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="text-[10px] font-bold text-arena-muted">
@@ -245,7 +279,7 @@ export default function WorkoutLogger({
             <div className="border-t border-arena-border p-3">
               <button
                 onClick={finish}
-                disabled={saving || doneCount === 0}
+                disabled={saving}
                 className={`flex w-full items-center justify-center gap-2 rounded-xl py-3 font-black tracking-widest transition disabled:opacity-40 ${
                   allDone
                     ? "bg-arena-gold text-black shadow-[0_0_24px_rgba(212,175,55,0.35)]"
@@ -257,7 +291,11 @@ export default function WorkoutLogger({
                 ) : (
                   <>
                     <Trophy size={16} />
-                    {allDone ? "TERMINER LA SÉANCE" : `ENREGISTRER (${doneCount}/${totalSets})`}
+                    {allDone
+                      ? "TERMINER LA SÉANCE"
+                      : doneCount === 0
+                        ? "TERMINER (SANS SÉRIES COCHÉES)"
+                        : `TERMINER (${doneCount}/${totalSets})`}
                   </>
                 )}
               </button>

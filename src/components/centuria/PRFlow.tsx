@@ -15,6 +15,9 @@ import {
   Weight,
   type LucideIcon,
 } from "lucide-react";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { PR_EXERCISE_IMAGE } from "@/lib/exerciseCatalog";
 import { supabase } from "@/integrations/supabase/client";
 import { submitPR, mockVerifyPR } from "@/lib/prs.functions";
 import {
@@ -393,7 +396,7 @@ export default function PRFlow({
         {/* Content */}
         <div className="flex-1 overflow-y-auto px-5 pb-8">
           <AnimatePresence mode="wait">
-            {/* ═══ STEP 1 — Exercise ═══ */}
+            {/* ═══ STEP 1 — Exercise (RadioGroup natif, plus robuste) ═══ */}
             {step === 1 && (
               <motion.div key="s1" {...pageVariants} className="flex flex-col gap-4 pt-6">
                 <h2 className="text-center font-[Anton] text-[32px] uppercase tracking-wide text-foreground">
@@ -402,24 +405,53 @@ export default function PRFlow({
                 <p className="text-center text-sm text-arena-sub">
                   Choisis l'exercice de ton 1RM
                 </p>
-                <div className="mt-4 flex flex-col gap-4">
-                  {EXERCISES.map((ex) => (
-                    <button
-                      key={ex.id}
-                      type="button"
-                      onClick={() => {
-                        setExercise(ex.id);
-                        setStep(2);
-                      }}
-                      className="flex h-[100px] items-center gap-5 rounded-2xl border border-[#262626] bg-[#141414] px-6 text-left transition-all hover:border-arena hover:shadow-[0_0_15px_var(--arena-glow)] active:scale-[0.98]"
-                    >
-                      <ex.icon size={44} className="text-arena" strokeWidth={2.2} />
-                      <span className="font-[Anton] text-xl uppercase tracking-widest text-foreground">
-                        {ex.label}
-                      </span>
-                    </button>
-                  ))}
-                </div>
+
+                <RadioGroup
+                  value={exercise ?? ""}
+                  onValueChange={(v) => setExercise(v as Exercise)}
+                  className="mt-4 flex flex-col gap-3"
+                >
+                  {EXERCISES.map((ex) => {
+                    const selected = exercise === ex.id;
+                    const img = PR_EXERCISE_IMAGE[ex.id];
+                    return (
+                      <Label
+                        key={ex.id}
+                        htmlFor={`pr-ex-${ex.id}`}
+                        className={`flex cursor-pointer items-center gap-4 rounded-2xl border p-3 transition-all ${
+                          selected
+                            ? "border-arena bg-arena/10 shadow-[0_0_15px_var(--arena-glow)]"
+                            : "border-[#262626] bg-[#141414]"
+                        }`}
+                      >
+                        <RadioGroupItem
+                          id={`pr-ex-${ex.id}`}
+                          value={ex.id}
+                          className="border-arena text-arena"
+                        />
+                        <img
+                          src={img}
+                          alt={ex.label}
+                          loading="lazy"
+                          className="h-14 w-14 shrink-0 rounded-xl object-cover border border-[#262626] bg-black"
+                          onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+                        />
+                        <span className="flex-1 font-[Anton] text-xl uppercase tracking-widest text-foreground">
+                          {ex.label}
+                        </span>
+                      </Label>
+                    );
+                  })}
+                </RadioGroup>
+
+                <button
+                  type="button"
+                  disabled={!exercise}
+                  onClick={() => setStep(2)}
+                  className="mt-6 flex h-14 items-center justify-center gap-2 rounded-2xl bg-arena font-bold text-arena-foreground shadow-[0_0_25px_var(--arena-glow)] disabled:opacity-40 disabled:shadow-none"
+                >
+                  Continuer <ChevronRight size={16} />
+                </button>
               </motion.div>
             )}
 
