@@ -116,8 +116,8 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   const value = useMemo<SubscriptionContextValue>(
     () => ({
       status,
-      isPremium: !!status?.isPremium,
-      isPaid: !!status?.isPremium,
+      isPremium: QA_MODE ? true : !!status?.isPremium,
+      isPaid: QA_MODE ? true : !!status?.isPremium,
       loading,
       purchasing,
       paywallOpen,
