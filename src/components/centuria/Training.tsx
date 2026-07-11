@@ -6,9 +6,10 @@ import PremiumBadge from "./paywall/PremiumBadge";
 import WorkoutLogger from "./WorkoutLogger";
 import GoalEditor from "./GoalEditor";
 import ExerciseLibrary from "./ExerciseLibrary";
-import BodyDiagram, { type MuscleIntensity } from "./BodyDiagram";
+import BodyDiagram, { type MuscleRecovery } from "./BodyDiagram";
 import { TEMPLATES, normalizeMuscle, type Template, type WorkoutExercise } from "@/lib/workoutTemplates";
 import type { LibraryExercise } from "@/lib/exerciseCatalog";
+import { computeRecovery, type MuscleGroup } from "@/lib/recovery";
 
 interface VerifiedPR {
   exercise: string;
