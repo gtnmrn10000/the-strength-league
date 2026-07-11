@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Loader2, Send, Trash2, AlertTriangle, Play, ChefHat, BarChart3, TrendingUp } from "lucide-react";
+import { Loader2, Send, Trash2, AlertTriangle, Play, ChefHat, BarChart3, TrendingUp, CalendarClock } from "lucide-react";
 import { toast } from "sonner";
 import {
   coachChat,
