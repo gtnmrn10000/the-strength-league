@@ -1,9 +1,11 @@
 import { useMemo, useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Search, Dumbbell, Plus } from "lucide-react";
+import { Search, Plus } from "lucide-react";
 import {
   EXERCISE_LIBRARY,
   CATEGORY_LABEL,
+  CATEGORY_ICON,
+  CATEGORY_ACCENT,
   type LibraryExercise,
   type MuscleCategory,
 } from "@/lib/exerciseCatalog";
