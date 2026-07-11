@@ -196,10 +196,17 @@ export default function Training({ onPR, refreshKey }: { onPR: () => void; refre
     setLibraryOpen(false);
   };
 
-  const switchTemplate = (id: string) => {
-    const t = TEMPLATES.find((x) => x.id === id);
-    if (t) setSession(cloneTemplate(t));
+  const startEmptySession = () => {
+    setSession({
+      id: "custom",
+      name: "Ma séance",
+      muscle_groups: [],
+      restSec: 90,
+      exercises: [],
+    });
+    setLibraryOpen(true);
   };
+
 
   return (
     <div className="px-4 pt-2 pb-6">
