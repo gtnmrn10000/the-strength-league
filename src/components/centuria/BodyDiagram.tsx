@@ -48,28 +48,31 @@ const BACK_MAP: Partial<Record<Region, Muscle[]>> = {
   mollets: ["calves"],
 };
 
-/** 0 = neutre, 1/2/3 = tiers d'intensité (mappés à frequency react-body-highlighter). */
-function tierFor(intensity: number | undefined): 0 | 1 | 2 | 3 {
-  if (!intensity) return 0;
-  if (intensity >= 0.75) return 3;
-  if (intensity >= 0.5) return 2;
-  return 1;
-}
-
 export type MuscleIntensity = Partial<Record<Region, number>>;
+export type MuscleRecovery = Partial<Record<Region, number>>; // 0..100
 
-// Palette or → rouge sang, indexée par frequency-1
-// Dégradé or : or sombre → or franc → or clair (F0D875)
-const HIGHLIGHT_COLORS = ["#8a6a1f", "#D4AF37", "#F0D875"];
+// Traffic light : rouge <50, orange 50-80, vert >80
+const COLOR_RED = "#ef4444";
+const COLOR_ORANGE = "#f59e0b";
+const COLOR_GREEN = "#22c55e";
+const HIGHLIGHT_COLORS = [COLOR_RED, COLOR_ORANGE, COLOR_GREEN];
 const BODY_COLOR = "#1a1a1a";
 
+/** Retourne un tier 1=rouge, 2=orange, 3=vert (mappé sur frequency 1/2/3). */
+function tierForRecovery(pct: number | undefined): 0 | 1 | 2 | 3 {
+  if (pct === undefined) return 0;
+  if (pct < 50) return 1; // rouge : pas récup
+  if (pct <= 80) return 2; // orange : en cours
+  return 3; // vert : frais (>80)
+}
+
 function buildData(
-  intensities: MuscleIntensity | undefined,
+  recovery: MuscleRecovery | undefined,
   map: Partial<Record<Region, Muscle[]>>,
 ): IExerciseData[] {
   const buckets: Record<number, Muscle[]> = { 1: [], 2: [], 3: [] };
   (Object.keys(map) as Region[]).forEach((r) => {
-    const tier = tierFor(intensities?.[r]);
+    const tier = tierForRecovery(recovery?.[r]);
     if (tier === 0) return;
     buckets[tier].push(...(map[r] ?? []));
   });
@@ -77,7 +80,6 @@ function buildData(
   ([1, 2, 3] as const).forEach((freq) => {
     const muscles = Array.from(new Set(buckets[freq]));
     if (muscles.length === 0) return;
-    // Répète l'exercice `freq` fois pour que frequency = freq
     for (let i = 0; i < freq; i++) {
       data.push({ name: `tier-${freq}-${i}`, muscles });
     }
@@ -86,18 +88,21 @@ function buildData(
 }
 
 /**
- * Silhouette anatomique premium via react-body-highlighter.
- * Muscles ciblés rendus en dégradé or → rouge sang selon l'intensité.
+ * Silhouettes avant/arrière colorées par état de récup :
+ * rouge <50 %, orange 50-80 %, vert >80 %.
+ * Les muscles jamais travaillés restent gris (baseline).
  */
 export default function BodyDiagram({
-  intensities,
+  recovery,
   targets,
 }: {
+  /** Legacy prop — ignoré, gardé pour compat. */
   intensities?: MuscleIntensity;
+  recovery?: MuscleRecovery;
   targets?: string[];
 }) {
-  const frontData = buildData(intensities, FRONT_MAP);
-  const backData = buildData(intensities, BACK_MAP);
+  const frontData = buildData(recovery, FRONT_MAP);
+  const backData = buildData(recovery, BACK_MAP);
   const targetSet = new Set((targets ?? []).map((t) => normalizeMuscle(t)));
 
   return (
@@ -111,10 +116,11 @@ export default function BodyDiagram({
       }}
     >
       <div className="mb-3 flex items-center justify-between">
-        <p className="text-xs font-black tracking-widest text-arena-muted">CIBLES DE LA SÉANCE</p>
+        <p className="text-xs font-black tracking-widest text-arena-muted">RÉCUPÉRATION</p>
         <div className="flex items-center gap-3">
-          <LegendDot color={HIGHLIGHT_COLORS[1]} label="ciblé" />
-          <LegendDot color={HIGHLIGHT_COLORS[2]} label="intense" />
+          <LegendDot color={COLOR_RED} label="<50%" />
+          <LegendDot color={COLOR_ORANGE} label="50-80%" />
+          <LegendDot color={COLOR_GREEN} label=">80%" />
         </div>
       </div>
 
@@ -126,14 +132,27 @@ export default function BodyDiagram({
       {targets && targets.length > 0 && (
         <div className="mt-3 flex flex-wrap gap-1.5">
           {[...targetSet].map((t) => {
-            const int = intensities?.[t as Region];
+            const pct = recovery?.[t as Region];
+            const color =
+              pct === undefined
+                ? "rgba(212,175,55,0.6)"
+                : pct < 50
+                  ? COLOR_RED
+                  : pct <= 80
+                    ? COLOR_ORANGE
+                    : COLOR_GREEN;
             return (
               <span
                 key={t}
-                className="rounded-full border border-arena-gold/40 bg-arena-gold/10 px-2 py-0.5 text-[10px] font-bold text-arena-gold"
+                className="rounded-full border px-2 py-0.5 text-[10px] font-bold"
+                style={{
+                  borderColor: `${color}66`,
+                  background: `${color}1a`,
+                  color,
+                }}
               >
                 {LABEL[t as Region] ?? t}
-                {int ? ` · ${Math.round(int * 100)}%` : ""}
+                {pct !== undefined ? ` · ${Math.round(pct)}%` : ""}
               </span>
             );
           })}
@@ -179,7 +198,7 @@ function LegendDot({ color, label }: { color: string; label: string }) {
         className="h-2 w-2 rounded-full"
         style={{ background: color, boxShadow: `0 0 6px ${color}` }}
       />
-      <span className="text-[10px] text-arena-sub">{label}</span>
+      <span className="text-[9px] text-arena-sub">{label}</span>
     </div>
   );
 }
