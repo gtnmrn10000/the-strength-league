@@ -339,6 +339,30 @@ export default function PRFlow({
     else if (step === 4) setStep(3);
   };
 
+  useEffect(() => {
+    if (!open) return;
+    console.log("[PRFlow] step changed", { step, exercise });
+  }, [open, step, exercise]);
+
+  const handleExerciseContinue = () => {
+    console.log("[PRFlow] continue exercise clicked", {
+      exercise,
+      step,
+      hasExercise: !!exercise,
+    });
+
+    if (!exercise) {
+      console.log("[PRFlow] continue exercise blocked: no exercise selected");
+      return;
+    }
+
+    console.log("[PRFlow] before setStep", { from: step, to: 2 });
+    setStep((previousStep) => {
+      console.log("[PRFlow] setStep updater", { previousStep, nextStep: 2 });
+      return 2;
+    });
+  };
+
   const handleClose = (prValidated?: boolean) => {
     onOpenChange(false, prValidated);
   };
@@ -408,7 +432,10 @@ export default function PRFlow({
 
                 <RadioGroup
                   value={exercise ?? ""}
-                  onValueChange={(v) => setExercise(v as Exercise)}
+                  onValueChange={(v) => {
+                    console.log("[PRFlow] exercise changed", { value: v, previous: exercise, step });
+                    setExercise(v as Exercise);
+                  }}
                   className="mt-4 flex flex-col gap-3"
                 >
                   {EXERCISES.map((ex) => {
@@ -447,7 +474,7 @@ export default function PRFlow({
                 <button
                   type="button"
                   disabled={!exercise}
-                  onClick={() => setStep(2)}
+                  onClick={handleExerciseContinue}
                   className="mt-6 flex h-14 items-center justify-center gap-2 rounded-2xl bg-arena font-bold text-arena-foreground shadow-[0_0_25px_var(--arena-glow)] disabled:opacity-40 disabled:shadow-none"
                 >
                   Continuer <ChevronRight size={16} />
