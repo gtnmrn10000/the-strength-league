@@ -378,19 +378,22 @@ export const clearCoachHistory = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-// ---------- Sauvegarde d'une séance ----------
+// ---------- Sauvegarde d'une séance (démarrée maintenant ou programmée) ----------
 const saveSchema = z.object({
   name: z.string().min(1).max(120),
   duration_min: z.number().int().min(1).max(360).optional(),
   muscle_groups: z.array(z.string()).max(10),
   exercises: z.array(z.any()).max(20),
   notes: z.string().max(1000).optional(),
+  mode: z.enum(["start", "schedule"]).default("start"),
+  scheduled_for: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
 });
 
 export const saveWorkoutSession = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => saveSchema.parse(d))
   .handler(async ({ data, context }) => {
+    const isSchedule = data.mode === "schedule";
     const { data: row, error } = await context.supabase
       .from("workout_sessions")
       .insert({
@@ -400,13 +403,56 @@ export const saveWorkoutSession = createServerFn({ method: "POST" })
         muscle_groups: data.muscle_groups,
         exercises: data.exercises,
         notes: data.notes ?? null,
-        completed_at: new Date().toISOString(),
+        completed_at: isSchedule ? null : new Date().toISOString(),
+        scheduled_for: isSchedule ? (data.scheduled_for ?? null) : null,
       })
-      .select("id, completed_at")
+      .select("id, completed_at, scheduled_for")
       .single();
     if (error) throw new Response(error.message, { status: 500 });
     return row;
   });
+
+// ---------- Séances programmées à venir ----------
+export const listPlannedWorkouts = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const today = new Date().toISOString().slice(0, 10);
+    const { data, error } = await context.supabase
+      .from("workout_sessions")
+      .select("id, name, muscle_groups, duration_min, exercises, scheduled_for")
+      .eq("user_id", context.userId)
+      .is("completed_at", null)
+      .not("scheduled_for", "is", null)
+      .gte("scheduled_for", today)
+      .order("scheduled_for", { ascending: true })
+      .limit(20);
+    if (error) throw new Response(error.message, { status: 500 });
+    return (data ?? []) as Array<{
+      id: string;
+      name: string;
+      muscle_groups: string[];
+      duration_min: number | null;
+      exercises: unknown;
+      scheduled_for: string;
+    }>;
+  });
+
+const idSchema = z.object({ id: z.string().uuid() });
+
+export const deletePlannedWorkout = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => idSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase
+      .from("workout_sessions")
+      .delete()
+      .eq("id", data.id)
+      .eq("user_id", context.userId)
+      .is("completed_at", null);
+    if (error) throw new Response(error.message, { status: 500 });
+    return { ok: true };
+  });
+
 
 // ---------- Récup pour widget ----------
 export const getRecentMuscleWork = createServerFn({ method: "GET" })
