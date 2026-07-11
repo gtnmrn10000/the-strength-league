@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Camera, NotebookPen, Target, Sparkles, Dumbbell, Trophy, Plus, Minus, X, Library, Play } from "lucide-react";
+import { Camera, NotebookPen, Target, Sparkles, Dumbbell, Trophy, Plus, Minus, X, Library, Play, CalendarClock, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import CoachSheet from "./coach/CoachSheet";
 import PremiumBadge from "./paywall/PremiumBadge";
