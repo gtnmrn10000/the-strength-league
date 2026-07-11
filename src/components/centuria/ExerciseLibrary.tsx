@@ -110,7 +110,8 @@ export default function ExerciseLibrary({
                     </button>
                   )}
                 </li>
-              ))}
+                );
+              })}
             </ul>
           )}
         </div>
