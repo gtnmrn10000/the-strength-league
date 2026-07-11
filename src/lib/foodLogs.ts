@@ -30,14 +30,18 @@ function endOfDayISO(d = new Date()) {
 }
 
 export async function fetchTodayLogs(): Promise<FoodLog[]> {
+  return fetchLogsForDate(new Date());
+}
+
+export async function fetchLogsForDate(date: Date): Promise<FoodLog[]> {
   const { data: auth } = await supabase.auth.getUser();
   if (!auth.user) return [];
   const { data, error } = await supabase
     .from("food_logs")
     .select("*")
     .eq("user_id", auth.user.id)
-    .gte("logged_at", startOfDayISO())
-    .lte("logged_at", endOfDayISO())
+    .gte("logged_at", startOfDayISO(date))
+    .lte("logged_at", endOfDayISO(date))
     .order("logged_at", { ascending: false });
   if (error) throw error;
   return (data ?? []) as FoodLog[];
