@@ -11,6 +11,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { paywallProvider, EntitlementStatus } from "@/lib/paywall/provider";
 import type { PlanId } from "@/lib/paywall/plans";
+import { QA_MODE } from "@/lib/qaMode";
 
 type PaywallReason = "coach" | "photo-ia" | "analyse" | "recipes" | "video" | "generic";
 
@@ -83,6 +84,9 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   }, [refresh]);
 
   const openPaywall = useCallback((reason: PaywallReason = "generic") => {
+    // En QA_MODE, aucune fonctionnalité n'est verrouillée — le paywall ne
+    // s'ouvre jamais, même si un call-site l'invoque.
+    if (QA_MODE) return;
     setPaywallReason(reason);
     setPaywallOpen(true);
   }, []);
@@ -112,8 +116,8 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   const value = useMemo<SubscriptionContextValue>(
     () => ({
       status,
-      isPremium: !!status?.isPremium,
-      isPaid: !!status?.isPremium,
+      isPremium: QA_MODE ? true : !!status?.isPremium,
+      isPaid: QA_MODE ? true : !!status?.isPremium,
       loading,
       purchasing,
       paywallOpen,
