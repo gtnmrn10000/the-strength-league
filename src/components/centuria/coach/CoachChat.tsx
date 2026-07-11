@@ -96,8 +96,13 @@ export default function CoachChat({ onSessionStarted }: { onSessionStarted?: () 
     }
   };
 
-  const startSession = async (idx: number, w: GeneratedWorkout) => {
-    setStartingIdx(idx);
+  const startSession = async (
+    idx: number,
+    w: GeneratedWorkout,
+    mode: "start" | "schedule",
+    scheduledFor: string | null,
+  ) => {
+    setStartingIdx({ i: idx, mode });
     try {
       await saveWorkoutSession({
         data: {
@@ -105,12 +110,18 @@ export default function CoachChat({ onSessionStarted }: { onSessionStarted?: () 
           duration_min: w.duration_min,
           muscle_groups: w.muscle_groups,
           exercises: w.exercises,
+          mode,
+          scheduled_for: mode === "schedule" ? scheduledFor : null,
         },
       });
-      toast.success("Séance envoyée dans Training ✅");
+      if (mode === "start") {
+        toast.success("Séance envoyée dans Training ✅");
+      } else {
+        toast.success(`Séance programmée pour le ${scheduledFor} 📅`);
+      }
       onSessionStarted?.();
     } catch {
-      toast.error("Impossible d'envoyer la séance.");
+      toast.error(mode === "start" ? "Impossible d'envoyer la séance." : "Impossible de programmer la séance.");
     } finally {
       setStartingIdx(null);
     }
