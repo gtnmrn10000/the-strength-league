@@ -112,7 +112,7 @@ export default function Training({ onPR, refreshKey }: { onPR: () => void; refre
 
       const since = new Date(Date.now() - 14 * 24 * 3600 * 1000).toISOString();
 
-      const [profileRes, prsRes, sessionsRes, historyRes] = await Promise.all([
+      const [profileRes, prsRes, sessionsRes, historyRes, plannedRes] = await Promise.all([
         supabase.rpc("get_my_profile").maybeSingle(),
         supabase
           .from("prs")
