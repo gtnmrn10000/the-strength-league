@@ -20,16 +20,20 @@ export default function CoachChat({ onSessionStarted }: { onSessionStarted?: () 
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    let cancelled = false;
     (async () => {
       try {
         const h = await getCoachHistory();
-        setMessages(h);
+        if (!cancelled) setMessages(Array.isArray(h) ? h : []);
       } catch {
-        // silent
+        if (!cancelled) setMessages([]);
       } finally {
-        setBooting(false);
+        if (!cancelled) setBooting(false);
       }
     })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
