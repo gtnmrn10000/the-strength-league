@@ -1,4 +1,4 @@
-import { Plus, ScanLine, Search, Loader2, Trash2, PackageX, Sparkles, Lock } from "lucide-react";
+import { Plus, ScanLine, Search, Loader2, Trash2, PackageX, Sparkles, Lock, ChevronLeft, ChevronRight, CalendarDays } from "lucide-react";
 import PremiumBadge from "./paywall/PremiumBadge";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { recognizeFoodPhoto } from "@/lib/foodPhoto.functions";
@@ -12,9 +12,11 @@ import {
   addFoodLog,
   addFoodLogFromProduct,
   deleteFoodLog,
-  fetchTodayLogs,
+  fetchLogsForDate,
 } from "@/lib/foodLogs";
 import { supabase } from "@/integrations/supabase/client";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 import {
   ActivityLevel,
   DEFAULT_GOALS,
