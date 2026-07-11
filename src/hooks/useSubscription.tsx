@@ -84,6 +84,9 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   }, [refresh]);
 
   const openPaywall = useCallback((reason: PaywallReason = "generic") => {
+    // En QA_MODE, aucune fonctionnalité n'est verrouillée — le paywall ne
+    // s'ouvre jamais, même si un call-site l'invoque.
+    if (QA_MODE) return;
     setPaywallReason(reason);
     setPaywallOpen(true);
   }, []);
