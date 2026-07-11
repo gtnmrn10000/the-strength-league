@@ -1,4 +1,5 @@
 import { Component, type ReactNode, useEffect, useState } from "react";
+import { toast } from "sonner";
 import Onboarding from "./Onboarding";
 import Feed from "./Feed";
 import Training from "./Training";
@@ -10,6 +11,7 @@ import BottomNav from "./BottomNav";
 import HeaderLogo from "./HeaderLogo";
 import { SubscriptionProvider } from "@/hooks/useSubscription";
 import Paywall from "./paywall/Paywall";
+import { supabase } from "@/integrations/supabase/client";
 
 const ONBOARDED_KEY = "centuria_onboarded";
 
@@ -49,6 +51,7 @@ class TabErrorBoundary extends Component<
 export default function Shell() {
   const [hydrated, setHydrated] = useState(false);
   const [onboarded, setOnboarded] = useState(false);
+  const [sessionReady, setSessionReady] = useState(false);
   const [tab, setTab] = useState("feed");
   const [showPR, setShowPR] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -57,6 +60,32 @@ export default function Shell() {
     setOnboarded(localStorage.getItem(ONBOARDED_KEY) === "true");
     setHydrated(true);
   }, []);
+
+  // Ensure a Supabase session exists (QA mode: anonymous sign-in) so
+  // server functions guarded by requireSupabaseAuth receive a bearer token.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data } = await supabase.auth.getSession();
+        if (!data.session) {
+          const { error } = await supabase.auth.signInAnonymously();
+          if (error) {
+            console.error("[auth] anonymous sign-in failed", error);
+            toast.error("Impossible d'initialiser la session. Recharge la page.");
+          }
+        }
+      } catch (e) {
+        console.error("[auth] session bootstrap error", e);
+      } finally {
+        if (!cancelled) setSessionReady(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
 
   const handleOnboardingDone = () => {
     localStorage.setItem(ONBOARDED_KEY, "true");
@@ -70,8 +99,8 @@ export default function Shell() {
     }
   };
 
-  // Render nothing until hydrated to avoid mismatch
-  if (!hydrated) {
+  // Render nothing until hydrated + session bootstrapped to avoid 401 on server fns
+  if (!hydrated || !sessionReady) {
     return <div className="mx-auto flex h-dvh max-w-md items-center justify-center bg-background" />;
   }
 
