@@ -172,6 +172,9 @@ export default function Meals() {
       setManualOpen(false);
       toast.success(`${entry.product_name} ajouté.`);
       reloadLogs();
+      // Partage anonyme la fiche vers la base commune (verified=false)
+      const { addCommunityManual } = await import("@/lib/communityFoods");
+      addCommunityManual({ name: entry.product_name, ...entry }).catch(() => {});
     } catch {
       toast.error("Impossible d'ajouter au journal.");
     }
