@@ -27,6 +27,45 @@ interface WorkoutHistoryRow {
   exercises: unknown;
 }
 
+interface PlannedRow {
+  id: string;
+  name: string | null;
+  muscle_groups: string[] | null;
+  duration_min: number | null;
+  scheduled_for: string;
+  exercises: unknown;
+}
+
+type CoachExercise = {
+  name?: string;
+  sets?: number;
+  reps?: string;
+  suggested_weight_kg?: number;
+  muscle_groups?: string[];
+};
+
+/** Convertit une séance générée par le Coach IA (sets=number, reps=string) en Template éditable. */
+function plannedToTemplate(row: PlannedRow): Template {
+  const raw = Array.isArray(row.exercises) ? (row.exercises as CoachExercise[]) : [];
+  const exercises: WorkoutExercise[] = raw.map((e) => {
+    const nSets = Math.max(1, Math.min(10, Number(e?.sets) || 3));
+    const repsNum = parseInt(String(e?.reps ?? "8"), 10) || 8;
+    const w = typeof e?.suggested_weight_kg === "number" ? e.suggested_weight_kg : 0;
+    return {
+      name: String(e?.name ?? "Exercice"),
+      muscle_groups: Array.isArray(e?.muscle_groups) ? e.muscle_groups.map(String) : [],
+      sets: Array.from({ length: nSets }, () => ({ reps: repsNum, weight_kg: w })),
+    };
+  });
+  return {
+    id: "planned",
+    name: row.name ?? "Séance programmée",
+    muscle_groups: row.muscle_groups ?? [],
+    restSec: 90,
+    exercises,
+  };
+}
+
 function totalVolume(exercises: unknown): number {
   if (!Array.isArray(exercises)) return 0;
   let v = 0;
