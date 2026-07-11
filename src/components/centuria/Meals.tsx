@@ -45,6 +45,8 @@ export default function Meals() {
   const [photoLoading, setPhotoLoading] = useState(false);
   const photoInputRef = useRef<HTMLInputElement>(null);
   const recognizePhoto = recognizeFoodPhoto;
+  const [photoResult, setPhotoResult] = useState<FoodPhotoResult | null>(null);
+  const [photoAdjustOpen, setPhotoAdjustOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>(() => new Date());
   const [datePopoverOpen, setDatePopoverOpen] = useState(false);
 
