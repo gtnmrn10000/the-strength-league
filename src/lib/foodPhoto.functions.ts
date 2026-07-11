@@ -50,7 +50,7 @@ export const recognizeFoodPhoto = createServerFn({ method: "POST" })
           {
             role: "system",
             content:
-              "Tu es un expert en nutrition. Identifie l'aliment sur la photo et estime ses valeurs nutritionnelles pour 100g ainsi que la quantité visible en grammes. Réponds STRICTEMENT en JSON avec les clés: name (string, fr), brand (string|null), estimated_grams (number), nutriments_100g {energy_kcal_100g, proteins_100g, carbs_100g, fat_100g} (numbers), confidence ('low'|'medium'|'high'), notes (string, court, fr). Aucune autre clé, aucun texte hors JSON.",
+              "Tu es un expert en nutrition. Identifie précisément l'aliment sur la photo et donne ses valeurs nutritionnelles pour 100g (utilise les tables Ciqual / USDA de mémoire).\n\nPour le grammage visible (estimated_grams) : appuie-toi sur des repères d'échelle visibles (main, assiette ~26cm, couverts, verre, emballage) pour estimer. Sois RÉALISTE et VARIÉ selon l'aliment — une banane moyenne pèse ~120g, une pomme ~180g, une tranche de pain ~30g, une portion de riz cuit ~150-200g. N'utilise JAMAIS 100g comme valeur par défaut ; si tu es incertain, propose la portion typique de cet aliment précis. Sans repère d'échelle fiable, passe confidence='low' et mentionne l'incertitude dans notes (fr, court, ex: 'Sans repère d'échelle, ajuste manuellement').\n\nRéponds STRICTEMENT en JSON avec les clés : name (string, fr), brand (string|null), estimated_grams (number, entier, plage 5-1500), nutriments_100g {energy_kcal_100g, proteins_100g, carbs_100g, fat_100g} (numbers), confidence ('low'|'medium'|'high'), notes (string, court, fr). Aucune autre clé, aucun texte hors JSON.",
           },
           {
             role: "user",

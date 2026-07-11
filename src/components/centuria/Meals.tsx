@@ -1,10 +1,11 @@
 import { Plus, ScanLine, Search, Loader2, Trash2, PackageX, Sparkles, Lock, ChevronLeft, ChevronRight, CalendarDays } from "lucide-react";
 import PremiumBadge from "./paywall/PremiumBadge";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { recognizeFoodPhoto } from "@/lib/foodPhoto.functions";
+import { recognizeFoodPhoto, type FoodPhotoResult } from "@/lib/foodPhoto.functions";
 import BarcodeScanner from "./food/BarcodeScanner";
 import ProductSheet from "./food/ProductSheet";
 import ManualEntrySheet from "./food/ManualEntrySheet";
+import PhotoAdjustSheet from "./food/PhotoAdjustSheet";
 import { FoodProduct, fetchProductByBarcode, searchProducts } from "@/lib/openFoodFacts";
 import {
   FoodLog,
@@ -44,6 +45,8 @@ export default function Meals() {
   const [photoLoading, setPhotoLoading] = useState(false);
   const photoInputRef = useRef<HTMLInputElement>(null);
   const recognizePhoto = recognizeFoodPhoto;
+  const [photoResult, setPhotoResult] = useState<FoodPhotoResult | null>(null);
+  const [photoAdjustOpen, setPhotoAdjustOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>(() => new Date());
   const [datePopoverOpen, setDatePopoverOpen] = useState(false);
 
@@ -222,22 +225,10 @@ export default function Meals() {
       const result = await recognizePhoto({ data: { image_data_url: dataUrl } });
       console.log("[photo-ia] step 3: got result", result);
 
-      // 6. Auto-add: on log directement dans le journal du jour sélectionné
-      const grams = result.estimated_grams;
-      const factor = grams / 100;
-      await addFoodLog({
-        source: "photo",
-        product_name: result.brand ? `${result.brand} · ${result.name}` : result.name,
-        quantity_g: grams,
-        calories: Math.round(result.nutriments_100g.energy_kcal_100g * factor),
-        proteins_g: Math.round(result.nutriments_100g.proteins_100g * factor * 10) / 10,
-        carbs_g: Math.round(result.nutriments_100g.carbs_100g * factor * 10) / 10,
-        fats_g: Math.round(result.nutriments_100g.fat_100g * factor * 10) / 10,
-      });
-      console.log("[photo-ia] step 4: added to journal");
-      toast.success(`${result.name} ajouté (${grams} g estimés).`);
-      if (result.notes) toast.info(result.notes);
-      reloadLogs();
+      // Ouvre le sheet d'ajustement — l'IA est peu fiable pour estimer un
+      // poids à l'oeil sans référence d'échelle, l'utilisateur confirme.
+      setPhotoResult(result);
+      setPhotoAdjustOpen(true);
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
       console.error("[photo-ia] error", e);
@@ -506,6 +497,38 @@ export default function Meals() {
         onOpenChange={setManualOpen}
         onSubmit={handleManualSubmit}
         defaultName={manualDefaultName}
+      />
+      <PhotoAdjustSheet
+        open={photoAdjustOpen}
+        onOpenChange={(o) => {
+          setPhotoAdjustOpen(o);
+          if (!o) setPhotoResult(null);
+        }}
+        result={photoResult}
+        onConfirm={async (grams) => {
+          if (!photoResult) return;
+          const factor = grams / 100;
+          try {
+            await addFoodLog({
+              source: "photo",
+              product_name: photoResult.brand
+                ? `${photoResult.brand} · ${photoResult.name}`
+                : photoResult.name,
+              quantity_g: grams,
+              calories: Math.round(photoResult.nutriments_100g.energy_kcal_100g * factor),
+              proteins_g: Math.round(photoResult.nutriments_100g.proteins_100g * factor * 10) / 10,
+              carbs_g: Math.round(photoResult.nutriments_100g.carbs_100g * factor * 10) / 10,
+              fats_g: Math.round(photoResult.nutriments_100g.fat_100g * factor * 10) / 10,
+            });
+            toast.success(`${photoResult.name} ajouté (${grams} g).`);
+            reloadLogs();
+          } catch {
+            toast.error("Ajout impossible.");
+          } finally {
+            setPhotoAdjustOpen(false);
+            setPhotoResult(null);
+          }
+        }}
       />
     </div>
   );
