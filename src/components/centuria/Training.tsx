@@ -89,6 +89,7 @@ export default function Training({ onPR, refreshKey }: { onPR: () => void; refre
           .from("workout_sessions")
           .select("id, name, muscle_groups, duration_min, completed_at, exercises")
           .eq("user_id", user.id)
+          .not("completed_at", "is", null)
           .order("completed_at", { ascending: false })
           .limit(20),
       ]);
