@@ -67,6 +67,8 @@ export default function CoachChat({ onSessionStarted }: { onSessionStarted?: () 
       const msg = e instanceof Error ? e.message : String(e);
       if (msg.includes("PREMIUM_REQUIRED") || msg.includes("402")) toast.error("Réservé aux abonnés Premium.");
       else if (msg.includes("429")) toast.error("Trop de requêtes, réessaie dans un instant.");
+      else if (msg.includes("401") || msg.toLowerCase().includes("unauthorized"))
+        toast.error("Session expirée, recharge la page pour te reconnecter.");
       else toast.error("Le Coach n'a pas pu répondre.");
       setMessages((m) => m.slice(0, -1));
     } finally {
