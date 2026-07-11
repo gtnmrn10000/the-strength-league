@@ -167,6 +167,10 @@ export default function Training({ onPR, refreshKey }: { onPR: () => void; refre
       if (historyRes.data) {
         setHistory(historyRes.data as WorkoutHistoryRow[]);
       }
+
+      if (plannedRes.data) {
+        setPlanned(plannedRes.data as PlannedRow[]);
+      }
     })();
     return () => { cancelled = true; };
   }, [refreshKey, localTick]);
