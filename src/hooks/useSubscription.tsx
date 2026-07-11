@@ -63,7 +63,16 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
     mounted.current = true;
     refresh();
     const { data: sub } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "SIGNED_IN" || event === "SIGNED_OUT" || event === "USER_UPDATED") {
+      // INITIAL_SESSION fires when the persisted session finishes loading —
+      // the first refresh() runs before that, so without it a signed-in
+      // premium user is briefly (and stickily) shown as free.
+      if (
+        event === "INITIAL_SESSION" ||
+        event === "SIGNED_IN" ||
+        event === "SIGNED_OUT" ||
+        event === "USER_UPDATED" ||
+        event === "TOKEN_REFRESHED"
+      ) {
         refresh();
       }
     });
