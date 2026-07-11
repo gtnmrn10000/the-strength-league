@@ -83,14 +83,9 @@ export default function Training({ onPR, refreshKey }: { onPR: () => void; refre
       }
 
       if (sessionsRes.data) {
-        const counts: Record<string, number> = {};
-        for (const s of sessionsRes.data as { muscle_groups: string[] | null }[]) {
-          for (const g of s.muscle_groups ?? []) {
-            const k = normalizeMuscle(g);
-            counts[k] = (counts[k] ?? 0) + 1;
-          }
-        }
-        setRecentByMuscle(counts);
+        setRecentSessions(
+          (sessionsRes.data as Array<{ muscle_groups: string[] | null; completed_at: string }>) ?? [],
+        );
       }
     })();
     return () => { cancelled = true; };
@@ -99,26 +94,21 @@ export default function Training({ onPR, refreshKey }: { onPR: () => void; refre
   const exerciseLabels: Record<string, string> = { squat: "Squat", bench: "Bench Press", deadlift: "Deadlift" };
   const hasPRs = Object.keys(bestPRs).length > 0;
 
-  // Intensité par muscle pour le diagramme = part du volume relatif de la séance,
-  // rehaussée par le nb récent de séances (>1 boost).
-  const intensities = useMemo<MuscleIntensity>(() => {
-    const counts: Record<string, number> = {};
-    for (const ex of session.exercises) {
-      const setsCount = ex.sets.length;
-      for (const g of ex.muscle_groups) {
-        const k = normalizeMuscle(g);
-        counts[k] = (counts[k] ?? 0) + setsCount;
-      }
-    }
-    const max = Math.max(1, ...Object.values(counts));
-    const out: MuscleIntensity = {};
-    for (const [k, v] of Object.entries(counts)) {
-      const base = v / max; // 0..1 dans la séance
-      const recentBoost = Math.min(0.2, (recentByMuscle[k] ?? 0) * 0.05);
-      out[k as keyof MuscleIntensity] = Math.min(1, base + recentBoost);
+  // Récupération par muscle (0-100%) — pilote la couleur feu tricolore du diagramme.
+  const recovery = useMemo<MuscleRecovery>(() => {
+    // Normalise les muscle_groups des sessions vers les clés canoniques.
+    const normalized = recentSessions.map((s) => ({
+      completed_at: s.completed_at,
+      muscle_groups: (s.muscle_groups ?? []).map((g) => normalizeMuscle(g)),
+    }));
+    const states = computeRecovery(normalized);
+    const out: MuscleRecovery = {};
+    for (const st of states) {
+      // On ne colore que les muscles réellement travaillés (avec un lastAt).
+      if (st.lastAt) out[st.group as MuscleGroup] = st.percent;
     }
     return out;
-  }, [session, recentByMuscle]);
+  }, [recentSessions]);
 
   const totalSets = session.exercises.reduce((s, e) => s + e.sets.length, 0);
   const targetMuscles = Array.from(
