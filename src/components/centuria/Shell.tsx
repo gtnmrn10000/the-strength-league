@@ -51,6 +51,7 @@ class TabErrorBoundary extends Component<
 export default function Shell() {
   const [hydrated, setHydrated] = useState(false);
   const [onboarded, setOnboarded] = useState(false);
+  const [sessionReady, setSessionReady] = useState(false);
   const [tab, setTab] = useState("feed");
   const [showPR, setShowPR] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -59,6 +60,32 @@ export default function Shell() {
     setOnboarded(localStorage.getItem(ONBOARDED_KEY) === "true");
     setHydrated(true);
   }, []);
+
+  // Ensure a Supabase session exists (QA mode: anonymous sign-in) so
+  // server functions guarded by requireSupabaseAuth receive a bearer token.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data } = await supabase.auth.getSession();
+        if (!data.session) {
+          const { error } = await supabase.auth.signInAnonymously();
+          if (error) {
+            console.error("[auth] anonymous sign-in failed", error);
+            toast.error("Impossible d'initialiser la session. Recharge la page.");
+          }
+        }
+      } catch (e) {
+        console.error("[auth] session bootstrap error", e);
+      } finally {
+        if (!cancelled) setSessionReady(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
 
   const handleOnboardingDone = () => {
     localStorage.setItem(ONBOARDED_KEY, "true");
