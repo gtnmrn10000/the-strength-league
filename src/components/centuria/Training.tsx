@@ -42,7 +42,7 @@ export default function Training({ onPR, refreshKey }: { onPR: () => void; refre
 
   // Séance du jour éditable — on part du template Push par défaut.
   const [session, setSession] = useState<Template>(() => cloneTemplate(TEMPLATES[0]));
-  const [recentByMuscle, setRecentByMuscle] = useState<Record<string, number>>({});
+  const [recentSessions, setRecentSessions] = useState<Array<{ muscle_groups: string[] | null; completed_at: string }>>([]);
 
   useEffect(() => {
     let cancelled = false;
