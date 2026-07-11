@@ -270,11 +270,64 @@ export default function Meals() {
     [logs],
   );
 
+  const shiftDay = (delta: number) => {
+    const d = new Date(selectedDate);
+    d.setDate(d.getDate() + delta);
+    // Ne pas aller dans le futur
+    if (d > new Date()) return;
+    setSelectedDate(d);
+  };
+
+  const dateLabel = isToday
+    ? "AUJOURD'HUI"
+    : selectedDate.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" }).toUpperCase();
+
   return (
     <div className="px-4 pt-2 pb-4">
+      <div className="mb-3 flex items-center gap-2">
+        <button
+          onClick={() => shiftDay(-1)}
+          className="flex h-9 w-9 items-center justify-center rounded-xl border border-arena-border bg-arena-surface active:scale-90"
+          aria-label="Jour précédent"
+        >
+          <ChevronLeft size={16} />
+        </button>
+        <Popover open={datePopoverOpen} onOpenChange={setDatePopoverOpen}>
+          <PopoverTrigger asChild>
+            <button className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-arena-border bg-arena-surface px-3 py-2 text-xs font-black tracking-widest text-foreground active:scale-[0.98]">
+              <CalendarDays size={14} className="text-arena" />
+              {dateLabel}
+            </button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0 pointer-events-auto" align="center">
+            <Calendar
+              mode="single"
+              selected={selectedDate}
+              onSelect={(d) => {
+                if (d) {
+                  setSelectedDate(d);
+                  setDatePopoverOpen(false);
+                }
+              }}
+              disabled={(d) => d > new Date()}
+              initialFocus
+              className="pointer-events-auto"
+            />
+          </PopoverContent>
+        </Popover>
+        <button
+          onClick={() => shiftDay(1)}
+          disabled={isToday}
+          className="flex h-9 w-9 items-center justify-center rounded-xl border border-arena-border bg-arena-surface active:scale-90 disabled:opacity-30"
+          aria-label="Jour suivant"
+        >
+          <ChevronRight size={16} />
+        </button>
+      </div>
+
       <div className="mb-4 rounded-2xl border border-arena-border bg-arena-surface p-4">
         <div className="mb-3 flex items-baseline justify-between">
-          <span className="text-xs font-black tracking-widest text-arena-muted">AUJOURD'HUI</span>
+          <span className="text-xs font-black tracking-widest text-arena-muted">MACROS</span>
           <span className="text-[11px] text-arena-muted">
             {Math.round(totals.kcal)} / {goals.kcal} kcal
           </span>
