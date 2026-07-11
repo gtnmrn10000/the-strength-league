@@ -22,6 +22,8 @@ export type GeneratedWorkout = {
   warmup: string;
   exercises: GeneratedExercise[];
   cooldown: string;
+  /** Date ISO YYYY-MM-DD suggérée par l'IA (peut être null si "maintenant"). */
+  scheduled_for?: string | null;
 };
 
 export type GeneratedRecipe = {
