@@ -720,7 +720,7 @@ export default function PRFlow({
                   <p className="font-[Anton] text-xl uppercase tracking-wider text-foreground">
                     {uploadProgress < 60
                       ? "UPLOAD EN COURS..."
-                      : "VÉRIFICATION IA EN COURS..."}
+                      : "PUBLICATION SUR LE FEED..."}
                   </p>
                   {uploadProgress >= 60 && (
                     <motion.p
