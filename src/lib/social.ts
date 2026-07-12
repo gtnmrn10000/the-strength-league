@@ -72,10 +72,14 @@ type ProfilePreview = {
 
 type PrPreview = {
   id: string;
+  user_id: string;
   exercise: string;
   weight_kg: number;
   reps: number;
+  status: "pending" | "verified" | "contested" | "rejected" | "suspect";
 };
+
+type PrVoteRow = { pr_id: string; user_id: string; vote: "valid" | "doubt" };
 
 function fallbackAuthor(userId: string): FeedPost["author"] {
   return {
