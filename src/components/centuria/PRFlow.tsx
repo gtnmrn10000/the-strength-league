@@ -23,7 +23,6 @@ import { submitPR } from "@/lib/prs.functions";
 import {
   GRADE_LABELS,
   computeGradeForLift,
-  type Grade,
 } from "@/lib/grades";
 import { GradeIcon } from "@/lib/gradeIcons";
 import {
