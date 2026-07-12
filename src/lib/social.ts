@@ -93,10 +93,13 @@ function fallbackAuthor(userId: string): FeedPost["author"] {
 async function attachFeedRelations(rows: PostRow[], hypedSet = new Set<string>()): Promise<FeedPost[]> {
   if (rows.length === 0) return [];
 
+  const { data: { user } } = await supabase.auth.getUser();
+  const meId = user?.id ?? null;
+
   const userIds = [...new Set(rows.map((p) => p.user_id))];
   const prIds = [...new Set(rows.map((p) => p.pr_id).filter(Boolean) as string[])];
 
-  const [profilesRes, prsRes] = await Promise.all([
+  const [profilesRes, prsRes, votesRes] = await Promise.all([
     supabase
       .from("profiles")
       .select("user_id, pseudo, avatar_url, current_grade")
@@ -104,8 +107,14 @@ async function attachFeedRelations(rows: PostRow[], hypedSet = new Set<string>()
     prIds.length > 0
       ? supabase
           .from("prs")
-          .select("id, exercise, weight_kg, reps")
+          .select("id, user_id, exercise, weight_kg, reps, status")
           .in("id", prIds)
+      : Promise.resolve({ data: [], error: null }),
+    prIds.length > 0
+      ? supabase
+          .from("pr_votes")
+          .select("pr_id, user_id, vote")
+          .in("pr_id", prIds)
       : Promise.resolve({ data: [], error: null }),
   ]);
 
@@ -123,6 +132,20 @@ async function attachFeedRelations(rows: PostRow[], hypedSet = new Set<string>()
     });
   }
 
+  const voteAgg = new Map<
+    string,
+    { valid: number; doubt: number; mine: "valid" | "doubt" | null }
+  >();
+  if (!votesRes.error) {
+    (votesRes.data ?? []).forEach((v: PrVoteRow) => {
+      const agg = voteAgg.get(v.pr_id) ?? { valid: 0, doubt: 0, mine: null };
+      if (v.vote === "valid") agg.valid++;
+      else if (v.vote === "doubt") agg.doubt++;
+      if (meId && v.user_id === meId) agg.mine = v.vote;
+      voteAgg.set(v.pr_id, agg);
+    });
+  }
+
   return rows.map((post) => {
     const profile = profilesByUser.get(post.user_id);
     const author = profile
@@ -134,11 +157,30 @@ async function attachFeedRelations(rows: PostRow[], hypedSet = new Set<string>()
         }
       : fallbackAuthor(post.user_id);
 
+    let prBlock: FeedPost["pr"] = null;
+    if (post.pr_id) {
+      const raw = prsById.get(post.pr_id);
+      if (raw) {
+        const agg = voteAgg.get(raw.id) ?? { valid: 0, doubt: 0, mine: null };
+        prBlock = {
+          id: raw.id,
+          exercise: raw.exercise,
+          weight_kg: raw.weight_kg,
+          reps: raw.reps,
+          status: raw.status,
+          valid_count: agg.valid,
+          doubt_count: agg.doubt,
+          my_vote: agg.mine,
+          is_own: meId === raw.user_id,
+        };
+      }
+    }
+
     return {
       ...post,
       author,
       hyped_by_me: hypedSet.has(post.id),
-      pr: post.pr_id ? prsById.get(post.pr_id) ?? null : null,
+      pr: prBlock,
     };
   });
 }
