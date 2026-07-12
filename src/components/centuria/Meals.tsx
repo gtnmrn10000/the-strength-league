@@ -28,6 +28,7 @@ import {
 } from "@/lib/nutrition";
 import { toast } from "sonner";
 import { useSubscription } from "@/hooks/useSubscription";
+import { capturePhoto } from "@/lib/nativeMedia";
 
 export default function Meals() {
   const [showScanner, setShowScanner] = useState(false);
@@ -340,12 +341,13 @@ export default function Meals() {
           Scanner
         </button>
         <button
-          onClick={() => {
+          onClick={async () => {
             if (!isPremium) {
               openPaywall("photo-ia");
               return;
             }
-            photoInputRef.current?.click();
+            const f = await capturePhoto();
+            if (f) handlePhotoFile(f);
           }}
           disabled={photoLoading}
           className="relative flex h-14 flex-col items-center justify-center gap-1 rounded-2xl border border-arena-border bg-gradient-to-br from-arena/20 to-arena-surface text-[11px] font-black text-foreground active:scale-[0.98] disabled:opacity-60"
@@ -371,18 +373,6 @@ export default function Meals() {
           Manuel
         </button>
       </div>
-      <input
-        ref={photoInputRef}
-        type="file"
-        accept="image/*"
-        capture="environment"
-        className="hidden"
-        onChange={(e) => {
-          const f = e.target.files?.[0];
-          if (f) handlePhotoFile(f);
-          e.target.value = "";
-        }}
-      />
 
       <form onSubmit={handleSearch} className="mb-4 flex gap-2">
         <div className="flex flex-1 items-center gap-2 rounded-xl border border-arena-border bg-arena-surface px-3">
