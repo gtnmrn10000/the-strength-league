@@ -312,7 +312,9 @@ export default function PRFlow({
 
       setUploadProgress(60);
       // Bucket privé : on stocke le path pour générer un signedURL plus tard.
-      const pr = await submitPR({
+      // L'insertion du PR déclenche un trigger DB qui crée automatiquement
+      // un post 'pr' dans le feed pour la vérification communautaire.
+      await submitPR({
         data: {
           exercise,
           weight_kg: Number(weight),
@@ -322,9 +324,7 @@ export default function PRFlow({
       });
 
       setUploadProgress(85);
-      await new Promise((r) => setTimeout(r, 3000));
-      const result = await mockVerifyPR({ data: { prId: pr.id } });
-      setVerifyResult(result);
+      await new Promise((r) => setTimeout(r, 1200));
 
       setUploadProgress(100);
       setStep("victory");
