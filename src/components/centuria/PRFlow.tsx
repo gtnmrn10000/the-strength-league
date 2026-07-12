@@ -782,11 +782,11 @@ export default function PRFlow({
                       transition={{ repeat: Infinity, duration: 2 }}
                       className="flex h-20 w-20 items-center justify-center rounded-2xl bg-arena-gold/10"
                     >
-                      <CheckCircle2 size={56} className="text-arena-green" strokeWidth={2.2} />
+                      <CheckCircle2 size={56} className="text-arena-gold" strokeWidth={2.2} />
                     </motion.div>
 
                     <h2 className="font-[Anton] text-3xl uppercase tracking-wider text-foreground">
-                      PR VÉRIFIÉ
+                      PR ENVOYÉ
                     </h2>
 
                     <p className="inline-flex items-center gap-2 text-sm text-arena-sub">
@@ -804,75 +804,36 @@ export default function PRFlow({
                   </div>
                 </motion.div>
 
-                <motion.p
-                  initial={{ y: 30, opacity: 0 }}
-                  animate={{ y: -10, opacity: 1 }}
-                  transition={{ delay: 0.5, duration: 1 }}
-                  className="relative z-10 font-[Anton] text-3xl text-arena-gold"
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4 }}
+                  className="relative z-10 mx-4 rounded-2xl border border-arena-gold/40 bg-arena-gold/5 px-5 py-4 text-center"
                 >
-                  +500 XP
-                </motion.p>
+                  <p className="font-[Anton] text-lg uppercase tracking-wider text-arena-gold">
+                    En attente de la communauté
+                  </p>
+                  <p className="mt-1 text-xs text-arena-sub">
+                    Ton PR est publié dans le feed. Il sera vérifié dès qu'il
+                    aura reçu <span className="font-bold text-foreground">5 votes « Valide »</span>{" "}
+                    (net). Le grade et les +500 XP se débloquent à ce moment-là.
+                  </p>
+                </motion.div>
 
-                {verifyResult && (
-                  <motion.p
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.7 }}
-                    className="relative z-10 text-sm text-arena-sub"
-                  >
-                    Total : {verifyResult.xp} XP
-                  </motion.p>
-                )}
-
-                {verifyResult?.leveledUp && (
-                  <motion.div
-                    initial={{ scale: 0, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{ delay: 1, type: "spring", damping: 8 }}
-                    className="relative z-10 flex flex-col items-center gap-2 rounded-2xl border-2 border-arena-gold bg-arena-gold/10 px-10 py-5"
-                  >
-                    <motion.div
-                      animate={{ scale: [1, 1.4, 1] }}
-                      transition={{ repeat: 3, duration: 0.5, delay: 1.3 }}
-                    >
-                      <GradeIcon grade={verifyResult.newGrade} size={48} className="text-arena-gold" />
-                    </motion.div>
-                    <p className="font-[Anton] text-xl uppercase tracking-wider text-arena-gold">
-                      LEVEL UP !
-                    </p>
-                    <p className="text-sm text-foreground">
-                      {GRADE_LABELS[verifyResult.previousGrade]} →{" "}
-                      {GRADE_LABELS[verifyResult.newGrade]}
-                    </p>
-                  </motion.div>
-                )}
-
-                {verifyResult && !verifyResult.leveledUp && (
-                  <motion.p
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.8 }}
-                    className="relative z-10 inline-flex items-center gap-1 text-sm text-arena-sub"
-                  >
-                    <GradeIcon grade={verifyResult.newGrade} size={14} /> Grade :{" "}
-                    {GRADE_LABELS[verifyResult.newGrade]}
-                  </motion.p>
-                )}
-
-                <div className="relative z-10 mt-4 flex w-full flex-col gap-3">
-                  <button
-                    onClick={() => handleClose(true)}
-                    className="h-12 w-full rounded-2xl border border-[#262626] text-sm font-bold text-arena-sub"
-                  >
-                    Voir mon profil
-                  </button>
+                <div className="relative z-10 mt-2 flex w-full flex-col gap-3 px-4">
                   <motion.button
                     whileTap={{ scale: 0.97 }}
                     onClick={() => handleClose(true)}
                     className="h-14 w-full rounded-2xl bg-arena font-bold text-arena-foreground shadow-[0_0_25px_var(--arena-glow)]"
                   >
-                    Partager sur le feed
+                    Voir sur le feed
                   </motion.button>
+                  <button
+                    onClick={() => handleClose(true)}
+                    className="h-12 w-full rounded-2xl border border-[#262626] text-sm font-bold text-arena-sub"
+                  >
+                    Fermer
+                  </button>
                 </div>
               </motion.div>
             )}
