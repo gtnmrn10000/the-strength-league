@@ -45,7 +45,7 @@ export const recognizeFoodPhoto = createServerFn({ method: "POST" })
         Authorization: `Bearer ${key}`,
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "google/gemini-2.5-pro",
         messages: [
           {
             role: "system",
