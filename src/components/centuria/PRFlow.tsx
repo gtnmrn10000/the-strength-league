@@ -41,15 +41,14 @@ const EXERCISES: { id: Exercise; icon: LucideIcon; label: string }[] = [
   { id: "deadlift", icon: Weight, label: "DEADLIFT" },
 ];
 
-// L'analyse vidéo ne juge QUE la propreté du mouvement (amplitude, verrouillage,
-// pas de triche). Le poids affiché et enregistré vient à 100% de la saisie
-// manuelle de l'utilisateur à l'étape "COMBIEN ?" — jamais d'une estimation IA.
+// La vérification est communautaire : les autres athlètes voteront « Valide »
+// ou « Douteux » sur le PR depuis le feed. Le grade / les XP se débloquent
+// dès que le PR atteint le seuil défini côté serveur (voir prs.functions.ts).
 const ANALYSIS_TEXTS = [
-  "Analyse de l'amplitude...",
-  "Contrôle du verrouillage...",
-  "Vérification de la forme...",
-  "Détection de triche...",
-  "Validation du mouvement...",
+  "Publication du PR...",
+  "Préparation du feed...",
+  "Ouverture aux votes...",
+  "En attente de la communauté...",
 ];
 
 const pageVariants = {
