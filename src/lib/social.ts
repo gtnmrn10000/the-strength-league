@@ -137,7 +137,7 @@ async function attachFeedRelations(rows: PostRow[], hypedSet = new Set<string>()
     { valid: number; doubt: number; mine: "valid" | "doubt" | null }
   >();
   if (!votesRes.error) {
-    (votesRes.data ?? []).forEach((v: PrVoteRow) => {
+    (votesRes.data ?? []).forEach((v: any) => {
       const agg = voteAgg.get(v.pr_id) ?? { valid: 0, doubt: 0, mine: null };
       if (v.vote === "valid") agg.valid++;
       else if (v.vote === "doubt") agg.doubt++;
