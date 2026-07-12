@@ -79,7 +79,7 @@ type PrPreview = {
   status: "pending" | "verified" | "contested" | "rejected" | "suspect";
 };
 
-type PrVoteRow = { pr_id: string; user_id: string; vote: "valid" | "doubt" };
+
 
 function fallbackAuthor(userId: string): FeedPost["author"] {
   return {
