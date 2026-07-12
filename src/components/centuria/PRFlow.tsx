@@ -19,7 +19,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { PR_EXERCISE_IMAGE } from "@/lib/exerciseCatalog";
 import { supabase } from "@/integrations/supabase/client";
-import { submitPR, mockVerifyPR } from "@/lib/prs.functions";
+import { submitPR } from "@/lib/prs.functions";
 import {
   GRADE_LABELS,
   computeGradeForLift,
