@@ -258,6 +258,35 @@ export type Database = {
           },
         ]
       }
+      pr_votes: {
+        Row: {
+          created_at: string
+          pr_id: string
+          user_id: string
+          vote: string
+        }
+        Insert: {
+          created_at?: string
+          pr_id: string
+          user_id: string
+          vote: string
+        }
+        Update: {
+          created_at?: string
+          pr_id?: string
+          user_id?: string
+          vote?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pr_votes_pr_id_fkey"
+            columns: ["pr_id"]
+            isOneToOne: false
+            referencedRelation: "prs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           age: number | null
