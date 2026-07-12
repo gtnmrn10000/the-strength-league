@@ -20,6 +20,7 @@ import { Label } from "@/components/ui/label";
 import { PR_EXERCISE_IMAGE } from "@/lib/exerciseCatalog";
 import { supabase } from "@/integrations/supabase/client";
 import { submitPR } from "@/lib/prs.functions";
+import { captureVideo } from "@/lib/nativeMedia";
 import {
   GRADE_LABELS,
   computeGradeForLift,
@@ -568,37 +569,22 @@ export default function PRFlow({
 
                 {!videoFile ? (
                   <div className="mt-4 flex flex-col gap-3">
-                    <input
-                      ref={cameraInputRef}
-                      type="file"
-                      accept="video/*"
-                      capture="environment"
-                      className="hidden"
-                      onChange={(e) => {
-                        const f = e.target.files?.[0];
-                        if (f) handleVideoSelect(f);
-                      }}
-                    />
-                    <input
-                      ref={videoInputRef}
-                      type="file"
-                      accept="video/*"
-                      className="hidden"
-                      onChange={(e) => {
-                        const f = e.target.files?.[0];
-                        if (f) handleVideoSelect(f);
-                      }}
-                    />
                     <motion.button
                       whileTap={{ scale: 0.98 }}
-                      onClick={() => cameraInputRef.current?.click()}
+                      onClick={async () => {
+                        const f = await captureVideo(true);
+                        if (f) handleVideoSelect(f);
+                      }}
                       className="flex h-16 items-center justify-center gap-3 rounded-2xl bg-arena font-[Anton] text-lg uppercase tracking-wider text-arena-foreground shadow-[0_0_25px_var(--arena-glow)]"
                     >
                       📹 FILMER MAINTENANT
                     </motion.button>
                     <motion.button
                       whileTap={{ scale: 0.98 }}
-                      onClick={() => videoInputRef.current?.click()}
+                      onClick={async () => {
+                        const f = await captureVideo(false);
+                        if (f) handleVideoSelect(f);
+                      }}
                       className="flex h-16 items-center justify-center gap-3 rounded-2xl border border-[#262626] bg-[#141414] font-[Anton] text-lg uppercase tracking-wider text-arena-sub"
                     >
                       📁 CHOISIR UNE VIDÉO
