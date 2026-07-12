@@ -21,9 +21,15 @@ export interface FeedPost {
   };
   hyped_by_me: boolean;
   pr?: {
+    id: string;
     exercise: string;
     weight_kg: number;
     reps: number;
+    status: "pending" | "verified" | "contested" | "rejected" | "suspect";
+    valid_count: number;
+    doubt_count: number;
+    my_vote: "valid" | "doubt" | null;
+    is_own: boolean;
   } | null;
 }
 
