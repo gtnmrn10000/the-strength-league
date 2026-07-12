@@ -141,7 +141,7 @@ export default function PRFlow({
   const [videoDuration, setVideoDuration] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [verifyResult, setVerifyResult] = useState<VerifyResult | null>(null);
+  
   const [analysisIdx, setAnalysisIdx] = useState(0);
   const [userBW, setUserBW] = useState<number>(80);
   const weightRef = useRef<HTMLInputElement>(null);
