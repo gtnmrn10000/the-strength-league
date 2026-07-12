@@ -35,12 +35,6 @@ import {
 type Exercise = "squat" | "bench" | "deadlift";
 type Step = 1 | 2 | 3 | 4 | "uploading" | "victory";
 
-interface VerifyResult {
-  previousGrade: Grade;
-  newGrade: Grade;
-  xp: number;
-  leveledUp: boolean;
-}
 
 const EXERCISES: { id: Exercise; icon: LucideIcon; label: string }[] = [
   { id: "squat", icon: Footprints, label: "SQUAT" },
