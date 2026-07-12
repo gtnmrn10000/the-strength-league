@@ -48,12 +48,15 @@ const EXERCISES: { id: Exercise; icon: LucideIcon; label: string }[] = [
   { id: "deadlift", icon: Weight, label: "DEADLIFT" },
 ];
 
+// L'analyse vidéo ne juge QUE la propreté du mouvement (amplitude, verrouillage,
+// pas de triche). Le poids affiché et enregistré vient à 100% de la saisie
+// manuelle de l'utilisateur à l'étape "COMBIEN ?" — jamais d'une estimation IA.
 const ANALYSIS_TEXTS = [
-  "Analyse de la profondeur...",
-  "Vérification des charges...",
-  "Contrôle de la forme...",
-  "Calcul du ratio BW...",
-  "Validation finale...",
+  "Analyse de l'amplitude...",
+  "Contrôle du verrouillage...",
+  "Vérification de la forme...",
+  "Détection de triche...",
+  "Validation du mouvement...",
 ];
 
 const pageVariants = {
