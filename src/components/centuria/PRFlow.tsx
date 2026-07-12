@@ -20,6 +20,7 @@ import { Label } from "@/components/ui/label";
 import { PR_EXERCISE_IMAGE } from "@/lib/exerciseCatalog";
 import { supabase } from "@/integrations/supabase/client";
 import { submitPR } from "@/lib/prs.functions";
+import { captureVideo } from "@/lib/nativeMedia";
 import {
   GRADE_LABELS,
   computeGradeForLift,
