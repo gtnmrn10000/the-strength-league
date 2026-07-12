@@ -163,7 +163,7 @@ export default function PRFlow({
       setVideoDuration(null);
       setError(null);
       setUploadProgress(0);
-      setVerifyResult(null);
+      
       setAnalysisIdx(0);
     }
   }, [open]);
