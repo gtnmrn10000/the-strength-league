@@ -99,6 +99,13 @@
       "when": 1789829390943,
       "tag": "0013_xp_anticheat_rate_limits_indexes",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1789829407400,
+      "tag": "0014_lock_xp_events_insert_and_food_logs_roles",
+      "breakpoints": true
     }
   ]
 }
