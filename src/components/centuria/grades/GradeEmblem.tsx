@@ -226,11 +226,15 @@ export function GradeEmblem({ grade, size = 48, state, locked = false, active = 
         <pattern id={texture} width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(-18)"><path d="M0 1h8M0 5h8" stroke={metal.accent} strokeWidth=".22" opacity=".14" /></pattern>
         <filter id={relief} x="-18%" y="-18%" width="136%" height="136%"><feDropShadow dx="0" dy="1.2" stdDeviation=".8" floodColor={metal.shadow} floodOpacity=".9" /><feDropShadow dx="0" dy="-.35" stdDeviation=".25" floodColor={metal.accent} floodOpacity=".28" /></filter>
         <clipPath id={`grade-clip-${id}`}><circle cx="36" cy="36" r="34" /></clipPath>
+        <radialGradient id={aura} cx="50%" cy="50%" r="50%"><stop stopColor={metal.accent} stopOpacity=".55" /><stop offset=".55" stopColor={metal.mid} stopOpacity=".22" /><stop offset="1" stopColor={metal.shadow} stopOpacity="0" /></radialGradient>
+        <linearGradient id={spec} x1="20" y1="6" x2="48" y2="50" gradientUnits="userSpaceOnUse"><stop stopColor="#ffffff" stopOpacity=".16" /><stop offset=".45" stopColor="#ffffff" stopOpacity=".03" /><stop offset="1" stopColor="#000000" stopOpacity=".2" /></linearGradient>
       </defs>
+      {!resolvedLocked && <Aura grade={grade} metal={metal} auraId={aura} context={context} animated={canReveal} compact={compact} />}
       <g opacity={resolvedLocked ? .22 : 1} style={{ filter: `url(#${relief})` }}>
         <Insignia grade={grade} fill={fill} shade={shade} metal={resolvedLocked ? { ...metal, edge: "#454a4c", accent: "#5b6062" } : metal} animated={animateInsignia} context={context} compact={compact} />
         {!compact && <path d="M9 28h54M12 43h48" stroke={`url(#${texture})`} strokeWidth="5" opacity=".16" />}
       </g>
+      {!resolvedLocked && !compact && <path d="M36 4 62 20v32L36 68 10 52V20Z" fill={`url(#${spec})`} clipPath={`url(#grade-clip-${id})`} opacity=".5" style={{ mixBlendMode: "overlay" }} />}
       {allowSweep && <motion.rect x="-30" y="0" width={grade === "divin" ? 7 : 11} height="72" fill={`url(#${sweep})`} transform="skewX(-16)" clipPath={`url(#grade-clip-${id})`} initial={{ x: -30, opacity: 0 }} animate={{ x: 110, opacity: [0, 1, 0] }} transition={{ delay: context === "level-up" ? 1.04 : .4, duration: .5, ease: "easeInOut" }} />}
       {resolvedLocked && <g><path d="M30 37v-3a6 6 0 0 1 12 0v3" fill="none" stroke="#666a6c" strokeWidth="1.4" /><path d="M28 37h16v12H28Z" fill="#101214" stroke="#555a5c" strokeWidth="1" /></g>}
       {progress !== undefined && <circle cx="36" cy="36" r="34.6" fill="none" stroke={metal.accent} strokeWidth="1.1" pathLength="100" strokeDasharray="100" strokeDashoffset={100 - p} strokeLinecap="round" transform="rotate(-90 36 36)" />}
