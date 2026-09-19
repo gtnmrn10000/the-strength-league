@@ -53,8 +53,10 @@ export default function GradeGallery({
                 >
                   <GradeEmblem
                     grade={g}
-                     size={62}
+                    size={62}
                     state={isCurrent ? "current" : isUnlocked ? "unlocked" : "locked"}
+                    context="gallery"
+                    animated={isUnlocked || idx === currentIdx + 1}
                     progress={isCurrent ? Math.max(3, Math.min(100, idx === GRADES.length - 1 ? 100 : ((xp - required) / (GRADE_XP[GRADES[idx + 1]] - required)) * 100)) : undefined}
                   />
 

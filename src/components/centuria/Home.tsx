@@ -166,7 +166,7 @@ export default function Home({
       {/* Grade */}
       <section className="border-y border-arena-border py-4">
         <div className="flex items-center gap-3">
-          <GradeEmblem grade={grade} size={36} active progress={gradeInfo.progressPct} />
+          <GradeEmblem grade={grade} size={36} active progress={gradeInfo.progressPct} context="compact" animated />
           <div className="min-w-0 flex-1">
             <span className="text-sm font-bold text-foreground">{GRADE_LABELS[grade]}</span>
             <p className="mt-0.5 text-xs text-arena-sub">

@@ -150,7 +150,7 @@ export default function Profile() {
       <h3 className="mb-3 mt-6 text-xs font-black tracking-widest text-arena-muted">PROGRESSION</h3>
       <div className="border-y border-arena-border py-4">
         <div className="flex items-center gap-3">
-          <GradeEmblem grade={grade} size={36} active progress={progressPct} />
+          <GradeEmblem grade={grade} size={36} active progress={progressPct} context="compact" animated />
           <div className="min-w-0 flex-1">
             <span className="text-sm font-bold text-foreground">{GRADE_LABELS[grade]}</span>
             <p className="mt-0.5 text-xs text-arena-muted"><span className="font-bold text-arena-gold">{xp.toLocaleString()}</span> XP</p>
@@ -415,7 +415,7 @@ function CombatCard({
           )}
         </div>
         <div className="flex flex-col items-center">
-          <GradeEmblem grade={grade} size={36} active />
+          <GradeEmblem grade={grade} size={36} active context="compact" animated />
           <span className="mt-0.5 text-[10px] font-bold text-arena">{GRADE_LABELS[grade]}</span>
         </div>
       </div>
