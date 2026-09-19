@@ -58,8 +58,8 @@
 - [x] Reduced motion et QA 320 / 360 / 375 / 390
 
 ## Refonte sculptée finale des emblèmes
-- [ ] Neuf silhouettes conformes à la référence client
-- [ ] Relief, facettes et textures métalliques lisibles en petit
-- [ ] Animations adaptées aux nouvelles formes
+- [x] Neuf silhouettes conformes à la référence client
+- [x] Relief, facettes et textures métalliques lisibles en petit
+- [x] Animations adaptées aux nouvelles formes
 - [ ] Galerie et level-up premium sur quatre tailles
 - [ ] TypeScript, build et QA visuelle
