@@ -68,18 +68,6 @@ export const GRADE_LABELS: Record<Grade, string> = {
   divin: "Divin",
 };
 
-export const GRADE_EMOJIS: Record<Grade, string> = {
-  recruit: "🔰",
-  soldat: "⚔️",
-  guerrier: "🗡️",
-  spartiate: "🛡️",
-  gladiateur: "🏛️",
-  centurion: "🦅",
-  titan: "⚡",
-  legende: "👑",
-  divin: "✨",
-};
-
 /** Grade correspondant à un total d'XP donné. */
 export function gradeForXp(xp: number): Grade {
   let idx = 0;

@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
-import { Mail, Lock, ChevronLeft, Sparkles, ShieldCheck, Trophy, Check, Dumbbell, Target, TrendingUp, AlertCircle, Flame, Swords, Zap, Loader2, type LucideIcon } from "lucide-react";
+import { Mail, Lock, ChevronLeft, ShieldCheck, Trophy, Check, Dumbbell, Target, TrendingUp, AlertCircle, Flame, Swords, Zap, Loader2, type LucideIcon } from "lucide-react";
 import Logo from "./Logo";
 import { saveUserProfile } from "./userProfile";
 import { track } from "./analytics";
@@ -118,8 +118,8 @@ export default function Onboarding({
   }, [authed]);
 
   const titles = authed
-    ? ["FORGE TON PROFIL", "FIXE TON PREMIER OBJECTIF"]
-    : ["PROUVE TA FORCE.", authMode === "login" ? "CONNEXION" : "CRÉE TON COMPTE"];
+    ? ["Ton profil", "Ton premier objectif"]
+    : ["CENTURIA", authMode === "login" ? "Connexion" : "Créer un compte"];
 
 
   const statsErrors = validateStats(pseudo, age, taille, poids);
@@ -221,7 +221,7 @@ export default function Onboarding({
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto scrollbar-hide px-5 pt-6 pb-4">
-        <h1 className="mb-6 text-2xl font-black uppercase leading-tight tracking-tight text-foreground">
+        <h1 className="mb-6 text-2xl font-black leading-tight text-foreground">
           {titles[step]}
         </h1>
         {current === "hero" && <HeroCard />}
@@ -251,9 +251,9 @@ export default function Onboarding({
           <button
             onClick={handleContinue}
             disabled={saving || (current === "goal" && !canContinue())}
-            className={`h-14 w-full rounded-2xl font-black uppercase tracking-wide transition-all duration-200 active:scale-95
+            className={`h-14 w-full rounded-lg font-semibold transition-all duration-200 active:scale-[0.98]
               ${canContinue()
-                ? "bg-arena text-arena-foreground shadow-[0_0_35px_var(--arena-glow)]"
+                ? "bg-foreground text-background"
                 : "bg-arena/30 text-arena-foreground/50"
               }`}
           >
@@ -282,17 +282,13 @@ export default function Onboarding({
 function HeroCard() {
   return (
     <div className="flex flex-col gap-4">
-      <div className="rounded-2xl border border-arena-border bg-arena-surface p-5">
-        <div className="mb-4 flex items-center justify-center">
+        <div className="border-b border-arena-border pb-6">
+          <div className="mb-5 flex items-center justify-start">
           <Logo size="lg" />
         </div>
         <p className="mb-4 text-sm leading-relaxed text-arena-sub">
           Enregistre tes séances, suis ta progression et fais vérifier tes records par la communauté.
         </p>
-        <div className="flex items-center gap-2">
-          <Sparkles size={14} className="text-arena-gold" />
-          <span className="text-xs text-arena-gold">Premier grade débloqué en 60 secondes</span>
-        </div>
       </div>
       <div className="grid grid-cols-3 gap-3">
         {[
@@ -300,7 +296,7 @@ function HeroCard() {
           { icon: Trophy, label: "Classement national", color: "text-arena-gold" },
           { icon: Flame, label: "Feed social", color: "text-arena" },
         ].map(({ icon: Icon, label, color }) => (
-          <div key={label} className="flex flex-col items-center gap-2 rounded-2xl border border-arena-border bg-arena-surface p-3 text-center">
+          <div key={label} className="flex flex-col items-center gap-2 border-r border-arena-border p-3 text-center last:border-r-0">
             <Icon size={20} className={color} />
             <span className="text-[10px] font-bold text-arena-sub leading-tight">{label}</span>
           </div>
@@ -410,8 +406,8 @@ function GoalStep({ selected, onSelect }: { selected: string | null; onSelect: (
           </div>
         </button>
       ))}
-      <div className="mt-2 flex items-start gap-2 rounded-xl bg-arena-gold/5 p-3">
-        <Sparkles size={14} className="mt-0.5 shrink-0 text-arena-gold" />
+      <div className="mt-2 flex items-start gap-2 border-t border-arena-border pt-3">
+        <Target size={14} className="mt-0.5 shrink-0 text-arena-gold" />
         <p className="text-[11px] text-arena-gold leading-relaxed">
           Tu pourras changer d'objectif à tout moment dans les réglages.
         </p>

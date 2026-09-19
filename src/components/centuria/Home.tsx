@@ -6,6 +6,7 @@ import { fetchProgress, EMPTY_PROGRESS, type ProgressData } from "@/lib/progress
 import { computeRecovery, MUSCLE_LABEL, type RecoveryState } from "@/lib/recovery";
 import { GRADE_LABELS, nextGradeInfo, type Grade } from "@/lib/grades";
 import { GradeIcon } from "@/lib/gradeIcons";
+import { GradeEmblem } from "./grades/GradeEmblem";
 import { fetchMyProfile } from "@/lib/profileStore";
 import { readActiveSession, type ActiveSessionInfo } from "@/lib/activeSession";
 
@@ -164,30 +165,21 @@ export default function Home({
       </section>
 
       {/* Grade */}
-      <section className="rounded-2xl border border-arena-border bg-arena-surface p-4">
-        <div className="flex items-center justify-between">
-          <span className="flex items-center gap-2 text-sm font-bold text-foreground">
-            <GradeIcon grade={grade} size={18} /> {GRADE_LABELS[grade]}
-          </span>
+      <section className="border-y border-arena-border py-4">
+        <div className="flex items-center gap-3">
+          <GradeEmblem grade={grade} size={46} state="current" progress={gradeInfo.progressPct} />
+          <div className="min-w-0 flex-1">
+            <span className="text-sm font-bold text-foreground">{GRADE_LABELS[grade]}</span>
+            <p className="mt-0.5 text-xs text-arena-sub">
+              {gradeInfo.nextGrade ? `${xp.toLocaleString()} XP · encore ${gradeInfo.xpRemaining.toLocaleString()}` : `${xp.toLocaleString()} XP · grade maximum`}
+            </p>
+          </div>
           {gradeInfo.nextGrade && (
             <span className="flex items-center gap-1 text-xs text-arena-sub">
               <ArrowRight size={12} /> {GRADE_LABELS[gradeInfo.nextGrade]}
             </span>
           )}
         </div>
-        <div className="mt-2 h-2 overflow-hidden rounded-full bg-secondary">
-          <motion.div
-            className="h-full rounded-full bg-arena"
-            initial={{ width: 0 }}
-            animate={{ width: `${gradeInfo.progressPct}%` }}
-            transition={{ duration: 0.5, ease: "easeOut" }}
-          />
-        </div>
-        <p className="mt-2 text-xs text-arena-sub">
-          {gradeInfo.nextGrade
-            ? `${xp.toLocaleString()} XP — encore ${gradeInfo.xpRemaining.toLocaleString()} XP`
-            : `${xp.toLocaleString()} XP — grade maximum`}
-        </p>
       </section>
 
       {/* Récupération */}

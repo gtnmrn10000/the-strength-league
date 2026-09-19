@@ -1,4 +1,4 @@
-import { Plus, ScanLine, Search, Loader2, Trash2, PackageX, Sparkles, Lock, ChevronLeft, ChevronRight, CalendarDays } from "lucide-react";
+import { Plus, ScanLine, Search, Loader2, Trash2, PackageX, Camera, Lock, ChevronLeft, ChevronRight, CalendarDays } from "lucide-react";
 import PremiumBadge from "./paywall/PremiumBadge";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { recognizeFoodPhoto, type FoodPhotoResult } from "@/lib/api";
@@ -334,7 +334,7 @@ export default function Meals() {
       <div className="mb-3 grid grid-cols-3 gap-2">
         <button
           onClick={() => setShowScanner(true)}
-          className="flex h-14 flex-col items-center justify-center gap-1 rounded-2xl bg-arena text-[11px] font-black text-arena-on active:scale-[0.98]"
+          className="flex h-14 flex-col items-center justify-center gap-1 rounded-lg bg-foreground text-[11px] font-semibold text-background active:scale-[0.98]"
         >
           <ScanLine size={18} />
           Scanner
@@ -349,16 +349,16 @@ export default function Meals() {
             if (f) handlePhotoFile(f);
           }}
           disabled={photoLoading}
-          className="relative flex h-14 flex-col items-center justify-center gap-1 rounded-2xl border border-arena-border bg-gradient-to-br from-arena/20 to-arena-surface text-[11px] font-black text-foreground active:scale-[0.98] disabled:opacity-60"
+          className="relative flex h-14 flex-col items-center justify-center gap-1 rounded-lg border border-arena-border bg-arena-surface text-[11px] font-semibold text-foreground active:scale-[0.98] disabled:opacity-60"
         >
           {photoLoading ? (
             <Loader2 size={18} className="animate-spin" />
           ) : isPremium ? (
-            <Sparkles size={18} className="text-arena" />
+            <Camera size={18} className="text-arena-gold" />
           ) : (
             <Lock size={16} className="text-arena-muted" />
           )}
-          Photo IA
+          Analyse photo
           <PremiumBadge unlocked={isPremium} className="absolute -top-1 -right-1" />
         </button>
         <button
@@ -366,7 +366,7 @@ export default function Meals() {
             setManualDefaultName("");
             setManualOpen(true);
           }}
-          className="flex h-14 flex-col items-center justify-center gap-1 rounded-2xl border border-arena-border bg-arena-surface text-[11px] font-bold text-foreground active:scale-[0.98]"
+          className="flex h-14 flex-col items-center justify-center gap-1 rounded-lg border border-arena-border bg-arena-surface text-[11px] font-semibold text-foreground active:scale-[0.98]"
         >
           <Plus size={16} />
           Manuel

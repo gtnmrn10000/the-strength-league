@@ -1,4 +1,4 @@
-import { Check, Sparkles, X } from "lucide-react";
+import { Check, X } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { PLANS, PREMIUM_FEATURES, planById, type PlanId } from "@/lib/paywall/plans";
 import { STUDENT_BLOCKER_COPY } from "@/lib/paywall/eligibility";
@@ -13,8 +13,8 @@ const REASON_COPY: Record<string, { title: string; subtitle: string }> = {
     subtitle: "Chat illimité, séances perso, récupération musculaire.",
   },
   "photo-ia": {
-    title: "Scan photo IA",
-    subtitle: "Prends ton assiette en photo, on remplit les macros.",
+    title: "Analyse photo",
+    subtitle: "Photographie ton assiette, puis vérifie les quantités avant d'ajouter le repas.",
   },
   analyse: {
     title: "Analyse avancée",
@@ -26,11 +26,11 @@ const REASON_COPY: Record<string, { title: string; subtitle: string }> = {
   },
   video: {
     title: "Feedback vidéo",
-    subtitle: "Analyse IA de ton exécution à partir d'une vidéo.",
+    subtitle: "Retour détaillé sur ton exécution à partir d'une vidéo.",
   },
   generic: {
-    title: "Passe à Centuria Premium",
-    subtitle: "Débloque tout le potentiel de ton entraînement.",
+    title: "Centuria Premium",
+    subtitle: "Coach, analyse photo et suivi avancé.",
   },
 };
 
@@ -113,10 +113,8 @@ export default function Paywall() {
         </button>
 
         <div className="flex-1 overflow-y-auto scrollbar-hide">
-          <div className="bg-gradient-to-b from-arena/20 via-background to-background px-6 pt-10 pb-6">
-            <div className="mb-4 inline-flex items-center gap-1.5 rounded-full bg-arena px-3 py-1 text-[10px] font-black tracking-widest text-arena-on">
-              <Sparkles size={12} /> PREMIUM
-            </div>
+          <div className="border-b border-arena-border px-6 pb-6 pt-12">
+            <p className="mb-3 text-xs font-semibold text-arena-gold">Premium</p>
             <h2 className="text-2xl font-black leading-tight text-foreground">{copy.title}</h2>
             <p className="mt-2 text-sm text-arena-muted">{copy.subtitle}</p>
           </div>
@@ -124,7 +122,7 @@ export default function Paywall() {
           <ul className="space-y-3 px-6 py-4">
             {PREMIUM_FEATURES.map((f) => (
               <li key={f.title} className="flex gap-3">
-                <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-arena/20">
+                <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center text-arena-gold">
                   <Check size={12} className="text-arena" />
                 </div>
                 <div>
@@ -142,15 +140,15 @@ export default function Paywall() {
                 <button
                   key={p.id}
                   onClick={() => setSelected(p.id)}
-                  className={`flex w-full items-center justify-between rounded-2xl border p-4 text-left transition-all ${
-                    active ? "border-arena bg-arena/10" : "border-arena-border bg-arena-surface"
+                  className={`flex min-h-16 w-full items-center justify-between rounded-lg border px-4 py-3 text-left transition-colors ${
+                    active ? "border-arena-gold/60 bg-arena-gold/[0.04]" : "border-arena-border bg-arena-surface"
                   }`}
                 >
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-black text-foreground">{p.label}</span>
                       {p.badge && (
-                        <span className="rounded-full bg-arena px-1.5 py-0.5 text-[9px] font-black text-arena-on">
+                        <span className="text-[10px] font-semibold text-arena-gold">
                           {p.badge}
                         </span>
                       )}
@@ -207,15 +205,15 @@ export default function Paywall() {
           <button
             onClick={handleSubscribe}
             disabled={purchasing !== null}
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-arena text-sm font-black tracking-widest text-arena-on active:scale-[0.98] disabled:opacity-60"
+             className="flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-foreground text-sm font-semibold text-background active:scale-[0.98] disabled:opacity-60"
           >
             {purchasing
-              ? "PATIENTE…"
+              ? "Patiente…"
               : isDev
-                ? "ACTIVER (MODE DEV)"
+                ? "Activer — mode dev"
                 : studentBlocked
-                  ? "BIENTÔT DISPONIBLE"
-                  : "S'ABONNER"}
+                  ? "Bientôt disponible"
+                  : "S'abonner"}
           </button>
           {!canPurchase && !isDev && (
             <p className="mt-2 text-center text-[11px] text-arena-muted">

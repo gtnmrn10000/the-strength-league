@@ -17,6 +17,7 @@ import { Route as LegalTermsRouteImport } from './routes/legal.terms'
 import { Route as LegalSupportRouteImport } from './routes/legal.support'
 import { Route as LegalRulesRouteImport } from './routes/legal.rules'
 import { Route as LegalPrivacyRouteImport } from './routes/legal.privacy'
+import { Route as DevGradesRouteImport } from './routes/dev.grades'
 import { Route as ApiPublicRevenuecatWebhookRouteImport } from './routes/api/public/revenuecat-webhook'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
@@ -59,6 +60,11 @@ const LegalPrivacyRoute = LegalPrivacyRouteImport.update({
   path: '/legal/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DevGradesRoute = DevGradesRouteImport.update({
+  id: '/dev/grades',
+  path: '/dev/grades',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicRevenuecatWebhookRoute =
   ApiPublicRevenuecatWebhookRouteImport.update({
     id: '/api/public/revenuecat-webhook',
@@ -70,6 +76,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/discover': typeof DiscoverRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/dev/grades': typeof DevGradesRoute
   '/legal/privacy': typeof LegalPrivacyRoute
   '/legal/rules': typeof LegalRulesRoute
   '/legal/support': typeof LegalSupportRoute
@@ -81,6 +88,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/discover': typeof DiscoverRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/dev/grades': typeof DevGradesRoute
   '/legal/privacy': typeof LegalPrivacyRoute
   '/legal/rules': typeof LegalRulesRoute
   '/legal/support': typeof LegalSupportRoute
@@ -93,6 +101,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/discover': typeof DiscoverRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/dev/grades': typeof DevGradesRoute
   '/legal/privacy': typeof LegalPrivacyRoute
   '/legal/rules': typeof LegalRulesRoute
   '/legal/support': typeof LegalSupportRoute
@@ -106,6 +115,7 @@ export interface FileRouteTypes {
     | '/'
     | '/discover'
     | '/reset-password'
+    | '/dev/grades'
     | '/legal/privacy'
     | '/legal/rules'
     | '/legal/support'
@@ -117,6 +127,7 @@ export interface FileRouteTypes {
     | '/'
     | '/discover'
     | '/reset-password'
+    | '/dev/grades'
     | '/legal/privacy'
     | '/legal/rules'
     | '/legal/support'
@@ -128,6 +139,7 @@ export interface FileRouteTypes {
     | '/'
     | '/discover'
     | '/reset-password'
+    | '/dev/grades'
     | '/legal/privacy'
     | '/legal/rules'
     | '/legal/support'
@@ -140,6 +152,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DiscoverRoute: typeof DiscoverRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  DevGradesRoute: typeof DevGradesRoute
   LegalPrivacyRoute: typeof LegalPrivacyRoute
   LegalRulesRoute: typeof LegalRulesRoute
   LegalSupportRoute: typeof LegalSupportRoute
@@ -206,6 +219,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LegalPrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dev/grades': {
+      id: '/dev/grades'
+      path: '/dev/grades'
+      fullPath: '/dev/grades'
+      preLoaderRoute: typeof DevGradesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/revenuecat-webhook': {
       id: '/api/public/revenuecat-webhook'
       path: '/api/public/revenuecat-webhook'
@@ -220,6 +240,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DiscoverRoute: DiscoverRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  DevGradesRoute: DevGradesRoute,
   LegalPrivacyRoute: LegalPrivacyRoute,
   LegalRulesRoute: LegalRulesRoute,
   LegalSupportRoute: LegalSupportRoute,

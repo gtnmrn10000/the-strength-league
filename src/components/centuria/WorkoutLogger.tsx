@@ -43,6 +43,8 @@ import { track } from "@/lib/analytics";
 import { useAuth } from "@/hooks/useAuth";
 import ExerciseLibrary from "./ExerciseLibrary";
 import SessionSummary, { type NewRecord, type SessionResult } from "./session/SessionSummary";
+import LevelUpOverlay from "./grades/LevelUpOverlay";
+import type { Grade } from "@/lib/grades";
 
 const DRAFT_KEY = ACTIVE_SESSION_KEY;
 
@@ -136,6 +138,7 @@ export default function WorkoutLogger({
   const [confirmFinish, setConfirmFinish] = useState(false);
   const [confirmAbandon, setConfirmAbandon] = useState(false);
   const [result, setResult] = useState<SessionResult | null>(null);
+  const [levelUp, setLevelUp] = useState<{ previous: Grade; current: Grade; xp: number } | null>(null);
   const perfsLoaded = useRef(false);
 
   // Reprise : une séance en cours survit à un changement d'onglet, à une mise en
@@ -455,6 +458,7 @@ export default function WorkoutLogger({
           xpGained = xp?.gained;
           if (xp?.leveledUp) {
             track("grade_unlocked", { grade: xp.grade, previous_grade: xp.previousGrade });
+            setLevelUp({ previous: xp.previousGrade as Grade, current: xp.grade as Grade, xp: xp.xp });
           }
         }
       } catch (e) {
@@ -779,6 +783,15 @@ export default function WorkoutLogger({
           }}
           onAdd={addExercise}
         />
+        {levelUp && (
+          <LevelUpOverlay
+            open
+            previousGrade={levelUp.previous}
+            newGrade={levelUp.current}
+            totalXp={levelUp.xp}
+            onContinue={() => setLevelUp(null)}
+          />
+        )}
 
         <AlertDialog open={confirmFinish} onOpenChange={setConfirmFinish}>
           <AlertDialogContent className="max-w-[20rem] rounded-2xl border-arena-border bg-arena-surface">

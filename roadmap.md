@@ -32,20 +32,20 @@
 - [x] P0-3 Sécurité : RLS, storage, colonnes protégées, limites anti-spam, index
 - [x] P0-4 XP/grades anti-triche (xp_events service role, grade dérivé du XP)
 - [x] P0-5 Modération : rôles, masquage, blocages en base, filtre spam minimal
-- [ ] P1 Règles communauté + support/FAQ + mes signalements (UI)
-- [ ] P1 Analytics first-party + ErrorBoundary/journal d'erreurs
-- [ ] P1 Accessibilité, 320×568, performance
+- [x] P1 Règles communauté + support/FAQ + mes signalements (UI)
+- [x] P1 Analytics first-party + ErrorBoundary/journal d'erreurs
+- [x] P1 Accessibilité, 320×568, performance
 - [x] docs/release-checklist.md, docs/qa-data-cleanup.md
 ## Sprint grades premium
-- [ ] Créer des emblèmes SVG accessibles pour les 9 grades
-- [ ] Refaire la transition de passage de grade
-- [ ] Migrer galerie, accueil, profil et surfaces grade
-- [ ] Ajouter un aperçu QA hors production
-- [ ] Vérifier tailles mobiles, états et compilation
+- [x] Créer des emblèmes SVG accessibles pour les 9 grades
+- [x] Refaire la transition de passage de grade
+- [x] Migrer galerie, accueil, profil et surfaces grade
+- [x] Ajouter un aperçu QA hors production
+- [x] Vérifier tailles mobiles, états et compilation
 
 ## Passe visuelle premium globale
-- [ ] Auditer les 15 écrans demandés et supprimer les marqueurs IA/template à fort impact
-- [ ] Réduire cartes, pills, majuscules, effets et copy générique sans changer les fonctions
-- [ ] Harmoniser boutons, icônes, espacements, rayons et animations courtes
-- [ ] Simplifier Coach, nutrition et paywall sans modifier leur logique
-- [ ] QA visuelle 320 / 360 / 375 / 390 px, TypeScript et build
+- [x] Auditer les 15 écrans demandés et supprimer les marqueurs IA/template à fort impact
+- [x] Réduire cartes, pills, majuscules, effets et copy générique sans changer les fonctions
+- [x] Harmoniser boutons, icônes, espacements, rayons et animations courtes
+- [x] Simplifier Coach, nutrition et paywall sans modifier leur logique
+- [x] QA visuelle 320 / 360 / 375 / 390 px, TypeScript et build

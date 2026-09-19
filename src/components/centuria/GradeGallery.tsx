@@ -1,7 +1,7 @@
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Lock } from "lucide-react";
+import { motion, useReducedMotion } from "framer-motion";
 import { GRADES, GRADE_LABELS, GRADE_XP, gradeForXp, type Grade } from "@/lib/grades";
-import { GradeIcon } from "@/lib/gradeIcons";
+import { GradeEmblem } from "./grades/GradeEmblem";
 
 export default function GradeGallery({
   open,
@@ -17,6 +17,7 @@ export default function GradeGallery({
   // Le grade affiché dérive de l'XP réel ; `currentGrade` sert de repli.
   const grade = xp > 0 ? gradeForXp(xp) : currentGrade;
   const currentIdx = GRADES.indexOf(grade);
+  const reduceMotion = useReducedMotion();
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -31,12 +32,7 @@ export default function GradeGallery({
         </SheetHeader>
 
         <div className="flex-1 overflow-y-auto px-4 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
-          <p className="mb-4 text-xs text-arena-sub">
-            Neuf rangs, débloqués à l'XP. Tu en gagnes en terminant tes séances,
-            en restant régulier et en faisant vérifier tes records.
-          </p>
-
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col">
             {GRADES.map((g, idx) => {
               const isCurrent = idx === currentIdx;
               const required = GRADE_XP[g];
@@ -44,43 +40,39 @@ export default function GradeGallery({
               const missing = Math.max(0, required - xp);
 
               return (
-                <div
+                <motion.div
                   key={g}
-                  className={`relative flex items-center gap-4 rounded-2xl border p-4 transition-all ${
+                  initial={reduceMotion ? false : { opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: reduceMotion ? 0 : idx * 0.035, duration: 0.18 }}
+                  className={`relative flex min-h-[76px] items-center gap-3 border-b px-1 py-3 ${
                     isCurrent
-                      ? "border-arena-gold bg-arena-gold/5"
-                      : "border-arena-border bg-arena-surface"
+                      ? "border-arena-gold/40 bg-arena-gold/[0.035]"
+                      : "border-arena-border"
                   }`}
                 >
-                  <div
-                    style={{
-                      opacity: isUnlocked ? 1 : 0.3,
-                      filter: isUnlocked ? "none" : "grayscale(1)",
-                    }}
-                  >
-                    <GradeIcon grade={g} size={64} />
-                  </div>
+                  <GradeEmblem
+                    grade={g}
+                    size={54}
+                    state={isCurrent ? "current" : isUnlocked ? "unlocked" : "locked"}
+                    progress={isCurrent ? Math.max(3, Math.min(100, idx === GRADES.length - 1 ? 100 : ((xp - required) / (GRADE_XP[GRADES[idx + 1]] - required)) * 100)) : undefined}
+                  />
 
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <p className="truncate font-black text-foreground">{GRADE_LABELS[g]}</p>
-                      {isCurrent && (
-                        <span className="shrink-0 rounded-full bg-arena-gold px-2 py-0.5 text-[9px] font-black tracking-widest text-black">
-                          TU ES ICI
-                        </span>
-                      )}
-                      {!isUnlocked && <Lock size={12} className="shrink-0 text-arena-muted" />}
+                      {isCurrent && <span className="text-[10px] text-arena-gold">Grade actuel</span>}
                     </div>
                     <p className="mt-0.5 text-[10px] text-arena-sub">
-                      Rang {idx + 1} · {required.toLocaleString()} XP
+                      {required.toLocaleString()} XP requis
                     </p>
                     <p className="mt-1 text-[10px] leading-relaxed text-arena-muted">
                       {isUnlocked
-                        ? "Débloqué"
+                        ? isCurrent ? "Progression en cours" : "Débloqué"
                         : `Encore ${missing.toLocaleString()} XP`}
                     </p>
                   </div>
-                </div>
+                </motion.div>
               );
             })}
           </div>
