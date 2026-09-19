@@ -35,6 +35,11 @@ export function revenueCatConfigured(): boolean {
   );
 }
 
+/** Les achats in-app n'existent que dans l'app installée (App Store / Google Play). */
+export function purchasesAvailable(): boolean {
+  return isNativeRuntime() && revenueCatConfigured();
+}
+
 /** Mode effectif : RevenueCat seulement en natif ET avec clés + produits configurés. */
 export function paywallMode(): PaywallMode {
   return isNativeRuntime() && revenueCatConfigured() ? "revenuecat" : "dev";
@@ -50,6 +55,7 @@ export function missingSetup(): string[] {
     missing.push("Produit Standard App Store / Play (VITE_PRODUCT_ID_STANDARD)");
   if (!STORE_PRODUCT_IDS.centuria_student)
     missing.push("Produit Étudiant App Store / Play (VITE_PRODUCT_ID_STUDENT)");
+  missing.push("Vérification du statut étudiant (VITE_STUDENT_VERIFICATION_PROVIDER)");
   missing.push("Webhook RevenueCat → /api/public/revenuecat-webhook (secret REVENUECAT_WEBHOOK_SECRET)");
   if (!isNativeRuntime())
     missing.push("Build natif iOS / Android (les achats in-app n'existent pas sur le web)");

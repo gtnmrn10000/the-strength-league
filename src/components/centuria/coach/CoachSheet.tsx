@@ -30,7 +30,7 @@ export default function CoachSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="bottom" className="h-[92dvh] max-w-md mx-auto p-0 flex flex-col bg-background border-arena-border">
         <SheetHeader className="border-b border-arena-border px-4 py-3">
-          <SheetTitle className="text-sm font-black tracking-widest text-foreground">COACH IA</SheetTitle>
+          <SheetTitle className="text-sm font-black tracking-widest text-foreground">COACH</SheetTitle>
         </SheetHeader>
 
         <PremiumGate

@@ -5,7 +5,7 @@ import NotificationsSheet from "./social/NotificationsSheet";
 import { countUnread } from "@/lib/notifications";
 import PostCard from "./social/PostCard";
 import PostComposer from "./social/PostComposer";
-import { fetchFeed, type FeedPost } from "@/lib/social";
+import { fetchFeed, FEED_PAGE_SIZE, type FeedPost } from "@/lib/social";
 import { loadUserProfile, goalLabel } from "./userProfile";
 import { GoalIcon } from "@/lib/gradeIcons";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,6 +19,8 @@ export default function Feed({ onCreate }: { onCreate: () => void }) {
   const [feedError, setFeedError] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [unread, setUnread] = useState(0);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
   const profile = loadUserProfile();
 
   useEffect(() => {
@@ -29,6 +31,7 @@ export default function Feed({ onCreate }: { onCreate: () => void }) {
       .then((r) => {
         if (!active) return;
         setPosts(r);
+        setHasMore(r.length >= FEED_PAGE_SIZE);
       })
       .catch(() => {
         if (!active) return;
@@ -121,6 +124,28 @@ export default function Feed({ onCreate }: { onCreate: () => void }) {
           <PostCard key={p.id} post={p} />
         ))}
       </div>
+
+      {posts.length > 0 && hasMore && (
+        <button
+          onClick={async () => {
+            const last = posts[posts.length - 1];
+            if (!last || loadingMore) return;
+            setLoadingMore(true);
+            try {
+              const more = await fetchFeed({ before: last.created_at });
+              setPosts((prev) => [...prev, ...more.filter((m) => !prev.some((p) => p.id === m.id))]);
+              setHasMore(more.length >= FEED_PAGE_SIZE);
+            } catch {
+              setHasMore(false);
+            } finally {
+              setLoadingMore(false);
+            }
+          }}
+          className="mt-4 w-full rounded-2xl border border-arena-border py-3 text-xs font-black tracking-widest text-arena-sub active:scale-[0.99]"
+        >
+          {loadingMore ? "CHARGEMENT…" : "VOIR PLUS"}
+        </button>
+      )}
 
       <button
         onClick={() => setComposerOpen(true)}

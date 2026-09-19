@@ -111,7 +111,7 @@ async function loadRecoverySnapshot(supabase: any, userId: string) {
 
 function sanitizeWorkout(parsed: any, fallbackFocus: string, fallbackDuration: number): GeneratedWorkout {
   return {
-    name: String(parsed?.name ?? "Séance Coach IA").slice(0, 80),
+    name: String(parsed?.name ?? "Séance Coach").slice(0, 80),
     duration_min: Math.max(15, Math.min(180, Number(parsed?.duration_min) || fallbackDuration)),
     focus: String(parsed?.focus ?? fallbackFocus).slice(0, 80),
     muscle_groups: Array.isArray(parsed?.muscle_groups) ? parsed.muscle_groups.slice(0, 10).map(String) : [],

@@ -36,10 +36,27 @@ import {
 } from "@/lib/exerciseUserData";
 import { fetchProgress, statsFor } from "@/lib/progress";
 import { awardWorkoutXp } from "@/lib/xp.functions";
+import { queueSession } from "@/lib/offlineSync";
+import { pushBackHandler } from "@/lib/backButton";
 import ExerciseLibrary from "./ExerciseLibrary";
 import SessionSummary, { type NewRecord, type SessionResult } from "./session/SessionSummary";
 
 const DRAFT_KEY = "centuria:active-session";
+
+/** Détecte une erreur réseau/hors-ligne (par opposition à une erreur métier/auth). */
+function isNetworkError(e: unknown): boolean {
+  if (typeof navigator !== "undefined" && navigator.onLine === false) return true;
+  const msg =
+    e && typeof e === "object" && "message" in e
+      ? String((e as { message: unknown }).message).toLowerCase()
+      : "";
+  return (
+    msg.includes("failed to fetch") ||
+    msg.includes("networkerror") ||
+    msg.includes("network request failed") ||
+    msg.includes("load failed")
+  );
+}
 
 type Draft = { template: Template; done: Record<string, boolean>; startedAt: number };
 
@@ -316,12 +333,51 @@ export default function WorkoutLogger({
         completed_at: new Date().toISOString(),
       };
 
-      const { data: inserted, error } = await supabase
-        .from("workout_sessions")
-        .insert([payload])
-        .select("id")
-        .single();
-      if (error) throw error;
+      // Hors-ligne : on met la séance en file d'attente sans tenter le réseau,
+      // pour ne jamais perdre les kg/reps saisis.
+      if (typeof navigator !== "undefined" && navigator.onLine === false) {
+        queueSession(payload);
+        clearDraft();
+        setResult({
+          template,
+          durationMin,
+          exercises: savedExercises.length,
+          sets,
+          volume,
+          records,
+          pendingSync: true,
+        });
+        onCompleted?.();
+        return;
+      }
+
+      let inserted: { id: string } | null = null;
+      try {
+        const { data, error } = await supabase
+          .from("workout_sessions")
+          .insert([payload])
+          .select("id")
+          .single();
+        if (error) throw error;
+        inserted = data;
+      } catch (e) {
+        if (isNetworkError(e)) {
+          queueSession(payload);
+          clearDraft();
+          setResult({
+            template,
+            durationMin,
+            exercises: savedExercises.length,
+            sets,
+            volume,
+            records,
+            pendingSync: true,
+          });
+          onCompleted?.();
+          return;
+        }
+        throw e;
+      }
 
       let xpGained: number | undefined;
       try {
@@ -363,6 +419,18 @@ export default function WorkoutLogger({
     setResult(null);
     onOpenChange(false);
   };
+
+  // Bouton retour matériel : tant que la feuille est ouverte, on la
+  // referme (avec la même logique de confirmation) plutôt que de laisser
+  // remonter l'événement au niveau des onglets.
+  useEffect(() => {
+    if (!open) return;
+    return pushBackHandler(() => {
+      requestClose(false);
+      return true;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, result, template, doneCount]);
 
   const requestClose = (next: boolean) => {
     if (next) return;

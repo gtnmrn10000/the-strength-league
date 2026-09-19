@@ -194,14 +194,20 @@ async function attachFeedRelations(rows: PostRow[], hypedSet = new Set<string>()
 }
 
 /* ── Feed with mix algorithm ── */
-export async function fetchFeed(): Promise<FeedPost[]> {
-  const { data: { user } } = await supabase.auth.getUser();
+/** Page de fil : 15 posts par défaut, curseur sur `created_at` (pas de chargement massif au lancement). */
+export const FEED_PAGE_SIZE = 15;
 
-  const { data: posts, error } = await supabase
+export async function fetchFeed(options: { limit?: number; before?: string } = {}): Promise<FeedPost[]> {
+  const { data: { user } } = await supabase.auth.getUser();
+  const limit = options.limit ?? FEED_PAGE_SIZE;
+
+  let query = supabase
     .from("posts")
     .select("id, user_id, type, media_url, media_type, caption, muscle_groups, macros, pr_id, hype_count, comment_count, created_at")
     .order("created_at", { ascending: false })
-    .limit(100);
+    .limit(limit);
+  if (options.before) query = query.lt("created_at", options.before);
+  const { data: posts, error } = await query;
 
   if (error) throw error;
   if (!posts) return [];

@@ -1,6 +1,7 @@
 import { Check, Sparkles, X } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { PLANS, PREMIUM_FEATURES, type PlanId } from "@/lib/paywall/plans";
+import { PLANS, PREMIUM_FEATURES, planById, type PlanId } from "@/lib/paywall/plans";
+import { STUDENT_BLOCKER_COPY } from "@/lib/paywall/eligibility";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -43,13 +44,27 @@ export default function Paywall() {
     mode,
     devUnlockEnabled,
     setupTodo,
+    canPurchase,
+    prices,
+    studentOpen,
   } = useSubscription();
   const [selected, setSelected] = useState<PlanId>("centuria_standard");
   const [showTodo, setShowTodo] = useState(false);
   const copy = REASON_COPY[paywallReason] ?? REASON_COPY.generic;
   const isDev = mode === "dev";
 
+  const selectedPlan = planById(selected);
+  const studentBlocked = selectedPlan.requiresEligibility === "student" && !studentOpen;
+
   const handleSubscribe = async () => {
+    if (studentBlocked && !isDev) {
+      toast.error(STUDENT_BLOCKER_COPY);
+      return;
+    }
+    if (!canPurchase && !isDev) {
+      toast.error("L'abonnement s'achète dans l'app Centuria iOS ou Android.");
+      return;
+    }
     if (isDev && !devUnlockEnabled) {
       toast.error("Les achats ne sont pas encore branchés sur cet environnement.");
       return;
@@ -136,9 +151,16 @@ export default function Paywall() {
                     {p.note && (
                       <div className="mt-0.5 text-[11px] text-arena-muted">{p.note}</div>
                     )}
+                    {p.requiresEligibility === "student" && !studentOpen && (
+                      <div className="mt-0.5 text-[11px] text-arena-muted">
+                        Bientôt disponible
+                      </div>
+                    )}
                   </div>
                   <div className="text-right">
-                    <div className="text-sm font-black text-foreground">{p.priceLabel}</div>
+                    <div className="text-sm font-black text-foreground">
+                      {prices[p.id] ?? p.referencePrice}
+                    </div>
                     <div className="text-[10px] text-arena-muted">/ {p.period}</div>
                   </div>
                 </button>
@@ -180,8 +202,19 @@ export default function Paywall() {
             disabled={purchasing !== null}
             className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-arena text-sm font-black tracking-widest text-arena-on active:scale-[0.98] disabled:opacity-60"
           >
-            {purchasing ? "PATIENTE…" : isDev ? "ACTIVER (MODE DEV)" : "S'ABONNER"}
+            {purchasing
+              ? "PATIENTE…"
+              : isDev
+                ? "ACTIVER (MODE DEV)"
+                : studentBlocked
+                  ? "BIENTÔT DISPONIBLE"
+                  : "S'ABONNER"}
           </button>
+          {!canPurchase && !isDev && (
+            <p className="mt-2 text-center text-[11px] text-arena-muted">
+              L'abonnement Centuria s'achète dans l'app iOS ou Android.
+            </p>
+          )}
           <div className="mt-2 flex justify-center gap-4 text-[10px] text-arena-muted">
             <button onClick={handleRestore}>Restaurer mes achats</button>
             <span>•</span>

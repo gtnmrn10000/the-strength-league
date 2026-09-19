@@ -1,12 +1,21 @@
 import { useEffect, useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Globe, Scale as ScaleIcon, Crown, LogOut, Info, Shield, Loader2, ChevronRight, Ban } from "lucide-react";
+import { Globe, Scale as ScaleIcon, Crown, LogOut, Info, Shield, Loader2, ChevronRight, Ban, Bell } from "lucide-react";
 import UserAvatar from "./social/UserAvatar";
 import AccountSection from "./account/AccountSection";
 import { fetchBlockedProfiles, unblockUser } from "@/lib/moderation";
 import { supabase } from "@/integrations/supabase/client";
 import { useSubscription } from "@/hooks/useSubscription";
 import { toast } from "sonner";
+import { Switch } from "@/components/ui/switch";
+import {
+  isPushSupported,
+  registerPush,
+  unregisterPush,
+  getPushPrefs,
+  savePushPrefs,
+  type NotificationPrefs,
+} from "@/lib/push";
 
 const UNITS_KEY = "centuria_units";
 const LANG_KEY = "centuria_lang";
@@ -37,10 +46,58 @@ export default function Settings({
     { user_id: string; pseudo: string; avatar_url: string | null }[]
   >([]);
 
+  const pushSupported = isPushSupported();
+  const [prefs, setPrefs] = useState<NotificationPrefs | null>(null);
+  const [prefsBusy, setPrefsBusy] = useState<string | null>(null);
+
   useEffect(() => {
     if (!open) return;
     void fetchBlockedProfiles().then(setBlockedList);
   }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    void getPushPrefs().then(setPrefs);
+  }, [open]);
+
+  const updatePref = async (key: keyof NotificationPrefs, value: boolean) => {
+    if (!prefs) return;
+    const previous = prefs;
+    setPrefs({ ...prefs, [key]: value });
+    setPrefsBusy(key);
+    const ok = await savePushPrefs({ [key]: value });
+    setPrefsBusy(null);
+    if (!ok) {
+      setPrefs(previous);
+      toast.error("Impossible d'enregistrer cette préférence.");
+    }
+  };
+
+  const togglePush = async (value: boolean) => {
+    if (!prefs) return;
+    setPrefsBusy("push_enabled");
+    if (value) {
+      const res = await registerPush();
+      if (!res.ok) {
+        setPrefsBusy(null);
+        toast.error(
+          res.reason === "permission-denied"
+            ? "Permission refusée dans les réglages du téléphone."
+            : "Notifications push indisponibles sur cet appareil."
+        );
+        return;
+      }
+    } else {
+      await unregisterPush();
+    }
+    const ok = await savePushPrefs({ push_enabled: value });
+    setPrefsBusy(null);
+    if (ok) {
+      setPrefs({ ...prefs, push_enabled: value });
+    } else {
+      toast.error("Impossible d'enregistrer cette préférence.");
+    }
+  };
 
   const removeBlock = async (id: string) => {
     try {
@@ -201,6 +258,59 @@ export default function Settings({
             </p>
           </Section>
 
+          {/* Notifications */}
+          <Section title="NOTIFICATIONS">
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center justify-between rounded-2xl border border-arena-border bg-arena-surface p-3">
+                <div className="flex items-center gap-2">
+                  <Bell size={16} className="text-arena" />
+                  <span className="text-sm font-bold text-foreground">Notifications push</span>
+                </div>
+                <Switch
+                  checked={!!prefs?.push_enabled}
+                  disabled={!prefs || !pushSupported || prefsBusy === "push_enabled"}
+                  onCheckedChange={(v) => void togglePush(v)}
+                />
+              </div>
+              {!pushSupported && (
+                <p className="px-1 text-[10px] text-arena-muted">
+                  Les notifications push sont disponibles dans l'app iOS et Android.
+                </p>
+              )}
+
+              <PrefRow
+                label="Commentaires"
+                checked={!!prefs?.comments}
+                disabled={!prefs || prefsBusy === "comments"}
+                onChange={(v) => void updatePref("comments", v)}
+              />
+              <PrefRow
+                label="Votes / validation de record"
+                checked={!!prefs?.pr_votes}
+                disabled={!prefs || prefsBusy === "pr_votes"}
+                onChange={(v) => void updatePref("pr_votes", v)}
+              />
+              <PrefRow
+                label="Nouveaux abonnés"
+                checked={!!prefs?.followers}
+                disabled={!prefs || prefsBusy === "followers"}
+                onChange={(v) => void updatePref("followers", v)}
+              />
+              <PrefRow
+                label="Nouveau grade"
+                checked={!!prefs?.grades}
+                disabled={!prefs || prefsBusy === "grades"}
+                onChange={(v) => void updatePref("grades", v)}
+              />
+              <PrefRow
+                label="Rappel de séance"
+                checked={!!prefs?.workout_reminder}
+                disabled={!prefs || prefsBusy === "workout_reminder"}
+                onChange={(v) => void updatePref("workout_reminder", v)}
+              />
+            </div>
+          </Section>
+
           {/* Comptes bloqués */}
           <Section title="COMPTES BLOQUÉS">
             {blockedList.length === 0 ? (
@@ -287,6 +397,25 @@ function SegBtn({ active, onClick, children }: { active: boolean; onClick: () =>
     >
       {children}
     </button>
+  );
+}
+
+function PrefRow({
+  label,
+  checked,
+  disabled,
+  onChange,
+}: {
+  label: string;
+  checked: boolean;
+  disabled: boolean;
+  onChange: (v: boolean) => void;
+}) {
+  return (
+    <div className="flex items-center justify-between rounded-xl border border-arena-border bg-arena-surface px-3 py-2.5">
+      <span className="text-xs font-bold text-foreground">{label}</span>
+      <Switch checked={checked} disabled={disabled} onCheckedChange={onChange} />
+    </div>
   );
 }
 

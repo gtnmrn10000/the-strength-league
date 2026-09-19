@@ -73,7 +73,7 @@ function PrivacyPage() {
 
       <LegalSection title="INTELLIGENCE ARTIFICIELLE">
         <p>
-          Le Coach IA et la reconnaissance d'aliments par photo envoient ton message, ta photo ou
+          Le Coach et la reconnaissance d'aliments par photo envoient ton message, ta photo ou
           un résumé de ton profil sportif à un fournisseur de modèles d'IA pour générer une réponse.
           Ces contenus ne servent pas à t'identifier publiquement.
         </p>
@@ -98,7 +98,7 @@ function PrivacyPage() {
         </p>
         <p>
           Restent privés : e-mail, âge, taille, poids, pesées, journal alimentaire, séances,
-          conversations avec le Coach IA. Ils ne sont lisibles que par toi.
+          conversations avec le Coach. Ils ne sont lisibles que par toi.
         </p>
       </LegalSection>
 

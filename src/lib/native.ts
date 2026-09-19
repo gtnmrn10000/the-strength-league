@@ -1,4 +1,6 @@
 import { Capacitor } from "@capacitor/core";
+import { handleBackButton } from "./backButton";
+import { flushPendingSessions } from "./offlineSync";
 
 export const isNative = () => Capacitor.isNativePlatform();
 
@@ -18,7 +20,10 @@ let initialized = false;
  * Initialise les plugins natifs (status bar, clavier, splash) et le routage
  * des deep links après OAuth. Sans effet sur le web.
  */
-export async function initNativeShell(onAuthDeepLink?: (url: string) => void) {
+export async function initNativeShell(
+  onAuthDeepLink?: (url: string) => void,
+  onResume?: () => void,
+) {
   if (initialized || !isNative()) return;
   initialized = true;
 
@@ -60,6 +65,29 @@ export async function initNativeShell(onAuthDeepLink?: (url: string) => void) {
     });
   } catch (e) {
     console.warn("[native] app plugin unavailable", e);
+  }
+
+  try {
+    const { App } = await import("@capacitor/app");
+
+    // Bouton retour matériel Android : ferme les feuilles/dialogues ouverts
+    // via le registre, sinon délègue à la logique d'onglets (onResume gère
+    // aussi la reprise), sinon quitte l'app.
+    App.addListener("backButton", () => {
+      if (handleBackButton()) return;
+      window.dispatchEvent(new CustomEvent("centuria:hardware-back"));
+    });
+
+    // Reprise au premier plan : on retente les séances en attente et on
+    // déclenche un rafraîchissement léger de l'écran courant.
+    App.addListener("appStateChange", ({ isActive }) => {
+      if (isActive) {
+        void flushPendingSessions();
+        onResume?.();
+      }
+    });
+  } catch (e) {
+    console.warn("[native] lifecycle listeners unavailable", e);
   }
 
   try {
