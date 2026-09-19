@@ -26,6 +26,6 @@ export default function LevelUpOverlay({ open, previousGrade, newGrade, totalXp,
       <p className="mt-2 text-[11px] font-semibold text-arena-sub">Grade débloqué</p>
       {totalXp !== undefined && <p className="mt-3 text-xs text-arena-muted">{totalXp.toLocaleString()} XP{info?.nextGrade ? ` · ${info.xpRemaining.toLocaleString()} XP avant ${GRADE_LABELS[info.nextGrade]}` : " · grade maximum"}</p>}
     </motion.div>
-    <motion.div className="mt-10" initial={{ opacity: 0 }} animate={{ opacity: ready ? 1 : 0 }} transition={{ duration: .2 }}><Button onClick={onContinue} disabled={!ready} className="h-12 min-w-44 bg-foreground text-background hover:bg-foreground/90">Continuer</Button></motion.div>
+    <motion.div className="mt-10" initial={{ opacity: 0 }} animate={{ opacity: ready ? 1 : 0 }} transition={{ duration: .2 }}><Button onClick={onContinue} disabled={!ready} className="h-12 min-w-44 bg-foreground text-background hover:bg-foreground/90">CONTINUER</Button></motion.div>
   </motion.div>}</AnimatePresence>;
 }
