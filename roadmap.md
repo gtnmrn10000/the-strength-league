@@ -36,3 +36,9 @@
 - [ ] P1 Analytics first-party + ErrorBoundary/journal d'erreurs
 - [ ] P1 Accessibilité, 320×568, performance
 - [x] docs/release-checklist.md, docs/qa-data-cleanup.md
+## Sprint grades premium
+- [ ] Créer des emblèmes SVG accessibles pour les 9 grades
+- [ ] Refaire la transition de passage de grade
+- [ ] Migrer galerie, accueil, profil et surfaces grade
+- [ ] Ajouter un aperçu QA hors production
+- [ ] Vérifier tailles mobiles, états et compilation
