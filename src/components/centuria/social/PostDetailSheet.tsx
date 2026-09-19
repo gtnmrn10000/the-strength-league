@@ -1,19 +1,13 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { Flame, Send, Trash2, Dumbbell } from "lucide-react";
+import { Flame, Bookmark, Dumbbell } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import UserAvatar from "./UserAvatar";
 import { PostMedia } from "./PostMedia";
-import { PRBlock } from "./PostCard";
-import {
-  toggleHype,
-  fetchComments,
-  addComment,
-  deleteComment,
-  type FeedPost,
-  type PostComment,
-} from "@/lib/social";
+import { PRBlock, MealMacros } from "./PostCard";
+import CommentsPanel from "./CommentsPanel";
+import { toggleHype, toggleSave, type FeedPost } from "@/lib/social";
 import { GRADE_LABELS, type Grade } from "@/lib/grades";
 import { friendlyError } from "@/lib/errors";
 import { GradeEmblem } from "../grades/GradeEmblem";
@@ -24,14 +18,6 @@ function dateLabel(iso: string) {
     month: "short",
     year: "numeric",
   });
-}
-
-function shortAgo(iso: string) {
-  const diff = (Date.now() - new Date(iso).getTime()) / 1000;
-  if (diff < 60) return "à l'instant";
-  if (diff < 3600) return `${Math.round(diff / 60)}m`;
-  if (diff < 86400) return `${Math.round(diff / 3600)}h`;
-  return `${Math.round(diff / 86400)}j`;
 }
 
 const TYPE_LABEL: Record<string, string> = {
@@ -52,34 +38,14 @@ export default function PostDetailSheet({
 }) {
   const [hyped, setHyped] = useState(false);
   const [hypeCount, setHypeCount] = useState(0);
-  const [comments, setComments] = useState<PostComment[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [failed, setFailed] = useState(false);
-  const [body, setBody] = useState("");
-  const [sending, setSending] = useState(false);
+  const [saved, setSaved] = useState(false);
 
   useEffect(() => {
     if (!post) return;
     setHyped(post.hyped_by_me);
     setHypeCount(post.hype_count);
+    setSaved(post.saved_by_me);
   }, [post?.id]);
-
-  const loadComments = async (postId: string) => {
-    setLoading(true);
-    setFailed(false);
-    try {
-      setComments(await fetchComments(postId));
-    } catch {
-      setFailed(true);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (open && post) void loadComments(post.id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, post?.id]);
 
   if (!post) return null;
 
@@ -98,26 +64,14 @@ export default function PostDetailSheet({
     }
   };
 
-  const send = async () => {
-    if (!body.trim() || sending) return;
-    setSending(true);
+  const onSave = async () => {
+    const next = !saved;
+    setSaved(next);
     try {
-      await addComment(post.id, body);
-      setBody("");
-      await loadComments(post.id);
+      await toggleSave(post.id, saved);
     } catch (e) {
-      toast.error(friendlyError(e, "Commentaire impossible."));
-    } finally {
-      setSending(false);
-    }
-  };
-
-  const remove = async (id: string) => {
-    try {
-      await deleteComment(id);
-      await loadComments(post.id);
-    } catch {
-      toast.error("Suppression impossible.");
+      setSaved(!next);
+      toast.error(friendlyError(e, "Enregistrement impossible."));
     }
   };
 
@@ -152,27 +106,33 @@ export default function PostDetailSheet({
           </Link>
         </SheetHeader>
 
-        <div className="flex-1 overflow-y-auto px-4 py-3">
+        <div className="max-h-[45vh] shrink-0 overflow-y-auto px-4 py-3">
           {post.media_url && (
             <PostMedia
               path={post.media_url}
               postType={post.type}
               mediaType={post.media_type}
               alt={post.caption ?? ""}
-              className="max-h-[55vh] w-full rounded-2xl bg-black object-contain"
+              className="max-h-[40vh] w-full rounded-2xl bg-black object-contain"
             />
           )}
 
           {post.type === "pr" && <PRBlock post={post} />}
 
+          {post.type === "meal" && post.meal && (
+            <>
+              {post.meal.name && (
+                <p className="mt-3 text-sm font-semibold text-foreground">{post.meal.name}</p>
+              )}
+              <MealMacros meal={post.meal} />
+            </>
+          )}
+
           {post.type !== "pr" && post.muscle_groups && post.muscle_groups.length > 0 && (
-            <div className="mt-3 flex flex-wrap gap-2">
+            <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-arena-sub">
               {post.muscle_groups.map((m) => (
-                <span
-                  key={m}
-                  className="inline-flex items-center gap-1 rounded-full bg-arena/10 px-2.5 py-1 text-[10px] font-bold text-arena"
-                >
-                  <Dumbbell size={10} /> {m}
+                <span key={m} className="inline-flex items-center gap-1">
+                  <Dumbbell size={11} /> {m}
                 </span>
               ))}
             </div>
@@ -182,75 +142,27 @@ export default function PostDetailSheet({
             <p className="mt-3 whitespace-pre-line text-sm text-foreground/90">{post.caption}</p>
           )}
 
-          <div className="mt-4 flex items-center gap-4 border-y border-arena-border py-3 text-arena-sub">
+          <div className="mt-4 flex items-center gap-4 border-t border-arena-border pt-3 text-arena-sub">
             <button
               onClick={onHype}
+              aria-label={hyped ? "Retirer le hype" : "Hype"}
               className={`flex items-center gap-1.5 text-xs ${hyped ? "text-arena" : ""}`}
             >
               <Flame size={17} className={hyped ? "fill-arena text-arena" : ""} />
-              <span className="font-bold">{hypeCount}</span>
+              <span className="font-semibold">{hypeCount}</span>
             </button>
-            <span className="text-xs font-bold">
-              {comments.length} commentaire{comments.length > 1 ? "s" : ""}
-            </span>
-          </div>
-
-          <div className="mt-4 flex flex-col gap-4 pb-2">
-            {loading && <div className="h-16 animate-pulse rounded-2xl bg-arena-surface" />}
-            {!loading && failed && (
-              <p className="text-sm text-arena-muted">Commentaires indisponibles pour l'instant.</p>
-            )}
-            {!loading && !failed && comments.length === 0 && (
-              <p className="text-sm text-arena-muted">
-                Pas encore de commentaire. Lance la discussion.
-              </p>
-            )}
-            {comments.map((c) => (
-              <div key={c.id} className="flex gap-3">
-                <UserAvatar src={c.author?.avatar_url} pseudo={c.author?.pseudo} size={32} />
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="truncate text-sm font-bold text-foreground">
-                      {c.author?.pseudo ?? "Athlète"}
-                    </span>
-                    <span className="text-[10px] text-arena-muted">{shortAgo(c.created_at)}</span>
-                  </div>
-                  <p className="mt-0.5 break-words text-sm text-foreground/90">{c.body}</p>
-                </div>
-                {c.is_mine && (
-                  <button
-                    onClick={() => remove(c.id)}
-                    aria-label="Supprimer le commentaire"
-                    className="flex h-9 w-9 shrink-0 items-center justify-center text-arena-muted"
-                  >
-                    <Trash2 size={15} />
-                  </button>
-                )}
-              </div>
-            ))}
+            <button
+              onClick={onSave}
+              aria-label={saved ? "Retirer des enregistrements" : "Enregistrer"}
+              className="flex items-center gap-1.5 text-xs"
+            >
+              <Bookmark size={17} className={saved ? "fill-foreground text-foreground" : ""} />
+            </button>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 border-t border-arena-border px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
-          <input
-            value={body}
-            onChange={(e) => setBody(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") void send();
-            }}
-            maxLength={500}
-            placeholder="Ajoute un commentaire…"
-            className="min-w-0 flex-1 rounded-full border border-arena-border bg-arena-surface px-4 py-2.5 text-sm text-foreground outline-none focus:border-arena/50"
-          />
-          <button
-            onClick={send}
-            disabled={sending || !body.trim()}
-            aria-label="Envoyer"
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-arena text-arena-foreground disabled:opacity-40"
-          >
-            <Send size={16} />
-          </button>
-        </div>
+        {open && <CommentsPanel postId={post.id} />}
+
       </SheetContent>
     </Sheet>
   );

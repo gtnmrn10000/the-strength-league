@@ -18,6 +18,36 @@ const voteSchema = z.object({
   vote: z.enum(["valid", "doubt"]),
 });
 
+/** Un record officiel n'existe que sur les trois mouvements de force. */
+const LIFT_ALIASES: Record<string, "squat" | "bench" | "deadlift"> = {
+  squat: "squat",
+  "back-squat": "squat",
+  "barbell-squat": "squat",
+  "squat-barre": "squat",
+  "souleve-de-terre": "deadlift",
+  deadlift: "deadlift",
+  "barbell-deadlift": "deadlift",
+  "conventional-deadlift": "deadlift",
+  bench: "bench",
+  "bench-press": "bench",
+  "barbell-bench-press": "bench",
+  "developpe-couche": "bench",
+  "developpe-couche-barre": "bench",
+};
+
+function canonicalLift(id: string, name: string): "squat" | "bench" | "deadlift" | null {
+  const direct = LIFT_ALIASES[id];
+  if (direct) return direct;
+  const n = name
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+  if (/(back )?squat/.test(n) && !/(hack|bulgare|split|goblet|pistol)/.test(n)) return "squat";
+  if (/(souleve de terre|deadlift)/.test(n) && !/(roumain|romanian|rdl|sumo jambe)/.test(n)) return "deadlift";
+  if (/(developpe couche|bench press)/.test(n) && !/(incline|decline|haltere|dumbbell)/.test(n)) return "bench";
+  return null;
+}
+
 const VERIFY_NET_VOTES = 5;
 const CONTEST_MIN_TOTAL = 5;
 const CONTEST_DOUBT_RATIO = 0.5;
@@ -33,23 +63,34 @@ Deno.serve(async (req) => {
 
     if (body?.action === "submit") {
       const data = submitSchema.parse(body);
-      const { data: pr, error } = await supabase
+      const lift = canonicalLift(data.exercise, data.exercise_name);
+      if (!lift) {
+        return errorResponse(
+          "Le record officiel n'existe que sur le squat, le développé couché et le soulevé de terre. Publie cette vidéo comme entraînement.",
+          422,
+        );
+      }
+      const admin = adminClient();
+      const { data: pr, error } = await admin
         .from("prs")
         .insert({
           user_id: userId,
           exercise: data.exercise,
           exercise_id: data.exercise,
           exercise_name: data.exercise_name,
+          lift,
           weight_kg: data.weight_kg,
           reps: data.reps,
           video_url: data.video_url,
           status: "pending",
+          ai_status: "unavailable",
         })
         .select("id")
         .single();
       if (error) return errorResponse(`Failed to insert PR: ${error.message}`, 500);
       return jsonResponse(pr);
     }
+
 
     if (body?.action === "vote") {
       const data = voteSchema.parse(body);

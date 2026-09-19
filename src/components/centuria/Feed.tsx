@@ -121,7 +121,7 @@ export default function Feed({ onCreate }: { onCreate: () => void }) {
 
       <div className="flex flex-col gap-4">
         {posts.map((p) => (
-          <PostCard key={p.id} post={p} />
+          <PostCard key={p.feed_key} post={p} />
         ))}
       </div>
 

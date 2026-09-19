@@ -1,11 +1,8 @@
-import { Plus, ScanLine, Search, Loader2, Trash2, PackageX, Camera, Lock, ChevronLeft, ChevronRight, CalendarDays } from "lucide-react";
-import PremiumBadge from "./paywall/PremiumBadge";
+import { Plus, ScanLine, Search, Loader2, Trash2, PackageX, ChevronLeft, ChevronRight, CalendarDays } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { recognizeFoodPhoto, type FoodPhotoResult } from "@/lib/api";
 import BarcodeScanner from "./food/BarcodeScanner";
 import ProductSheet from "./food/ProductSheet";
 import ManualEntrySheet from "./food/ManualEntrySheet";
-import PhotoAdjustSheet from "./food/PhotoAdjustSheet";
 import { FoodProduct, fetchProductByBarcode, searchProducts } from "@/lib/openFoodFacts";
 import {
   FoodLog,
@@ -28,7 +25,6 @@ import {
 } from "@/lib/nutrition";
 import { toast } from "sonner";
 import { useSubscription } from "@/hooks/useSubscription";
-import { capturePhoto } from "@/lib/nativeMedia";
 
 export default function Meals() {
   const [showScanner, setShowScanner] = useState(false);
@@ -43,10 +39,6 @@ export default function Meals() {
   const [logs, setLogs] = useState<FoodLog[]>([]);
   const [goals, setGoals] = useState<MacroGoals>(DEFAULT_GOALS);
   const { isPremium, openPaywall } = useSubscription();
-  const [photoLoading, setPhotoLoading] = useState(false);
-  const photoInputRef = useRef<HTMLInputElement>(null);
-  const [photoResult, setPhotoResult] = useState<FoodPhotoResult | null>(null);
-  const [photoAdjustOpen, setPhotoAdjustOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>(() => new Date());
   const [datePopoverOpen, setDatePopoverOpen] = useState(false);
 
@@ -207,46 +199,6 @@ export default function Meals() {
     }
   };
 
-  const handlePhotoFile = async (file: File) => {
-    if (!isPremium) {
-      openPaywall("photo-ia");
-      return;
-    }
-    setPhotoLoading(true);
-    console.log("[photo-ia] step 1: reading file", { size: file.size, type: file.type });
-    try {
-      const dataUrl: string = await new Promise((resolve, reject) => {
-        const r = new FileReader();
-        r.onload = () => resolve(r.result as string);
-        r.onerror = () => reject(r.error);
-        r.readAsDataURL(file);
-      });
-      console.log("[photo-ia] step 2: calling recognizeFoodPhoto", { bytes: dataUrl.length });
-      const result = await recognizeFoodPhoto(dataUrl);
-      console.log("[photo-ia] step 3: got result", result);
-
-      // Ouvre le sheet d'ajustement — l'IA est peu fiable pour estimer un
-      // poids à l'oeil sans référence d'échelle, l'utilisateur confirme.
-      setPhotoResult(result);
-      setPhotoAdjustOpen(true);
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : String(e);
-      console.error("[photo-ia] error", e);
-      if (msg.includes("401") || msg.toLowerCase().includes("unauthorized")) {
-        toast.error("Session expirée, recharge la page pour te reconnecter.");
-      } else if (msg.includes("PREMIUM_REQUIRED") || msg.includes("402")) {
-        toast.error("Fonctionnalité réservée aux abonnés Premium.");
-      } else if (msg.includes("429")) {
-        toast.error("Trop de requêtes, réessaie dans un instant.");
-      } else {
-        toast.error("Analyse impossible. Réessaie avec une photo plus nette.");
-      }
-    } finally {
-      setPhotoLoading(false);
-    }
-  };
-
-
   const totals = useMemo(
     () =>
       logs.reduce(
@@ -331,35 +283,13 @@ export default function Meals() {
         </div>
       </div>
 
-      <div className="mb-3 grid grid-cols-3 gap-2">
+      <div className="mb-3 grid grid-cols-2 gap-2">
         <button
           onClick={() => setShowScanner(true)}
           className="flex h-14 flex-col items-center justify-center gap-1 rounded-lg bg-foreground text-[11px] font-semibold text-background active:scale-[0.98]"
         >
           <ScanLine size={18} />
           Scanner
-        </button>
-        <button
-          onClick={async () => {
-            if (!isPremium) {
-              openPaywall("photo-ia");
-              return;
-            }
-            const f = await capturePhoto();
-            if (f) handlePhotoFile(f);
-          }}
-          disabled={photoLoading}
-          className="relative flex h-14 flex-col items-center justify-center gap-1 rounded-lg border border-arena-border bg-arena-surface text-[11px] font-semibold text-foreground active:scale-[0.98] disabled:opacity-60"
-        >
-          {photoLoading ? (
-            <Loader2 size={18} className="animate-spin" />
-          ) : isPremium ? (
-            <Camera size={18} className="text-arena-gold" />
-          ) : (
-            <Lock size={16} className="text-arena-muted" />
-          )}
-          Analyse photo
-          <PremiumBadge unlocked={isPremium} className="absolute -top-1 -right-1" />
         </button>
         <button
           onClick={() => {
@@ -486,38 +416,6 @@ export default function Meals() {
         onOpenChange={setManualOpen}
         onSubmit={handleManualSubmit}
         defaultName={manualDefaultName}
-      />
-      <PhotoAdjustSheet
-        open={photoAdjustOpen}
-        onOpenChange={(o) => {
-          setPhotoAdjustOpen(o);
-          if (!o) setPhotoResult(null);
-        }}
-        result={photoResult}
-        onConfirm={async (grams) => {
-          if (!photoResult) return;
-          const factor = grams / 100;
-          try {
-            await addFoodLog({
-              source: "photo",
-              product_name: photoResult.brand
-                ? `${photoResult.brand} · ${photoResult.name}`
-                : photoResult.name,
-              quantity_g: grams,
-              calories: Math.round(photoResult.nutriments_100g.energy_kcal_100g * factor),
-              proteins_g: Math.round(photoResult.nutriments_100g.proteins_100g * factor * 10) / 10,
-              carbs_g: Math.round(photoResult.nutriments_100g.carbs_100g * factor * 10) / 10,
-              fats_g: Math.round(photoResult.nutriments_100g.fat_100g * factor * 10) / 10,
-            });
-            toast.success(`${photoResult.name} ajouté (${grams} g).`);
-            reloadLogs();
-          } catch {
-            toast.error("Ajout impossible.");
-          } finally {
-            setPhotoAdjustOpen(false);
-            setPhotoResult(null);
-          }
-        }}
       />
     </div>
   );

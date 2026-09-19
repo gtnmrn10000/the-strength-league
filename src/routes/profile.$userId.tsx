@@ -8,6 +8,8 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   fetchPublicProfile,
   fetchUserPosts,
+  fetchUserReposts,
+  fetchSavedPosts,
   isFollowing,
   updateMyProfile,
   type PublicProfile,
@@ -43,6 +45,39 @@ function ProfilePage() {
   const [editing, setEditing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [detail, setDetail] = useState<FeedPost | null>(null);
+  const [tab, setTab] = useState<"posts" | "reposts" | "saved">("posts");
+  const [reposts, setReposts] = useState<FeedPost[] | null>(null);
+  const [savedPosts, setSavedPosts] = useState<FeedPost[] | null>(null);
+  const [tabLoading, setTabLoading] = useState(false);
+
+  const currentList = tab === "posts" ? posts : tab === "reposts" ? (reposts ?? []) : (savedPosts ?? []);
+
+  useEffect(() => {
+    setTab("posts");
+    setReposts(null);
+    setSavedPosts(null);
+  }, [userId]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const run = async () => {
+      if (tab === "reposts" && reposts === null) {
+        setTabLoading(true);
+        const rows = await fetchUserReposts(userId);
+        if (!cancelled) setReposts(rows);
+      } else if (tab === "saved" && savedPosts === null) {
+        setTabLoading(true);
+        const rows = await fetchSavedPosts({ limit: 30 });
+        if (!cancelled) setSavedPosts(rows);
+      }
+      if (!cancelled) setTabLoading(false);
+    };
+    void run();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab, userId]);
 
   const load = async () => {
     setLoading(true);
@@ -218,31 +253,47 @@ function ProfilePage() {
           />
         </div>
 
-        {/* Posts grid */}
-        <div className="mt-6 mb-3 flex items-center justify-between">
-          <h2 className="text-xs font-black tracking-widest text-arena-muted">PUBLICATIONS</h2>
+        {/* Onglets */}
+        <div className="mt-6 mb-3 flex items-center gap-1 border-b border-arena-border">
+          <TabBtn label="Publications" active={tab === "posts"} onClick={() => setTab("posts")} />
+          <TabBtn label="Reposts" active={tab === "reposts"} onClick={() => setTab("reposts")} />
           {isMe && (
+            <TabBtn label="Enregistrés" active={tab === "saved"} onClick={() => setTab("saved")} />
+          )}
+          <div className="flex-1" />
+          {isMe && tab === "posts" && (
             <button
               onClick={() => {
                 sessionStorage.setItem("centuria:goto-tab", "community");
                 navigate({ to: "/" });
               }}
-              className="text-[11px] font-black uppercase tracking-wider text-arena"
+              className="pb-2 text-[11px] font-semibold text-arena"
             >
               Publier
             </button>
           )}
         </div>
-        {posts.length === 0 ? (
+
+        {tabLoading ? (
+          <div className="grid grid-cols-3 gap-1" aria-hidden>
+            {[0, 1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="aspect-square animate-pulse rounded bg-arena-surface" />
+            ))}
+          </div>
+        ) : currentList.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-arena-border p-6 text-center text-sm text-arena-muted">
-            {isMe
-              ? "Tes vidéos, photos et records apparaîtront ici."
-              : "Aucune publication pour l'instant."}
+            {tab === "saved"
+              ? "Les publications que tu enregistres apparaîtront ici."
+              : tab === "reposts"
+                ? "Aucune republication."
+                : isMe
+                  ? "Tes vidéos, photos et records apparaîtront ici."
+                  : "Aucune publication pour l'instant."}
           </div>
         ) : (
           <div className="grid grid-cols-3 gap-1">
-            {posts.map((p) => (
-              <PostThumb key={p.id} post={p} onOpen={() => setDetail(p)} />
+            {currentList.map((p) => (
+              <PostThumb key={p.feed_key} post={p} onOpen={() => setDetail(p)} />
             ))}
           </div>
         )}
@@ -434,5 +485,20 @@ function EditProfileSheet({
         </div>
       </SheetContent>
     </Sheet>
+  );
+}
+
+function TabBtn({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={`-mb-px border-b-2 px-3 pb-2 text-xs font-semibold transition-colors ${
+        active ? "border-arena-gold text-foreground" : "border-transparent text-arena-muted"
+      }`}
+    >
+      {label}
+    </button>
   );
 }

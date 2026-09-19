@@ -1,12 +1,11 @@
 import { useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { MessageCircle, Activity, BarChart3 } from "lucide-react";
-import CoachChat from "./CoachChat";
+import { Activity, BarChart3 } from "lucide-react";
 import CoachRecovery from "./CoachRecovery";
 import CoachAnalyse from "./CoachAnalyse";
 import PremiumGate from "../paywall/PremiumGate";
 
-type Tab = "chat" | "recovery" | "analyse";
+type Tab = "recovery" | "analyse";
 
 export default function CoachSheet({
   open,
@@ -17,14 +16,10 @@ export default function CoachSheet({
   onOpenChange: (v: boolean) => void;
   onSessionStarted?: () => void;
 }) {
-  const [tab, setTab] = useState<Tab>("chat");
+  const [tab, setTab] = useState<Tab>("recovery");
   const [refreshKey, setRefreshKey] = useState(0);
 
-  const handleSessionStarted = () => {
-    setRefreshKey((k) => k + 1);
-    onSessionStarted?.();
-    onOpenChange(false);
-  };
+  void onSessionStarted;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -36,15 +31,13 @@ export default function CoachSheet({
         <PremiumGate
           reason="coach"
           title="Coach Premium"
-          description="Chat illimité, séances perso générées à la volée et suivi de récupération musculaire — réservé aux abonnés."
+          description="Suivi de récupération musculaire et analyse détaillée de tes séances — réservé aux abonnés."
         >
-          <div className="grid grid-cols-3 border-b border-arena-border bg-background">
-            <TabBtn active={tab === "chat"} onClick={() => setTab("chat")} icon={MessageCircle} label="Chat" />
+          <div className="grid grid-cols-2 border-b border-arena-border bg-background">
             <TabBtn active={tab === "recovery"} onClick={() => setTab("recovery")} icon={Activity} label="Récup" />
             <TabBtn active={tab === "analyse"} onClick={() => setTab("analyse")} icon={BarChart3} label="Analyse" />
           </div>
           <div className="flex-1 overflow-hidden">
-            {tab === "chat" && <CoachChat onSessionStarted={handleSessionStarted} />}
             {tab === "recovery" && <CoachRecovery refreshKey={refreshKey} />}
             {tab === "analyse" && <CoachAnalyse refreshKey={refreshKey} />}
           </div>
