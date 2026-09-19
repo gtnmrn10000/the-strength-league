@@ -61,5 +61,5 @@
 - [x] Neuf silhouettes conformes à la référence client
 - [x] Relief, facettes et textures métalliques lisibles en petit
 - [x] Animations adaptées aux nouvelles formes
-- [ ] Galerie et level-up premium sur quatre tailles
-- [ ] TypeScript, build et QA visuelle
+- [x] Galerie et level-up premium sur quatre tailles
+- [x] TypeScript, build et QA visuelle

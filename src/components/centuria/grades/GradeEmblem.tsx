@@ -93,12 +93,14 @@ function Insignia({ grade, fill, shade, metal, animated, context, compact }: { g
         <motion.circle cx="36" cy="36" r="29.5" fill={dark} stroke={metal.edge} strokeWidth="1.5" initial={initialDraw} animate={draw} transition={{ delay, duration: .65 }} />
         <Laurel metal={metal} animated={animated} delay={delay + .06} />
         <motion.g initial={animated ? { scaleX: .86, opacity: .35 } : undefined} animate={animated ? { scaleX: [ .86, 1.035, 1 ], opacity: 1 } : undefined} transition={{ delay, duration: .66, ease: "easeOut" }} style={{ transformOrigin: "36px 34px" }}>
-          <path d="M7 30c10 0 17-5 29-16 12 11 19 16 29 16-6 4-11 9-14 17L36 38 21 47c-3-8-8-13-14-17Z" fill={`url(#${fill})`} stroke={metal.accent} strokeWidth="1.25" />
-          <Facet d="M9 30c10-1 18-6 27-16v24L21 45c-3-7-7-11-12-15Z" fill={metal.mid} opacity={.62} />
-          <Facet d="M63 30c-10-1-18-6-27-16v24l15 7c3-7 7-11 12-15Z" fill={metal.low} opacity={.68} />
-          <path d="m25 29 11 4 11-4-6 8-5 7-5-7Z" fill={metal.high} stroke={metal.edge} strokeWidth=".8" />
+          <path d="M6 29c11 1 19-3 28-13l2 15 2-15c9 10 17 14 28 13-6 4-10 9-13 16l-13-7-4 16-4-16-13 7c-3-7-7-12-13-16Z" fill={`url(#${fill})`} stroke={metal.accent} strokeWidth="1.2" />
+          <path d="M8 29c8 0 16-4 24-11l-1 7c-7 5-13 8-20 8Zm53 0c-8 0-16-4-24-11l1 7c7 5 13 8 20 8ZM13 36c6-1 11-3 17-7l-1 6c-5 4-9 6-13 6Zm46 0c-6-1-11-3-17-7l1 6c5 4 9 6 13 6Z" fill={metal.high} stroke={metal.edge} strokeWidth=".65" />
+          <path d="m36 20 6 7-2 9-4 5-4-5-2-9Z" fill={metal.high} stroke={metal.edge} strokeWidth=".9" />
+          <path d="m39 25 8 2-7 3Z" fill={metal.accent} stroke={metal.edge} strokeWidth=".65" />
+          <circle cx="37.5" cy="25.8" r=".8" fill={metal.shadow} />
+          <path d="m31 47 5 8 5-8M27 50l9 7 9-7" fill="none" stroke={metal.accent} strokeWidth="1.15" />
         </motion.g>
-        <path d="m31 9 5-5 5 5-2 5h-6Z" fill={metal.accent} stroke={metal.edge} strokeWidth=".8" />
+        <path d="m30 10 2-6 4 4 4-4 2 6-3 4h-6Z" fill={metal.accent} stroke={metal.edge} strokeWidth=".8" />
       </g>;
     case "titan":
       return <g filter="url(#relief)">
