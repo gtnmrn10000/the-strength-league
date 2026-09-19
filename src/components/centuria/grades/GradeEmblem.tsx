@@ -199,6 +199,8 @@ export function GradeEmblem({ grade, size = 48, state, locked = false, active = 
   const shade = `grade-shade-${id}`;
   const sweep = `grade-sweep-${id}`;
   const texture = `grade-texture-${id}`;
+  const aura = `grade-aura-${id}`;
+  const spec = `grade-spec-${id}`;
   const relief = `grade-relief-${id}`;
   const reduceMotion = Boolean(useReducedMotion());
   const resolvedLocked = locked || state === "locked";
