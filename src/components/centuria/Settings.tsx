@@ -115,8 +115,8 @@ export default function Settings({
                     </p>
                     <p className="text-[11px] text-arena-sub">
                       {isPremium
-                        ? "Accès complet : Coach IA, Photo IA, Analyse avancée"
-                        : "Accède au Coach IA et à Photo IA"}
+                        ? "Accès complet : Coach, Photo IA, Analyse avancée"
+                        : "Accède au Coach et à Photo IA"}
                     </p>
                   </div>
                 </div>

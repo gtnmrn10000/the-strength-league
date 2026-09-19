@@ -14,6 +14,7 @@ import {
   type FeedPost,
 } from "@/lib/social";
 import UserAvatar from "@/components/centuria/social/UserAvatar";
+import { PostMedia } from "@/components/centuria/social/PostMedia";
 import FollowButton from "@/components/centuria/social/FollowButton";
 import UserListSheet from "@/components/centuria/social/UserListSheet";
 import { GRADE_LABELS, type Grade } from "@/lib/grades";
@@ -284,7 +285,13 @@ function PostThumb({ post }: { post: FeedPost }) {
   return (
     <div className="relative aspect-square overflow-hidden rounded bg-arena-surface">
       {bg ? (
-        <img src={bg} alt="" className="h-full w-full object-cover" />
+        <PostMedia
+          path={bg}
+          postType={post.type}
+          mediaType={post.media_type}
+          thumb
+          className="h-full w-full bg-black object-cover"
+        />
       ) : (
         <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-arena/20 to-arena-gold/10 p-2 text-center">
           <span className="text-[10px] font-black uppercase tracking-wider text-arena">

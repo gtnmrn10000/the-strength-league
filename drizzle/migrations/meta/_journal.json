@@ -71,6 +71,13 @@
       "when": 1789825791652,
       "tag": "0009_xp_events_and_grade_backfill",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1789826239240,
+      "tag": "0010_post_media_and_pr_video_storage_policies",
+      "breakpoints": true
     }
   ]
 }

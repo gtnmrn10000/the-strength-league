@@ -7,7 +7,7 @@ import { toast } from "sonner";
 
 const REASON_COPY: Record<string, { title: string; subtitle: string }> = {
   coach: {
-    title: "Débloque le Coach IA",
+    title: "Débloque le Coach",
     subtitle: "Chat illimité, séances perso, récupération musculaire.",
   },
   "photo-ia": {

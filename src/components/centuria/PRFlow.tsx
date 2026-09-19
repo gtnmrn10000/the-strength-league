@@ -329,7 +329,7 @@ export default function PRFlow({
         className="flex h-dvh flex-col border-none bg-[#0A0A0A] p-0 [&>button]:hidden"
       >
         {/* Accessible title (visually hidden) */}
-        <SheetTitle className="sr-only">Log un PR</SheetTitle>
+        <SheetTitle className="sr-only">Publier un record</SheetTitle>
 
         {/* Header with progress bar */}
         {typeof step === "number" && (

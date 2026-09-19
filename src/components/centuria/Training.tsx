@@ -48,7 +48,7 @@ type CoachExercise = {
   muscle_groups?: string[];
 };
 
-/** Convertit une séance générée par le Coach IA (sets=number, reps=string) en Template éditable. */
+/** Convertit une séance générée par le Coach (sets=number, reps=string) en Template éditable. */
 function plannedToTemplate(row: PlannedRow): Template {
   const raw = Array.isArray(row.exercises) ? (row.exercises as CoachExercise[]) : [];
   const exercises: WorkoutExercise[] = raw.map((e) => {
@@ -93,7 +93,7 @@ function cloneTemplate(t: Template): Template {
   };
 }
 
-export default function Training({ onPR, refreshKey }: { onPR: () => void; refreshKey?: number }) {
+export default function Training({ onPR, refreshKey, autoStart }: { onPR: () => void; refreshKey?: number; autoStart?: number }) {
   const [bestPRs, setBestPRs] = useState<Record<string, VerifiedPR>>({});
   const [bodyweight, setBodyweight] = useState<number | null>(null);
   const [coachOpen, setCoachOpen] = useState(false);
@@ -101,6 +101,11 @@ export default function Training({ onPR, refreshKey }: { onPR: () => void; refre
   const [goalOpen, setGoalOpen] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(false);
   const [localTick, setLocalTick] = useState(0);
+
+  // Démarrage direct depuis l'accueil ("Démarrer une séance").
+  useEffect(() => {
+    if (autoStart) setWorkoutOpen(true);
+  }, [autoStart]);
 
   // Séance du jour éditable — on part du template Push par défaut.
   const [session, setSession] = useState<Template>(() => cloneTemplate(TEMPLATES[0]));
@@ -307,10 +312,10 @@ export default function Training({ onPR, refreshKey }: { onPR: () => void; refre
     <div className="px-4 pt-2 pb-6">
       {/* Actions rapides */}
       <div className="mb-4 grid grid-cols-2 gap-3">
-        <ActionCard icon={Camera} title="Log un PR" glow onClick={onPR} />
+        <ActionCard icon={Camera} title="Publier un record" glow onClick={onPR} />
         <ActionCard icon={NotebookPen} title="Mon entraînement" onClick={() => setWorkoutOpen(true)} />
         <ActionCard icon={Target} title="Mes objectifs" onClick={() => setGoalOpen(true)} />
-        <ActionCard icon={Sparkles} title="Coach IA" premium onClick={() => setCoachOpen(true)} />
+        <ActionCard icon={Sparkles} title="Coach" premium onClick={() => setCoachOpen(true)} />
       </div>
 
       {/* Progression réelle (séances terminées) */}
@@ -477,7 +482,7 @@ export default function Training({ onPR, refreshKey }: { onPR: () => void; refre
         <div className="rounded-2xl border border-arena-border bg-arena-surface p-4 text-center">
           <p className="text-sm text-arena-muted">Aucun PR enregistré</p>
           <p className="mt-1 flex items-center justify-center gap-1 text-xs text-arena-sub">
-            Log ton premier PR pour commencer <Trophy size={12} className="text-arena" />
+            Publie ton premier record pour commencer <Trophy size={12} className="text-arena" />
           </p>
         </div>
       )}
