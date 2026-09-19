@@ -35,6 +35,58 @@ function Facet({ d, fill, opacity = 1 }: { d: string; fill: string; opacity?: nu
   return <path d={d} fill={fill} opacity={opacity} />;
 }
 
+/** Halo / aura premium, intensité croissante par rang. Purement décoratif, derrière l'insigne. */
+const AURA_STRENGTH: Record<Grade, number> = {
+  recruit: 0, soldat: .1, guerrier: .16, spartiate: .3, gladiateur: .42,
+  centurion: .55, titan: .5, legende: .68, divin: .8,
+};
+
+function Aura({ grade, metal, auraId, context, animated, compact }: { grade: Grade; metal: Metal; auraId: string; context: GradeEmblemContext; animated: boolean; compact: boolean }) {
+  const base = AURA_STRENGTH[grade];
+  if (base === 0) return null;
+  const ceremony = context === "level-up";
+  const scale = ceremony ? 1 : context === "gallery" ? .62 : compact ? .3 : .48;
+  const o = base * scale;
+  const delay = ceremony ? .82 : .18;
+  const ember = grade === "spartiate" || grade === "gladiateur" || grade === "centurion";
+
+  return <g aria-hidden="true">
+    <motion.circle
+      cx="36" cy="37" r="33" fill={`url(#${auraId})`}
+      initial={animated ? { opacity: 0, scale: .92 } : { opacity: o }}
+      animate={animated ? { opacity: [0, o * 1.5, o], scale: 1 } : { opacity: o }}
+      transition={{ delay, duration: .9, ease: "easeOut" }}
+      style={{ transformOrigin: "36px 37px" }}
+    />
+    {ember && !compact && [0, 1, 2].map((i) => (
+      <motion.circle key={i} cx={22 + i * 14} cy={58 - i * 3} r={.9 - i * .12} fill={metal.accent}
+        initial={{ opacity: 0 }}
+        animate={animated ? { opacity: [0, .5, 0], cy: [58 - i * 3, 44 - i * 3] } : { opacity: 0 }}
+        transition={{ delay: delay + i * .14, duration: 1.1, ease: "easeOut" }} />
+    ))}
+    {grade === "legende" && !compact && [0, 1, 2, 3].map((i) => (
+      <motion.circle key={i} cx={20 + i * 11} cy={20 + (i % 2) * 30} r=".85" fill={metal.accent}
+        initial={{ opacity: 0 }}
+        animate={animated ? { opacity: [0, .55, 0] } : { opacity: 0 }}
+        transition={{ delay: delay + i * .12, duration: 1.2, ease: "easeInOut" }} />
+    ))}
+    {grade === "titan" && (
+      <motion.circle cx="36" cy="37" r="30" fill="none" stroke={metal.accent} strokeWidth=".7"
+        initial={{ opacity: 0 }}
+        animate={animated ? { opacity: [0, .35, 0], scale: [.97, 1.02, 1] } : { opacity: 0 }}
+        transition={{ delay: delay + .3, duration: .5 }} style={{ transformOrigin: "36px 37px" }} />
+    )}
+    {grade === "divin" && !compact && (
+      <motion.g
+        initial={{ opacity: 0 }} animate={animated ? { opacity: .5, rotate: ceremony ? 8 : 4 } : { opacity: .22 }}
+        transition={{ delay: delay + .1, duration: ceremony ? 2.2 : 1.4, ease: "linear" }}
+        style={{ transformOrigin: "36px 37px" }}>
+        <circle cx="36" cy="37" r="32" fill="none" stroke={metal.accent} strokeWidth=".6" strokeDasharray="5 9" opacity=".7" />
+      </motion.g>
+    )}
+  </g>;
+}
+
 function Insignia({ grade, fill, shade, metal, animated, context, compact }: { grade: Grade; fill: string; shade: string; metal: Metal; animated: boolean; context: GradeEmblemContext; compact: boolean }) {
   const ceremony = context === "level-up";
   const delay = ceremony ? .76 : .08;
@@ -147,6 +199,8 @@ export function GradeEmblem({ grade, size = 48, state, locked = false, active = 
   const shade = `grade-shade-${id}`;
   const sweep = `grade-sweep-${id}`;
   const texture = `grade-texture-${id}`;
+  const aura = `grade-aura-${id}`;
+  const spec = `grade-spec-${id}`;
   const relief = `grade-relief-${id}`;
   const reduceMotion = Boolean(useReducedMotion());
   const resolvedLocked = locked || state === "locked";
@@ -154,9 +208,12 @@ export function GradeEmblem({ grade, size = 48, state, locked = false, active = 
   const metal = METALS[grade];
   const tier = GRADES.indexOf(grade);
   const inView = useInView(rootRef, { once: true, amount: .45 });
-  const canAnimate = animated && tier >= 3 && !resolvedLocked && !reduceMotion && inView;
+  const canReveal = animated && !resolvedLocked && !reduceMotion && inView;
+  const canAnimate = canReveal && tier >= 3;
   const animateInsignia = canAnimate && context !== "compact";
-  const allowSweep = canAnimate && (["spartiate", "gladiateur", "centurion", "legende", "divin"] as Grade[]).includes(grade);
+  // micro-reflet pour tous les rangs, intensité croissante
+  const sweepOpacity = tier <= 2 ? .28 + tier * .1 : context === "level-up" ? 1 : .8;
+  const allowSweep = canReveal;
   const compact = size <= 36 || context === "compact";
   const p = Math.max(0, Math.min(100, progress ?? (resolvedActive ? 100 : 0)));
 
@@ -169,12 +226,16 @@ export function GradeEmblem({ grade, size = 48, state, locked = false, active = 
         <pattern id={texture} width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(-18)"><path d="M0 1h8M0 5h8" stroke={metal.accent} strokeWidth=".22" opacity=".14" /></pattern>
         <filter id={relief} x="-18%" y="-18%" width="136%" height="136%"><feDropShadow dx="0" dy="1.2" stdDeviation=".8" floodColor={metal.shadow} floodOpacity=".9" /><feDropShadow dx="0" dy="-.35" stdDeviation=".25" floodColor={metal.accent} floodOpacity=".28" /></filter>
         <clipPath id={`grade-clip-${id}`}><circle cx="36" cy="36" r="34" /></clipPath>
+        <radialGradient id={aura} cx="50%" cy="50%" r="50%"><stop stopColor={metal.accent} stopOpacity=".55" /><stop offset=".55" stopColor={metal.mid} stopOpacity=".22" /><stop offset="1" stopColor={metal.shadow} stopOpacity="0" /></radialGradient>
+        <linearGradient id={spec} x1="20" y1="6" x2="48" y2="50" gradientUnits="userSpaceOnUse"><stop stopColor="#ffffff" stopOpacity=".16" /><stop offset=".45" stopColor="#ffffff" stopOpacity=".03" /><stop offset="1" stopColor="#000000" stopOpacity=".2" /></linearGradient>
       </defs>
+      {!resolvedLocked && <Aura grade={grade} metal={metal} auraId={aura} context={context} animated={canReveal} compact={compact} />}
       <g opacity={resolvedLocked ? .22 : 1} style={{ filter: `url(#${relief})` }}>
         <Insignia grade={grade} fill={fill} shade={shade} metal={resolvedLocked ? { ...metal, edge: "#454a4c", accent: "#5b6062" } : metal} animated={animateInsignia} context={context} compact={compact} />
         {!compact && <path d="M9 28h54M12 43h48" stroke={`url(#${texture})`} strokeWidth="5" opacity=".16" />}
       </g>
-      {allowSweep && <motion.rect x="-30" y="0" width={grade === "divin" ? 7 : 11} height="72" fill={`url(#${sweep})`} transform="skewX(-16)" clipPath={`url(#grade-clip-${id})`} initial={{ x: -30, opacity: 0 }} animate={{ x: 110, opacity: [0, 1, 0] }} transition={{ delay: context === "level-up" ? 1.04 : .4, duration: .5, ease: "easeInOut" }} />}
+      {!resolvedLocked && !compact && <path d="M36 4 62 20v32L36 68 10 52V20Z" fill={`url(#${spec})`} clipPath={`url(#grade-clip-${id})`} opacity=".5" style={{ mixBlendMode: "overlay" }} />}
+      {allowSweep && <motion.rect x="-30" y="0" width={grade === "divin" ? 7 : 11} height="72" fill={`url(#${sweep})`} transform="skewX(-16)" clipPath={`url(#grade-clip-${id})`} initial={{ x: -30, opacity: 0 }} animate={{ x: 110, opacity: [0, sweepOpacity, 0] }} transition={{ delay: context === "level-up" ? 1.04 : .4, duration: .5, ease: "easeInOut" }} />}
       {resolvedLocked && <g><path d="M30 37v-3a6 6 0 0 1 12 0v3" fill="none" stroke="#666a6c" strokeWidth="1.4" /><path d="M28 37h16v12H28Z" fill="#101214" stroke="#555a5c" strokeWidth="1" /></g>}
       {progress !== undefined && <circle cx="36" cy="36" r="34.6" fill="none" stroke={metal.accent} strokeWidth="1.1" pathLength="100" strokeDasharray="100" strokeDashoffset={100 - p} strokeLinecap="round" transform="rotate(-90 36 36)" />}
     </svg>
