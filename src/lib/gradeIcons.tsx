@@ -12,32 +12,10 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { GRADES, type Grade } from "./grades";
-
-import recrueAsset from "@/assets/grades/recrue.png.asset.json";
-import soldatAsset from "@/assets/grades/soldat.png.asset.json";
-import guerrierAsset from "@/assets/grades/guerrier.png.asset.json";
-import spartiateAsset from "@/assets/grades/spartiate.png.asset.json";
-import gladiateurAsset from "@/assets/grades/gladiateur.png.asset.json";
-import centurionAsset from "@/assets/grades/centurion.png.asset.json";
-import titanAsset from "@/assets/grades/titan.png.asset.json";
-import legendeAsset from "@/assets/grades/legende.png.asset.json";
-import divinAsset from "@/assets/grades/divin.png.asset.json";
-
-export const GRADE_IMAGE: Record<Grade, string> = {
-  recruit: recrueAsset.url,
-  soldat: soldatAsset.url,
-  guerrier: guerrierAsset.url,
-  spartiate: spartiateAsset.url,
-  gladiateur: gladiateurAsset.url,
-  centurion: centurionAsset.url,
-  titan: titanAsset.url,
-  legende: legendeAsset.url,
-  divin: divinAsset.url,
-};
+import { GradeEmblem } from "@/components/centuria/grades/GradeEmblem";
 
 /**
- * Circular grade medal image with a gold border that thickens for top tiers.
- * Replaces the previous single-Award-shape icon system.
+ * Adaptateur compact conservé pour les surfaces historiques.
  */
 export function GradeIcon({
   grade,
@@ -48,50 +26,8 @@ export function GradeIcon({
   size?: number;
   className?: string;
 }) {
-  const tier = Math.max(0, GRADES.indexOf(grade));
-  // Top tiers (Titan, Légende, Divin) get a thicker gold ring.
-  const borderWidth = tier >= 6 ? Math.max(2, Math.round(size * 0.09)) : 1;
-  const glow =
-    tier >= 7
-      ? `0 0 ${Math.round(size * 0.35)}px rgba(212,175,55,0.55)`
-      : tier >= 6
-      ? `0 0 ${Math.round(size * 0.2)}px rgba(212,175,55,0.35)`
-      : "none";
-  return (
-    <span
-      className={className}
-      style={{
-        width: size,
-        height: size,
-        minWidth: size,
-        minHeight: size,
-        borderRadius: "9999px",
-        border: `${borderWidth}px solid var(--arena-gold, #D4AF37)`,
-        boxShadow: glow,
-        display: "inline-block",
-        overflow: "hidden",
-        flexShrink: 0,
-        aspectRatio: "1 / 1",
-        background: "#0a0a0a",
-        verticalAlign: "middle",
-        boxSizing: "border-box",
-      }}
-    >
-      <img
-        src={GRADE_IMAGE[grade]}
-        alt={grade}
-        draggable={false}
-        style={{
-          width: "100%",
-          height: "100%",
-          objectFit: "cover",
-          objectPosition: "center",
-          display: "block",
-          borderRadius: "9999px",
-        }}
-      />
-    </span>
-  );
+  void GRADES;
+  return <GradeEmblem grade={grade} size={size} className={className} />;
 }
 
 /** Goals — semantic Lucide icons. */

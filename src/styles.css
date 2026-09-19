@@ -98,6 +98,7 @@
   --arena-muted: oklch(0.42 0.015 260);
   --arena-surface: oklch(0.17 0.005 0);
   --arena-border: oklch(0.28 0.005 0);
+  --premium-separator: oklch(0.3 0.004 0 / 55%);
 
   --font-display: "Inter", system-ui, sans-serif;
 
@@ -120,6 +121,17 @@
     color: var(--color-foreground);
     font-family: var(--font-display);
     -webkit-font-smoothing: antialiased;
+  }
+  button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
+  button, [role="button"] { touch-action: manipulation; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }
 
