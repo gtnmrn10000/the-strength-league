@@ -52,11 +52,27 @@ type RegisterResult =
 export async function registerPush(): Promise<RegisterResult> {
   if (!isPushSupported()) return { ok: false, reason: "unsupported" };
 
-  let PushNotifications: typeof import("@capacitor/push-notifications").PushNotifications;
+  type PushNotificationsPlugin = {
+    requestPermissions: () => Promise<{ receive: string }>;
+    register: () => Promise<void>;
+    unregister: () => Promise<void>;
+    removeAllDeliveredNotifications: () => Promise<void>;
+    addListener: (
+      event: "registration" | "registrationError",
+      cb: (data: { value?: string } | unknown) => void,
+    ) => void;
+  };
+
+  let PushNotifications: PushNotificationsPlugin;
   try {
     // Import dynamique : le plugin n'est pas forcément installé tant que les
-    // identifiants APNs/FCM ne sont pas prêts côté build natif.
-    ({ PushNotifications } = await import("@capacitor/push-notifications"));
+    // identifiants APNs/FCM ne sont pas prêts côté build natif. Le module
+    // n'étant pas une dépendance du projet, on l'importe sans vérification
+    // de type et on échoue proprement si absent.
+    const mod: { PushNotifications: PushNotificationsPlugin } = await import(
+      /* @vite-ignore */ "@capacitor/push-notifications"
+    );
+    PushNotifications = mod.PushNotifications;
   } catch {
     return { ok: false, reason: "plugin-missing" };
   }
@@ -74,7 +90,7 @@ export async function registerPush(): Promise<RegisterResult> {
     return await new Promise<RegisterResult>((resolve) => {
       let settled = false;
 
-      PushNotifications.addListener("registration", (token) => {
+      PushNotifications.addListener("registration", (token: { value: string }) => {
         if (settled) return;
         settled = true;
         void supabase
@@ -115,9 +131,14 @@ export async function unregisterPush(): Promise<boolean> {
   try {
     if (isPushSupported()) {
       try {
-        const { PushNotifications } = await import("@capacitor/push-notifications");
-        await PushNotifications.removeAllDeliveredNotifications();
-        await PushNotifications.unregister();
+        const mod: {
+          PushNotifications: {
+            removeAllDeliveredNotifications: () => Promise<void>;
+            unregister: () => Promise<void>;
+          };
+        } = await import(/* @vite-ignore */ "@capacitor/push-notifications");
+        await mod.PushNotifications.removeAllDeliveredNotifications();
+        await mod.PushNotifications.unregister();
       } catch {
         // Plugin absent ou déjà désenregistré — sans conséquence.
       }
