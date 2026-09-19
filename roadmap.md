@@ -11,3 +11,16 @@
 - [x] H. Rétention : streak hebdo, objectif de semaine, résumé hebdo
 - [x] I. Microcopy sans slop IA
 - [x] J. QA E2E 360×640 / 375×667 / 390×844, TS + build, rapport final
+
+## Passe Mobile Only / Store Ready
+- [x] Offres CENTURIA STANDARD 26,99 € / ÉTUDIANT 12,99 €, prix store si branchés
+- [x] Achat natif uniquement, aucun checkout web, restore purchases
+- [x] Éligibilité étudiante bloquée tant que la vérification n'est pas branchée
+- [x] Séance hors-ligne : file locale, sync auto, badge « À synchroniser »
+- [x] Back button Android, reprise après arrière-plan, séance persistée
+- [x] Préférences notifications + enregistrement appareil (aucun envoi simulé)
+- [x] Fil paginé (15 + « Voir plus »)
+- [x] Audit strings et clés, version 1.0.0, permissions minimales
+- [x] QA 360×640 / 375×667 / 390×844, TS + build propres
+- [x] docs/store-readiness.md
+- [ ] Embarquer le build web dans le binaire natif (avant soumission App Store)
