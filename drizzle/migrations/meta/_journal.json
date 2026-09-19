@@ -22,6 +22,13 @@
       "when": 1789823239476,
       "tag": "0002_social_phase4",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1789823724014,
+      "tag": "0003_lock_down_new_trigger_functions",
+      "breakpoints": true
     }
   ]
 }
