@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
+import { track } from "@/lib/analytics";
 import { PostMedia } from "./PostMedia";
 import {
   Flame,
@@ -22,6 +23,7 @@ import CommentsSheet from "./CommentsSheet";
 import ReportSheet from "./ReportSheet";
 import { toggleHype, type FeedPost } from "@/lib/social";
 import { blockUser } from "@/lib/moderation";
+import { friendlyError } from "@/lib/errors";
 import { supabase } from "@/integrations/supabase/client";
 import { GRADE_LABELS, type Grade } from "@/lib/grades";
 import { GradeIcon } from "@/lib/gradeIcons";
@@ -62,9 +64,10 @@ export default function PostCard({ post }: { post: FeedPost }) {
     setCount((c) => c + (next ? 1 : -1));
     try {
       await toggleHype(post.id, hyped);
-    } catch {
+    } catch (e) {
       setHyped(!next);
       setCount((c) => c + (next ? -1 : 1));
+      toast.error(friendlyError(e, "Action impossible."));
     }
   };
 
@@ -75,7 +78,7 @@ export default function PostCard({ post }: { post: FeedPost }) {
       setHidden(true);
       toast.success("Utilisateur bloqué.");
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Blocage impossible.");
+      toast.error(friendlyError(e, "Blocage impossible."));
     }
   };
 
@@ -262,14 +265,14 @@ export function PRBlock({ post }: { post: FeedPost }) {
       setMyVote(res.my_vote);
       if (res.transitioned_to_verified) {
         toast.success("PR vérifié par la communauté !");
+        if (pr) track("pr_verified", { exercise: pr.exercise });
       }
     } catch (e: any) {
       setValidCount(prev.validCount);
       setDoubtCount(prev.doubtCount);
       setMyVote(prev.myVote);
       setStatus(prev.status);
-      const msg = e instanceof Error ? e.message : "Vote impossible";
-      toast.error(msg);
+      toast.error(friendlyError(e, "Vote impossible."));
     } finally {
       setPending(false);
     }

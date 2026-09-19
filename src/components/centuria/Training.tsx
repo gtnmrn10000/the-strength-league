@@ -15,6 +15,7 @@ import ProgressPanel from "./ProgressPanel";
 import ExerciseDetail from "./ExerciseDetail";
 import { fetchProgress, type ProgressData } from "@/lib/progress";
 import { useSyncStatus } from "@/lib/offlineSync";
+import { readActiveSession, type ActiveSessionInfo } from "@/lib/activeSession";
 
 interface VerifiedPR {
   exercise: string;
@@ -108,6 +109,12 @@ export default function Training({ onPR, refreshKey, autoStart }: { onPR: () => 
   useEffect(() => {
     if (autoStart) setWorkoutOpen(true);
   }, [autoStart]);
+
+  // Séance interrompue (plantage, app fermée) : on propose la reprise.
+  const [activeSession, setActiveSession] = useState<ActiveSessionInfo | null>(null);
+  useEffect(() => {
+    setActiveSession(readActiveSession());
+  }, [refreshKey, localTick, workoutOpen]);
 
   // Séance du jour éditable — on part du template Push par défaut.
   const [session, setSession] = useState<Template>(() => cloneTemplate(TEMPLATES[0]));
@@ -445,10 +452,18 @@ export default function Training({ onPR, refreshKey, autoStart }: { onPR: () => 
       {/* Démarrer */}
       <button
         onClick={() => setWorkoutOpen(true)}
-        disabled={session.exercises.length === 0}
-        className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-arena-gold py-3.5 font-black tracking-widest text-black shadow-[0_0_24px_rgba(212,175,55,0.35)] disabled:opacity-40 disabled:shadow-none active:scale-[0.98] transition"
+        disabled={session.exercises.length === 0 && !activeSession}
+        className="mt-4 flex w-full flex-col items-center justify-center gap-0.5 rounded-2xl bg-arena-gold py-3.5 font-black tracking-widest text-black shadow-[0_0_24px_rgba(212,175,55,0.35)] disabled:opacity-40 disabled:shadow-none active:scale-[0.98] transition"
       >
-        <Play size={16} strokeWidth={3} /> DÉMARRER LA SÉANCE
+        <span className="flex items-center gap-2">
+          <Play size={16} strokeWidth={3} />
+          {activeSession ? "REPRENDRE LA SÉANCE" : "DÉMARRER LA SÉANCE"}
+        </span>
+        {activeSession && (
+          <span className="text-[10px] font-bold tracking-normal opacity-70">
+            {activeSession.name} · {activeSession.doneSets}/{activeSession.totalSets} séries validées
+          </span>
+        )}
       </button>
 
       <CoachSheet

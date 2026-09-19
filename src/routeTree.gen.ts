@@ -15,6 +15,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProfileUserIdRouteImport } from './routes/profile.$userId'
 import { Route as LegalTermsRouteImport } from './routes/legal.terms'
 import { Route as LegalSupportRouteImport } from './routes/legal.support'
+import { Route as LegalRulesRouteImport } from './routes/legal.rules'
 import { Route as LegalPrivacyRouteImport } from './routes/legal.privacy'
 import { Route as ApiPublicRevenuecatWebhookRouteImport } from './routes/api/public/revenuecat-webhook'
 
@@ -48,6 +49,11 @@ const LegalSupportRoute = LegalSupportRouteImport.update({
   path: '/legal/support',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LegalRulesRoute = LegalRulesRouteImport.update({
+  id: '/legal/rules',
+  path: '/legal/rules',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LegalPrivacyRoute = LegalPrivacyRouteImport.update({
   id: '/legal/privacy',
   path: '/legal/privacy',
@@ -65,6 +71,7 @@ export interface FileRoutesByFullPath {
   '/discover': typeof DiscoverRoute
   '/reset-password': typeof ResetPasswordRoute
   '/legal/privacy': typeof LegalPrivacyRoute
+  '/legal/rules': typeof LegalRulesRoute
   '/legal/support': typeof LegalSupportRoute
   '/legal/terms': typeof LegalTermsRoute
   '/profile/$userId': typeof ProfileUserIdRoute
@@ -75,6 +82,7 @@ export interface FileRoutesByTo {
   '/discover': typeof DiscoverRoute
   '/reset-password': typeof ResetPasswordRoute
   '/legal/privacy': typeof LegalPrivacyRoute
+  '/legal/rules': typeof LegalRulesRoute
   '/legal/support': typeof LegalSupportRoute
   '/legal/terms': typeof LegalTermsRoute
   '/profile/$userId': typeof ProfileUserIdRoute
@@ -86,6 +94,7 @@ export interface FileRoutesById {
   '/discover': typeof DiscoverRoute
   '/reset-password': typeof ResetPasswordRoute
   '/legal/privacy': typeof LegalPrivacyRoute
+  '/legal/rules': typeof LegalRulesRoute
   '/legal/support': typeof LegalSupportRoute
   '/legal/terms': typeof LegalTermsRoute
   '/profile/$userId': typeof ProfileUserIdRoute
@@ -98,6 +107,7 @@ export interface FileRouteTypes {
     | '/discover'
     | '/reset-password'
     | '/legal/privacy'
+    | '/legal/rules'
     | '/legal/support'
     | '/legal/terms'
     | '/profile/$userId'
@@ -108,6 +118,7 @@ export interface FileRouteTypes {
     | '/discover'
     | '/reset-password'
     | '/legal/privacy'
+    | '/legal/rules'
     | '/legal/support'
     | '/legal/terms'
     | '/profile/$userId'
@@ -118,6 +129,7 @@ export interface FileRouteTypes {
     | '/discover'
     | '/reset-password'
     | '/legal/privacy'
+    | '/legal/rules'
     | '/legal/support'
     | '/legal/terms'
     | '/profile/$userId'
@@ -129,6 +141,7 @@ export interface RootRouteChildren {
   DiscoverRoute: typeof DiscoverRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   LegalPrivacyRoute: typeof LegalPrivacyRoute
+  LegalRulesRoute: typeof LegalRulesRoute
   LegalSupportRoute: typeof LegalSupportRoute
   LegalTermsRoute: typeof LegalTermsRoute
   ProfileUserIdRoute: typeof ProfileUserIdRoute
@@ -179,6 +192,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LegalSupportRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/legal/rules': {
+      id: '/legal/rules'
+      path: '/legal/rules'
+      fullPath: '/legal/rules'
+      preLoaderRoute: typeof LegalRulesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/legal/privacy': {
       id: '/legal/privacy'
       path: '/legal/privacy'
@@ -201,6 +221,7 @@ const rootRouteChildren: RootRouteChildren = {
   DiscoverRoute: DiscoverRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   LegalPrivacyRoute: LegalPrivacyRoute,
+  LegalRulesRoute: LegalRulesRoute,
   LegalSupportRoute: LegalSupportRoute,
   LegalTermsRoute: LegalTermsRoute,
   ProfileUserIdRoute: ProfileUserIdRoute,

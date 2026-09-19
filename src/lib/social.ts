@@ -204,6 +204,7 @@ export async function fetchFeed(options: { limit?: number; before?: string } = {
   let query = supabase
     .from("posts")
     .select("id, user_id, type, media_url, media_type, caption, muscle_groups, macros, pr_id, hype_count, comment_count, created_at")
+    .is("hidden_at", null)
     .order("created_at", { ascending: false })
     .limit(limit);
   if (options.before) query = query.lt("created_at", options.before);
@@ -264,6 +265,7 @@ export async function fetchUserPosts(userId: string): Promise<FeedPost[]> {
     .from("posts")
     .select("id, user_id, type, media_url, media_type, caption, muscle_groups, macros, pr_id, hype_count, comment_count, created_at")
     .eq("user_id", userId)
+    .is("hidden_at", null)
     .order("created_at", { ascending: false });
   if (error) throw error;
   return attachFeedRelations((data ?? []) as PostRow[]);
@@ -473,6 +475,7 @@ export async function fetchComments(postId: string): Promise<PostComment[]> {
     .from("post_comments")
     .select("id, post_id, user_id, body, created_at")
     .eq("post_id", postId)
+    .is("hidden_at", null)
     .order("created_at", { ascending: true });
   if (error || !data) return [];
   const rows = data.filter((c) => !blocked.has(c.user_id));

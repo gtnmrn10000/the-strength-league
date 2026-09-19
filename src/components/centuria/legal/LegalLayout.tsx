@@ -58,6 +58,7 @@ export default function LegalLayout({
         <div className="mt-8 flex flex-wrap gap-3 border-t border-arena-border pt-4 text-xs font-bold text-arena">
           <Link to="/legal/privacy">Confidentialité</Link>
           <Link to="/legal/terms">CGU</Link>
+          <Link to="/legal/rules">Règles de la communauté</Link>
           <Link to="/legal/support">Contact & support</Link>
         </div>
       </div>

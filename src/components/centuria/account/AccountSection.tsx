@@ -14,6 +14,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { deleteMyAccount, exportMyData, DELETE_CONFIRM_PHRASE } from "@/lib/api";
 import { toast } from "sonner";
+import { track } from "@/lib/analytics";
 
 function frError(message: string) {
   const m = message.toLowerCase();
@@ -105,6 +106,7 @@ export default function AccountSection({ onSignedOut }: { onSignedOut?: () => vo
     setDeleting(true);
     try {
       await deleteMyAccount(DELETE_CONFIRM_PHRASE);
+      track("account_deleted");
       await supabase.auth.signOut();
       localStorage.removeItem("centuria_onboarded");
       localStorage.removeItem("centuria_profile");

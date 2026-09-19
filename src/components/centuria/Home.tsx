@@ -7,6 +7,7 @@ import { computeRecovery, MUSCLE_LABEL, type RecoveryState } from "@/lib/recover
 import { GRADE_LABELS, nextGradeInfo, type Grade } from "@/lib/grades";
 import { GradeIcon } from "@/lib/gradeIcons";
 import { fetchMyProfile } from "@/lib/profileStore";
+import { readActiveSession, type ActiveSessionInfo } from "@/lib/activeSession";
 
 const WEEK_GOAL_KEY = "centuria:week-goal";
 
@@ -32,9 +33,15 @@ export default function Home({
   const [weekGoal, setWeekGoal] = useState(3);
   const [loading, setLoading] = useState(true);
 
+  const [activeSession, setActiveSession] = useState<ActiveSessionInfo | null>(null);
+
   useEffect(() => {
     setWeekGoal(readWeekGoal());
   }, []);
+
+  useEffect(() => {
+    setActiveSession(readActiveSession());
+  }, [refreshKey]);
 
   useEffect(() => {
     let cancelled = false;
@@ -95,9 +102,16 @@ export default function Home({
       <motion.button
         whileTap={{ scale: 0.98 }}
         onClick={onStartWorkout}
-        className="flex h-16 w-full items-center justify-center gap-2 rounded-2xl bg-arena text-lg font-black text-arena-foreground"
+        className="flex min-h-16 w-full flex-col items-center justify-center gap-0.5 rounded-2xl bg-arena py-3 text-lg font-black text-arena-foreground"
       >
-        <Play size={20} /> Démarrer une séance
+        <span className="flex items-center gap-2">
+          <Play size={20} /> {activeSession ? "Reprendre ma séance" : "Démarrer une séance"}
+        </span>
+        {activeSession && (
+          <span className="text-[11px] font-bold opacity-80">
+            {activeSession.name} · {activeSession.doneSets}/{activeSession.totalSets} séries
+          </span>
+        )}
       </motion.button>
 
       {/* Semaine */}

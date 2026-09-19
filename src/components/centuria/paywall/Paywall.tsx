@@ -3,8 +3,9 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { PLANS, PREMIUM_FEATURES, planById, type PlanId } from "@/lib/paywall/plans";
 import { STUDENT_BLOCKER_COPY } from "@/lib/paywall/eligibility";
 import { useSubscription } from "@/hooks/useSubscription";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
+import { track } from "@/lib/analytics";
 
 const REASON_COPY: Record<string, { title: string; subtitle: string }> = {
   coach: {
@@ -50,6 +51,11 @@ export default function Paywall() {
   } = useSubscription();
   const [selected, setSelected] = useState<PlanId>("centuria_standard");
   const [showTodo, setShowTodo] = useState(false);
+
+  useEffect(() => {
+    if (paywallOpen) track("paywall_viewed", { reason: paywallReason });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [paywallOpen]);
   const copy = REASON_COPY[paywallReason] ?? REASON_COPY.generic;
   const isDev = mode === "dev";
 
@@ -70,6 +76,7 @@ export default function Paywall() {
       return;
     }
     try {
+      track("purchase_started", { plan: selected });
       await purchase(selected);
       toast.success(
         isDev ? "Accès Premium activé (mode dev, aucun paiement)." : "Abonnement activé."

@@ -24,3 +24,15 @@
 - [x] QA 360×640 / 375×667 / 390×844, TS + build propres
 - [x] docs/store-readiness.md
 - [ ] Embarquer le build web dans le binaire natif (avant soumission App Store)
+
+## Sprint final (avant credentials externes)
+- [x] P0-1 App embarquée dans le binaire (build:native SPA + capacitor sans server.url)
+- [x] P0-1b Logique serveur sensible déplacée en fonctions backend distantes (coach, food-photo, account, award-xp, prs)
+- [x] P0-2 Séance indestructible (UUID client, upsert idempotent, file offline + backoff)
+- [x] P0-3 Sécurité : RLS, storage, colonnes protégées, limites anti-spam, index
+- [x] P0-4 XP/grades anti-triche (xp_events service role, grade dérivé du XP)
+- [x] P0-5 Modération : rôles, masquage, blocages en base, filtre spam minimal
+- [ ] P1 Règles communauté + support/FAQ + mes signalements (UI)
+- [ ] P1 Analytics first-party + ErrorBoundary/journal d'erreurs
+- [ ] P1 Accessibilité, 320×568, performance
+- [x] docs/release-checklist.md, docs/qa-data-cleanup.md

@@ -118,3 +118,36 @@ export async function reportContent(input: {
   });
   if (error) throw error;
 }
+
+
+/* ── Mes signalements ── */
+
+export type ReportStatus = "open" | "reviewed" | "actioned" | "dismissed";
+
+export const REPORT_STATUS_LABELS: Record<ReportStatus, string> = {
+  open: "En attente",
+  reviewed: "Examiné",
+  actioned: "Traité",
+  dismissed: "Rejeté",
+};
+
+export interface MyReport {
+  id: string;
+  target_type: ReportTarget;
+  reason: string;
+  details: string | null;
+  status: ReportStatus;
+  created_at: string;
+}
+
+export async function fetchMyReports(): Promise<MyReport[]> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
+  const { data, error } = await supabase
+    .from("content_reports")
+    .select("id, target_type, reason, details, status, created_at")
+    .eq("reporter_id", user.id)
+    .order("created_at", { ascending: false });
+  if (error || !data) return [];
+  return data as MyReport[];
+}
