@@ -42,3 +42,10 @@
 - [ ] Migrer galerie, accueil, profil et surfaces grade
 - [ ] Ajouter un aperçu QA hors production
 - [ ] Vérifier tailles mobiles, états et compilation
+
+## Passe visuelle premium globale
+- [ ] Auditer les 15 écrans demandés et supprimer les marqueurs IA/template à fort impact
+- [ ] Réduire cartes, pills, majuscules, effets et copy générique sans changer les fonctions
+- [ ] Harmoniser boutons, icônes, espacements, rayons et animations courtes
+- [ ] Simplifier Coach, nutrition et paywall sans modifier leur logique
+- [ ] QA visuelle 320 / 360 / 375 / 390 px, TypeScript et build
