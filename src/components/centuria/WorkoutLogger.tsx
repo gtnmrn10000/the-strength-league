@@ -40,6 +40,7 @@ import { queueSession } from "@/lib/offlineSync";
 import { pushBackHandler } from "@/lib/backButton";
 import { ACTIVE_SESSION_KEY } from "@/lib/activeSession";
 import { track } from "@/lib/analytics";
+import { useAuth } from "@/hooks/useAuth";
 import ExerciseLibrary from "./ExerciseLibrary";
 import SessionSummary, { type NewRecord, type SessionResult } from "./session/SessionSummary";
 
