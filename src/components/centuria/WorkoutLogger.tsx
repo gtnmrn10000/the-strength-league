@@ -128,6 +128,7 @@ export default function WorkoutLogger({
   const [now, setNow] = useState(Date.now());
   const [startedAt, setStartedAt] = useState<number | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const { user: authUser } = useAuth();
   const [saving, setSaving] = useState(false);
   const [perfs, setPerfs] = useState<Record<string, LastPerf>>({});
   const [libOpen, setLibOpen] = useState(false);
