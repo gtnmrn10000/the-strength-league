@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { Apple, Mail, Lock, Loader2, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
@@ -71,6 +72,25 @@ export default function AuthPanel({
       setBusy(null);
     }
   };
+
+  const sendReset = async () => {
+    const mail = email.trim();
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(mail)) {
+      setError("Entre ton adresse e-mail pour recevoir le lien de réinitialisation.");
+      return;
+    }
+    setError(null);
+    try {
+      const { error: err } = await supabase.auth.resetPasswordForEmail(mail, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (err) throw err;
+      toast.success("E-mail de réinitialisation envoyé. Vérifie tes spams.");
+    } catch (e) {
+      setError(frError(e instanceof Error ? e.message : String(e)));
+    }
+  };
+
 
   const oauth = async (provider: "google" | "apple") => {
     setError(null);
@@ -154,9 +174,23 @@ export default function AuthPanel({
         {mode === "signup" ? "J'ai déjà un compte" : "Créer un compte"}
       </button>
 
+      {mode === "login" && (
+        <button
+          type="button"
+          onClick={sendReset}
+          className="text-center text-[11px] font-semibold text-arena-muted underline"
+        >
+          Mot de passe oublié ?
+        </button>
+      )}
+
       <p className="mt-1 text-center text-[10px] leading-relaxed text-arena-muted">
-        En continuant, tu acceptes les <span className="text-arena-sub underline">CGU</span> et la{" "}
-        <span className="text-arena-sub underline">politique de confidentialité</span>.
+        En continuant, tu acceptes les{" "}
+        <Link to="/legal/terms" className="text-arena-sub underline">CGU</Link> et la{" "}
+        <Link to="/legal/privacy" className="text-arena-sub underline">
+          politique de confidentialité
+        </Link>
+        . <Link to="/legal/support" className="text-arena-sub underline">Contact</Link>
       </p>
     </div>
   );
