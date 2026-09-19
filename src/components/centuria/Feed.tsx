@@ -109,10 +109,19 @@ export default function Feed({ onCreate }: { onCreate: () => void }) {
       <button
         onClick={() => setComposerOpen(true)}
         className="fixed bottom-20 right-6 z-20 flex h-14 w-14 items-center justify-center rounded-full bg-arena text-arena-foreground shadow-[0_0_25px_var(--arena-glow)] active:scale-90 transition-transform"
-        aria-label="Log un PR"
+        aria-label="Publier"
       >
         <Plus size={24} />
       </button>
+
+      <PostComposer
+        open={composerOpen}
+        onOpenChange={setComposerOpen}
+        onPickPR={onCreate}
+        onPosted={() => {
+          void fetchFeed().then(setPosts).catch(() => undefined);
+        }}
+      />
 
       <NotificationsSheet
         open={notifOpen}
