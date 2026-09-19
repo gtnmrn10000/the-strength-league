@@ -93,7 +93,7 @@ function cloneTemplate(t: Template): Template {
   };
 }
 
-export default function Training({ onPR, refreshKey }: { onPR: () => void; refreshKey?: number }) {
+export default function Training({ onPR, refreshKey, autoStart }: { onPR: () => void; refreshKey?: number; autoStart?: number }) {
   const [bestPRs, setBestPRs] = useState<Record<string, VerifiedPR>>({});
   const [bodyweight, setBodyweight] = useState<number | null>(null);
   const [coachOpen, setCoachOpen] = useState(false);
@@ -101,6 +101,11 @@ export default function Training({ onPR, refreshKey }: { onPR: () => void; refre
   const [goalOpen, setGoalOpen] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(false);
   const [localTick, setLocalTick] = useState(0);
+
+  // Démarrage direct depuis l'accueil ("Démarrer une séance").
+  useEffect(() => {
+    if (autoStart) setWorkoutOpen(true);
+  }, [autoStart]);
 
   // Séance du jour éditable — on part du template Push par défaut.
   const [session, setSession] = useState<Template>(() => cloneTemplate(TEMPLATES[0]));

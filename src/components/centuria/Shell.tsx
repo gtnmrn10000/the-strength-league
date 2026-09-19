@@ -1,9 +1,9 @@
 import { Component, type ReactNode, useCallback, useEffect, useState } from "react";
 import Onboarding from "./Onboarding";
-import Feed from "./Feed";
+import Home from "./Home";
+import Community from "./Community";
 import Training from "./Training";
 import Meals from "./Meals";
-import Rankings from "./Rankings";
 import Profile from "./Profile";
 import PRFlow from "./PRFlow";
 import BottomNav from "./BottomNav";
@@ -56,7 +56,8 @@ function ShellInner() {
   const { user, loading } = useAuth();
   const [profileState, setProfileState] = useState<"idle" | "loading" | "ready">("idle");
   const [onboarded, setOnboarded] = useState(false);
-  const [tab, setTab] = useState("feed");
+  const [tab, setTab] = useState("home");
+  const [autoStart, setAutoStart] = useState(0);
   const [showPR, setShowPR] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -120,10 +121,21 @@ function ShellInner() {
         <HeaderLogo />
         <div className="flex-1 overflow-y-auto scrollbar-hide pb-[calc(5rem+env(safe-area-inset-bottom))]">
           <TabErrorBoundary resetKey={tab}>
-            {tab === "feed" && <Feed onCreate={() => setShowPR(true)} />}
-            {tab === "training" && <Training onPR={() => setShowPR(true)} refreshKey={refreshKey} />}
+            {tab === "home" && (
+              <Home
+                refreshKey={refreshKey}
+                onOpenTraining={() => setTab("training")}
+                onStartWorkout={() => {
+                  setAutoStart((n) => n + 1);
+                  setTab("training");
+                }}
+              />
+            )}
+            {tab === "training" && (
+              <Training onPR={() => setShowPR(true)} refreshKey={refreshKey} autoStart={autoStart} />
+            )}
+            {tab === "community" && <Community onCreate={() => setShowPR(true)} />}
             {tab === "meals" && <Meals />}
-            {tab === "rank" && <Rankings />}
             {tab === "profile" && <Profile key={refreshKey} />}
           </TabErrorBoundary>
         </div>
