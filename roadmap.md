@@ -82,3 +82,18 @@
 > Règle produit à jour : le **record officiel** ne concerne que le squat, le développé couché
 > et le soulevé de terre. Les autres exercices se publient comme vidéos d'entraînement
 > (les anciennes lignes « PR sur n'importe quel exercice » sont caduques).
+
+## Polish produit final — profil / dashboard / rang / coach / séances / settings
+- [ ] Passe mobile globale 320 / 360 / 375 / 390 px, respiration premium et emblèmes lisibles
+- [ ] Profil modifiable : avatar, bannière, pseudo, bio et objectif, avec aperçu et suppression des médias
+- [ ] Profil public social : bannière, avatar, grade, rang, abonnements, publications et republications
+- [ ] Audit visuel sans « look IA » hors Coach et analyse des records officiels SBD
+- [ ] Micro-animations sociales sobres, partage natif et copie de lien en repli
+- [ ] Classement global et par grade avec rang personnel, emblèmes, avatars et chargement progressif
+- [ ] Accueil déterministe : grade, XP, rang, nutrition du jour, récupération et objectif hebdomadaire
+- [ ] Coach conversationnel mobile restauré avec historique et erreurs réelles, sans faux résultat
+- [ ] Entraînement simplifié : modèles, historique, planifiées, reprise, logger et récapitulatif
+- [ ] Réglages restructurés en listes mobiles et promesses Premium corrigées
+- [ ] Nutrition harmonisée et ajout de repas accessible depuis l’accueil, sans analyse photo
+- [ ] QA interactions, clavier, accessibilité, TypeScript, web, natif et synchronisation Android / iOS
+- [ ] Analyse vidéo réelle des records officiels (bloquée : fournisseur externe non branché)
