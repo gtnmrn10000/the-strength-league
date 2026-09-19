@@ -660,7 +660,48 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      profiles_public: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          cover_url: string | null
+          created_at: string | null
+          current_grade: string | null
+          followers_count: number | null
+          following_count: number | null
+          posts_count: number | null
+          pseudo: string | null
+          user_id: string | null
+          xp: number | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          cover_url?: string | null
+          created_at?: string | null
+          current_grade?: string | null
+          followers_count?: number | null
+          following_count?: number | null
+          posts_count?: number | null
+          pseudo?: string | null
+          user_id?: string | null
+          xp?: number | null
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          cover_url?: string | null
+          created_at?: string | null
+          current_grade?: string | null
+          followers_count?: number | null
+          following_count?: number | null
+          posts_count?: number | null
+          pseudo?: string | null
+          user_id?: string | null
+          xp?: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       get_leaderboard: {

@@ -104,7 +104,7 @@ async function attachFeedRelations(rows: PostRow[], hypedSet = new Set<string>()
 
   const [profilesRes, prsRes, votesRes] = await Promise.all([
     supabase
-      .from("profiles")
+      .from("profiles_public")
       .select("user_id, pseudo, avatar_url, current_grade")
       .in("user_id", userIds),
     prIds.length > 0
@@ -240,7 +240,7 @@ export async function fetchFeed(): Promise<FeedPost[]> {
 /* ── Public profile ── */
 export async function fetchPublicProfile(userId: string): Promise<PublicProfile | null> {
   const { data, error } = await supabase
-    .from("profiles")
+    .from("profiles_public")
     .select("user_id, pseudo, bio, avatar_url, cover_url, current_grade, xp, posts_count, followers_count, following_count")
     .eq("user_id", userId)
     .maybeSingle();
@@ -336,7 +336,7 @@ export async function fetchSuggestions(): Promise<PublicProfile[]> {
   }
 
   let query = supabase
-    .from("profiles")
+    .from("profiles_public")
     .select("user_id, pseudo, bio, avatar_url, cover_url, current_grade, xp, posts_count, followers_count, following_count")
     .order("followers_count", { ascending: false })
     .order("posts_count", { ascending: false })
@@ -425,7 +425,7 @@ export async function searchProfiles(term: string, limit = 20): Promise<PublicPr
   const q = term.trim();
   if (q.length < 2) return [];
   const { data, error } = await supabase
-    .from("profiles")
+    .from("profiles_public")
     .select("user_id, pseudo, bio, avatar_url, cover_url, current_grade, xp, posts_count, followers_count, following_count")
     .ilike("pseudo", `%${q}%`)
     .order("followers_count", { ascending: false })
@@ -467,17 +467,21 @@ export async function fetchComments(postId: string): Promise<PostComment[]> {
 
   const ids = [...new Set(rows.map((c) => c.user_id))];
   const { data: profiles } = await supabase
-    .from("profiles")
+    .from("profiles_public")
     .select("user_id, pseudo, avatar_url, current_grade")
     .in("user_id", ids);
-  const byUser = new Map((profiles ?? []).map((p) => [p.user_id, p]));
+  const byUser = new Map((profiles ?? []).map((p) => [p.user_id as string, p]));
 
   return rows.map((c) => {
     const p = byUser.get(c.user_id);
     return {
       ...c,
       author: p
-        ? { pseudo: p.pseudo, avatar_url: p.avatar_url, current_grade: p.current_grade }
+        ? {
+            pseudo: p.pseudo ?? "Athlète",
+            avatar_url: p.avatar_url,
+            current_grade: p.current_grade ?? "recrue",
+          }
         : null,
       is_mine: !!user && user.id === c.user_id,
     };

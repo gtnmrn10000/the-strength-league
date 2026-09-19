@@ -294,7 +294,7 @@ function HeroCard() {
       </div>
       <div className="grid grid-cols-3 gap-3">
         {[
-          { icon: ShieldCheck, label: "PR vérifiés par IA", color: "text-arena-green" },
+          { icon: ShieldCheck, label: "PR vérifiés par la communauté", color: "text-arena-green" },
           { icon: Trophy, label: "Classement national", color: "text-arena-gold" },
           { icon: Flame, label: "Feed social", color: "text-arena" },
         ].map(({ icon: Icon, label, color }) => (

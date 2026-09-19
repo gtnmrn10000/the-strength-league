@@ -33,11 +33,12 @@ export async function fetchNotifications(limit = 40): Promise<AppNotification[]>
   const actors = new Map<string, { pseudo: string; avatar_url: string | null }>();
   if (actorIds.length > 0) {
     const { data: profiles } = await supabase
-      .from("profiles")
+      .from("profiles_public")
       .select("user_id, pseudo, avatar_url")
       .in("user_id", actorIds);
     (profiles ?? []).forEach((p) => {
-      actors.set(p.user_id, { pseudo: p.pseudo, avatar_url: p.avatar_url });
+      if (!p.user_id) return;
+      actors.set(p.user_id, { pseudo: p.pseudo ?? "Athlète", avatar_url: p.avatar_url });
     });
   }
 
