@@ -235,7 +235,7 @@ export function GradeEmblem({ grade, size = 48, state, locked = false, active = 
         {!compact && <path d="M9 28h54M12 43h48" stroke={`url(#${texture})`} strokeWidth="5" opacity=".16" />}
       </g>
       {!resolvedLocked && !compact && <path d="M36 4 62 20v32L36 68 10 52V20Z" fill={`url(#${spec})`} clipPath={`url(#grade-clip-${id})`} opacity=".5" style={{ mixBlendMode: "overlay" }} />}
-      {allowSweep && <motion.rect x="-30" y="0" width={grade === "divin" ? 7 : 11} height="72" fill={`url(#${sweep})`} transform="skewX(-16)" clipPath={`url(#grade-clip-${id})`} initial={{ x: -30, opacity: 0 }} animate={{ x: 110, opacity: [0, 1, 0] }} transition={{ delay: context === "level-up" ? 1.04 : .4, duration: .5, ease: "easeInOut" }} />}
+      {allowSweep && <motion.rect x="-30" y="0" width={grade === "divin" ? 7 : 11} height="72" fill={`url(#${sweep})`} transform="skewX(-16)" clipPath={`url(#grade-clip-${id})`} initial={{ x: -30, opacity: 0 }} animate={{ x: 110, opacity: [0, sweepOpacity, 0] }} transition={{ delay: context === "level-up" ? 1.04 : .4, duration: .5, ease: "easeInOut" }} />}
       {resolvedLocked && <g><path d="M30 37v-3a6 6 0 0 1 12 0v3" fill="none" stroke="#666a6c" strokeWidth="1.4" /><path d="M28 37h16v12H28Z" fill="#101214" stroke="#555a5c" strokeWidth="1" /></g>}
       {progress !== undefined && <circle cx="36" cy="36" r="34.6" fill="none" stroke={metal.accent} strokeWidth="1.1" pathLength="100" strokeDasharray="100" strokeDashoffset={100 - p} strokeLinecap="round" transform="rotate(-90 36 36)" />}
     </svg>
