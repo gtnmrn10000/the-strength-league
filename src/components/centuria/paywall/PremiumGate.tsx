@@ -1,4 +1,4 @@
-import { Lock, Sparkles } from "lucide-react";
+import { Lock, ShieldCheck } from "lucide-react";
 import { ReactNode } from "react";
 import { useSubscription } from "@/hooks/useSubscription";
 
@@ -60,7 +60,7 @@ export default function PremiumGate({
         onClick={() => openPaywall(reason)}
         className="inline-flex items-center gap-2 rounded-2xl bg-arena px-5 py-3 text-xs font-black tracking-widest text-arena-on active:scale-[0.98]"
       >
-        <Sparkles size={14} />
+        <ShieldCheck size={14} />
         DÉBLOQUER PREMIUM
       </button>
     </div>

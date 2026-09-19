@@ -9,6 +9,22 @@ import { supabase } from "@/integrations/supabase/client";
  */
 const cache = new Map<string, string>();
 
+export async function resolveStorageUrl(
+  bucket: "avatars" | "post-media" | "pr-videos",
+  path: string | null,
+): Promise<string | null> {
+  if (!path) return null;
+  if (/^(https?:|blob:|data:)/.test(path)) return path;
+  const key = `${bucket}:${path}`;
+  const hit = cache.get(key);
+  if (hit) return hit;
+
+  const { data, error } = await supabase.storage.from(bucket).createSignedUrl(path, 60 * 60);
+  if (error || !data?.signedUrl) return null;
+  cache.set(key, data.signedUrl);
+  return data.signedUrl;
+}
+
 export function bucketForPost(type: string): "pr-videos" | "post-media" {
   return type === "pr" ? "pr-videos" : "post-media";
 }
@@ -18,20 +34,8 @@ export async function resolveMediaUrl(
   type: string,
 ): Promise<string | null> {
   if (!path) return null;
-  if (/^https?:\/\//.test(path)) return path;
-
   const bucket = bucketForPost(type);
-  const key = `${bucket}:${path}`;
-  const hit = cache.get(key);
-  if (hit) return hit;
-
-  const { data, error } = await supabase.storage
-    .from(bucket)
-    .createSignedUrl(path, 60 * 60);
-  if (error || !data?.signedUrl) return null;
-
-  cache.set(key, data.signedUrl);
-  return data.signedUrl;
+  return resolveStorageUrl(bucket, path);
 }
 
 /** Devine si un média est une vidéo à partir du type stocké et de l'extension. */

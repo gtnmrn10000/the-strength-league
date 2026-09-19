@@ -30,7 +30,7 @@ const REASON_COPY: Record<string, { title: string; subtitle: string }> = {
   },
   generic: {
     title: "Centuria Premium",
-    subtitle: "Coach, analyse photo et suivi avancé.",
+    subtitle: "Coach et suivi avancé de progression.",
   },
 };
 

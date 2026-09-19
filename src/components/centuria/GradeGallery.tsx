@@ -45,7 +45,7 @@ export default function GradeGallery({
                   initial={reduceMotion ? false : { opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: reduceMotion ? 0 : idx * 0.035, duration: 0.18 }}
-                   className={`relative flex min-h-[84px] items-center gap-4 border-b px-1 py-3 ${
+                   className={`relative flex min-h-[106px] items-center gap-5 border-b px-1 py-4 ${
                     isCurrent
                       ? "border-arena-gold/40 bg-arena-gold/[0.035]"
                       : "border-arena-border"
@@ -53,7 +53,7 @@ export default function GradeGallery({
                 >
                   <GradeEmblem
                     grade={g}
-                    size={62}
+                     size={82}
                     state={isCurrent ? "current" : isUnlocked ? "unlocked" : "locked"}
                     context="gallery"
                     animated={isUnlocked || idx === currentIdx + 1}

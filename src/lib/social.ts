@@ -635,6 +635,7 @@ export async function updateMyProfile(patch: {
   bio?: string | null;
   avatar_url?: string | null;
   cover_url?: string | null;
+  goal?: "prise_masse" | "seche" | "recomposition" | "performance" | "sante" | null;
 }) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("Connecte-toi.");
@@ -645,6 +646,7 @@ export async function updateMyProfile(patch: {
       ...(patch.bio !== undefined && { bio: patch.bio }),
       ...(patch.avatar_url !== undefined && { avatar_url: patch.avatar_url }),
       ...(patch.cover_url !== undefined && { cover_url: patch.cover_url }),
+      ...(patch.goal !== undefined && { goal: patch.goal }),
       updated_at: new Date().toISOString(),
     })
     .eq("user_id", user.id);

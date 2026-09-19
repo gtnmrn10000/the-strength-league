@@ -1,4 +1,4 @@
-import { Lock, Sparkles } from "lucide-react";
+import { Lock, ShieldCheck } from "lucide-react";
 
 /**
  * Petit indicateur visuel PRO / cadenas cohérent partout dans l'app
@@ -35,7 +35,7 @@ export default function PremiumBadge({
       className={`inline-flex items-center gap-0.5 rounded-full bg-arena px-1.5 py-0.5 text-[8px] font-black tracking-wider text-arena-on ${className}`}
       aria-label="Fonctionnalité premium"
     >
-      <Sparkles size={8} />
+      <ShieldCheck size={8} />
       PRO
     </span>
   );

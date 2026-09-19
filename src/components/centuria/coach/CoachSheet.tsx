@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Activity, BarChart3 } from "lucide-react";
+import { Activity, BarChart3, MessagesSquare } from "lucide-react";
+import CoachChat from "./CoachChat";
 import CoachRecovery from "./CoachRecovery";
 import CoachAnalyse from "./CoachAnalyse";
 import PremiumGate from "../paywall/PremiumGate";
 
-type Tab = "recovery" | "analyse";
+type Tab = "chat" | "recovery" | "analyse";
 
 export default function CoachSheet({
   open,
@@ -16,10 +17,8 @@ export default function CoachSheet({
   onOpenChange: (v: boolean) => void;
   onSessionStarted?: () => void;
 }) {
-  const [tab, setTab] = useState<Tab>("recovery");
+  const [tab, setTab] = useState<Tab>("chat");
   const [refreshKey, setRefreshKey] = useState(0);
-
-  void onSessionStarted;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -31,13 +30,15 @@ export default function CoachSheet({
         <PremiumGate
           reason="coach"
           title="Coach Premium"
-          description="Suivi de récupération musculaire et analyse détaillée de tes séances — réservé aux abonnés."
+           description="Échange avec ton Coach, suis ta récupération et analyse tes séances."
         >
-          <div className="grid grid-cols-2 border-b border-arena-border bg-background">
+           <div className="grid grid-cols-3 border-b border-arena-border bg-background">
+             <TabBtn active={tab === "chat"} onClick={() => setTab("chat")} icon={MessagesSquare} label="Chat" />
             <TabBtn active={tab === "recovery"} onClick={() => setTab("recovery")} icon={Activity} label="Récup" />
             <TabBtn active={tab === "analyse"} onClick={() => setTab("analyse")} icon={BarChart3} label="Analyse" />
           </div>
           <div className="flex-1 overflow-hidden">
+             {tab === "chat" && <CoachChat onSessionStarted={() => { setRefreshKey((key) => key + 1); onSessionStarted?.(); }} />}
             {tab === "recovery" && <CoachRecovery refreshKey={refreshKey} />}
             {tab === "analyse" && <CoachAnalyse refreshKey={refreshKey} />}
           </div>
