@@ -48,7 +48,7 @@ type CoachExercise = {
   muscle_groups?: string[];
 };
 
-/** Convertit une séance générée par le Coach IA (sets=number, reps=string) en Template éditable. */
+/** Convertit une séance générée par le Coach (sets=number, reps=string) en Template éditable. */
 function plannedToTemplate(row: PlannedRow): Template {
   const raw = Array.isArray(row.exercises) ? (row.exercises as CoachExercise[]) : [];
   const exercises: WorkoutExercise[] = raw.map((e) => {
@@ -315,7 +315,7 @@ export default function Training({ onPR, refreshKey, autoStart }: { onPR: () => 
         <ActionCard icon={Camera} title="Log un PR" glow onClick={onPR} />
         <ActionCard icon={NotebookPen} title="Mon entraînement" onClick={() => setWorkoutOpen(true)} />
         <ActionCard icon={Target} title="Mes objectifs" onClick={() => setGoalOpen(true)} />
-        <ActionCard icon={Sparkles} title="Coach IA" premium onClick={() => setCoachOpen(true)} />
+        <ActionCard icon={Sparkles} title="Coach" premium onClick={() => setCoachOpen(true)} />
       </div>
 
       {/* Progression réelle (séances terminées) */}

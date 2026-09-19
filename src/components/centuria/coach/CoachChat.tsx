@@ -137,7 +137,7 @@ export default function CoachChat({ onSessionStarted }: { onSessionStarted?: () 
         ) : messages.length === 0 ? (
           <div className="mx-auto mt-8 max-w-sm rounded-2xl border border-dashed border-arena-border p-6 text-center">
             <p className="text-sm text-arena-muted">
-              Pose ta question au Coach IA — programmation, technique, récup, nutrition. Il connaît ton profil et l'état de tes muscles.
+              Pose ta question au Coach — programmation, technique, récup, nutrition. Il connaît ton profil et l'état de tes muscles.
             </p>
             <div className="mt-3 flex flex-col gap-2 text-left text-xs">
               {[

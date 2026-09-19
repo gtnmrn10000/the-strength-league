@@ -35,7 +35,7 @@ export default function CoachSheet({
 
         <PremiumGate
           reason="coach"
-          title="Coach IA Premium"
+          title="Coach Premium"
           description="Chat illimité, séances perso générées à la volée et suivi de récupération musculaire — réservé aux abonnés."
         >
           <div className="grid grid-cols-3 border-b border-arena-border bg-background">
