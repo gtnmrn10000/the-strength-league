@@ -33,16 +33,44 @@ const REASON_COPY: Record<string, { title: string; subtitle: string }> = {
 };
 
 export default function Paywall() {
-  const { paywallOpen, closePaywall, paywallReason } = useSubscription();
+  const {
+    paywallOpen,
+    closePaywall,
+    paywallReason,
+    purchase,
+    restore,
+    purchasing,
+    mode,
+    devUnlockEnabled,
+    setupTodo,
+  } = useSubscription();
   const [selected, setSelected] = useState<PlanId>("centuria_standard");
+  const [showTodo, setShowTodo] = useState(false);
   const copy = REASON_COPY[paywallReason] ?? REASON_COPY.generic;
+  const isDev = mode === "dev";
 
-  const handleSubscribe = () => {
-    toast.info("Bientôt disponible — intégration RevenueCat en cours.");
+  const handleSubscribe = async () => {
+    if (isDev && !devUnlockEnabled) {
+      toast.error("Les achats ne sont pas encore branchés sur cet environnement.");
+      return;
+    }
+    try {
+      await purchase(selected);
+      toast.success(
+        isDev ? "Accès Premium activé (mode dev, aucun paiement)." : "Abonnement activé."
+      );
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "L'achat a échoué.");
+    }
   };
 
-  const handleRestore = () => {
-    toast.info("Bientôt disponible — intégration RevenueCat en cours.");
+  const handleRestore = async () => {
+    try {
+      await restore();
+      toast.success("Achats restaurés.");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Restauration impossible.");
+    }
   };
 
   return (
