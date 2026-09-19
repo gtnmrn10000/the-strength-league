@@ -35,7 +35,7 @@ import {
   type LastPerf,
 } from "@/lib/exerciseUserData";
 import { fetchProgress, statsFor } from "@/lib/progress";
-import { awardWorkoutXp } from "@/lib/xp.functions";
+import { awardWorkoutXp } from "@/lib/api";
 import { queueSession } from "@/lib/offlineSync";
 import { pushBackHandler } from "@/lib/backButton";
 import ExerciseLibrary from "./ExerciseLibrary";
@@ -437,7 +437,7 @@ export default function WorkoutLogger({
       let xpGained: number | undefined;
       try {
         if (inserted?.id) {
-          const xp = await awardWorkoutXp({ data: { sessionId: inserted.id } });
+          const xp = await awardWorkoutXp(inserted.id);
           xpGained = xp?.gained;
         }
       } catch (e) {

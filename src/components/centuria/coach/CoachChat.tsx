@@ -3,13 +3,13 @@ import { Loader2, Send, Trash2, AlertTriangle, Play, ChefHat, BarChart3, Trendin
 import { toast } from "sonner";
 import {
   coachChat,
-  getCoachHistory,
-  clearCoachHistory,
-  saveWorkoutSession,
+  coachHistory,
+  coachClearHistory,
+  coachSaveWorkoutSession,
   type ChatMsg,
   type GeneratedWorkout,
   type GeneratedRecipe,
-} from "@/lib/coach.functions";
+} from "@/lib/api";
 
 export default function CoachChat({ onSessionStarted }: { onSessionStarted?: () => void }) {
   const [messages, setMessages] = useState<ChatMsg[]>([]);
@@ -23,7 +23,7 @@ export default function CoachChat({ onSessionStarted }: { onSessionStarted?: () 
     let cancelled = false;
     (async () => {
       try {
-        const h = await getCoachHistory();
+        const h = await coachHistory();
         if (!cancelled) setMessages(Array.isArray(h) ? h : []);
       } catch (e: unknown) {
         const msg = e instanceof Error ? e.message : String(e);
@@ -51,7 +51,7 @@ export default function CoachChat({ onSessionStarted }: { onSessionStarted?: () 
     setInput("");
     setLoading(true);
     try {
-      const { reply, workout, recipe, warnings } = await coachChat({ data: { message: text } });
+      const { reply, workout, recipe, warnings } = await coachChat(text);
       setMessages((m) => [
         ...m,
         {
@@ -89,7 +89,7 @@ export default function CoachChat({ onSessionStarted }: { onSessionStarted?: () 
   const clear = async () => {
     if (!confirm("Effacer tout l'historique du Coach ?")) return;
     try {
-      await clearCoachHistory();
+      await coachClearHistory();
       setMessages([]);
     } catch {
       toast.error("Suppression impossible.");
@@ -104,15 +104,13 @@ export default function CoachChat({ onSessionStarted }: { onSessionStarted?: () 
   ) => {
     setStartingIdx({ i: idx, mode });
     try {
-      await saveWorkoutSession({
-        data: {
-          name: w.name,
-          duration_min: w.duration_min,
-          muscle_groups: w.muscle_groups,
-          exercises: w.exercises,
-          mode,
-          scheduled_for: mode === "schedule" ? scheduledFor : null,
-        },
+      await coachSaveWorkoutSession({
+        name: w.name,
+        duration_min: w.duration_min,
+        muscle_groups: w.muscle_groups,
+        exercises: w.exercises,
+        mode,
+        scheduled_for: mode === "schedule" ? scheduledFor : null,
       });
       if (mode === "start") {
         toast.success("Séance envoyée dans Training ✅");
