@@ -4,7 +4,10 @@ export async function insertPR(
   supabase: SupabaseClient,
   userId: string,
   data: {
-    exercise: "squat" | "bench" | "deadlift";
+    /** id stable de la bibliothèque (ou ancien squat/bench/deadlift). */
+    exercise: string;
+    /** nom lisible affiché dans le feed. */
+    exercise_name: string;
     weight_kg: number;
     reps: number;
     video_url: string;
@@ -15,6 +18,8 @@ export async function insertPR(
     .insert({
       user_id: userId,
       exercise: data.exercise,
+      exercise_id: data.exercise,
+      exercise_name: data.exercise_name,
       weight_kg: data.weight_kg,
       reps: data.reps,
       video_url: data.video_url,

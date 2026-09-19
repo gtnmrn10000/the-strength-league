@@ -368,6 +368,7 @@ export type Database = {
           hype_count: number
           id: string
           macros: Json | null
+          media_type: string
           media_url: string | null
           muscle_groups: string[] | null
           pr_id: string | null
@@ -381,6 +382,7 @@ export type Database = {
           hype_count?: number
           id?: string
           macros?: Json | null
+          media_type?: string
           media_url?: string | null
           muscle_groups?: string[] | null
           pr_id?: string | null
@@ -394,6 +396,7 @@ export type Database = {
           hype_count?: number
           id?: string
           macros?: Json | null
+          media_type?: string
           media_url?: string | null
           muscle_groups?: string[] | null
           pr_id?: string | null
@@ -536,6 +539,8 @@ export type Database = {
         Row: {
           created_at: string
           exercise: string
+          exercise_id: string | null
+          exercise_name: string | null
           hype_count: number
           id: string
           reps: number
@@ -547,6 +552,8 @@ export type Database = {
         Insert: {
           created_at?: string
           exercise: string
+          exercise_id?: string | null
+          exercise_name?: string | null
           hype_count?: number
           id?: string
           reps?: number
@@ -558,6 +565,8 @@ export type Database = {
         Update: {
           created_at?: string
           exercise?: string
+          exercise_id?: string | null
+          exercise_name?: string | null
           hype_count?: number
           id?: string
           reps?: number
@@ -654,6 +663,33 @@ export type Database = {
           name?: string
           notes?: string | null
           scheduled_for?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      xp_events: {
+        Row: {
+          amount: number
+          created_at: string
+          day: string
+          id: string
+          kind: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          day?: string
+          id?: string
+          kind: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          day?: string
+          id?: string
+          kind?: string
           user_id?: string
         }
         Relationships: []
