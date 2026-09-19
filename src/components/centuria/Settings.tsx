@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Globe, Scale as ScaleIcon, Crown, LogOut, Info, Shield, Loader2, ChevronRight, Ban } from "lucide-react";
 import UserAvatar from "./social/UserAvatar";
+import AccountSection from "./account/AccountSection";
 import { fetchBlockedProfiles, unblockUser } from "@/lib/moderation";
 import { supabase } from "@/integrations/supabase/client";
 import { useSubscription } from "@/hooks/useSubscription";
@@ -204,11 +205,14 @@ export default function Settings({
             )}
           </Section>
 
-          {/* Légal */}
+          {/* Compte, données, légal, suppression */}
+          <AccountSection onSignedOut={() => onOpenChange(false)} />
+
+          {/* À propos */}
           <Section title="À PROPOS">
             <div className="flex flex-col gap-2">
               <LinkRow icon={Info} label="Version" value="1.0.0" />
-              <LinkRow icon={Shield} label="Confidentialité" value="RGPD" />
+              <LinkRow icon={Shield} label="Données" value="RGPD" />
             </div>
           </Section>
 

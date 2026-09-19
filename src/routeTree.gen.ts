@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as DiscoverRouteImport } from './routes/discover'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProfileUserIdRouteImport } from './routes/profile.$userId'
@@ -16,6 +17,11 @@ import { Route as LegalTermsRouteImport } from './routes/legal.terms'
 import { Route as LegalSupportRouteImport } from './routes/legal.support'
 import { Route as LegalPrivacyRouteImport } from './routes/legal.privacy'
 
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DiscoverRoute = DiscoverRouteImport.update({
   id: '/discover',
   path: '/discover',
@@ -50,6 +56,7 @@ const LegalPrivacyRoute = LegalPrivacyRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/discover': typeof DiscoverRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/legal/privacy': typeof LegalPrivacyRoute
   '/legal/support': typeof LegalSupportRoute
   '/legal/terms': typeof LegalTermsRoute
@@ -58,6 +65,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/discover': typeof DiscoverRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/legal/privacy': typeof LegalPrivacyRoute
   '/legal/support': typeof LegalSupportRoute
   '/legal/terms': typeof LegalTermsRoute
@@ -67,6 +75,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/discover': typeof DiscoverRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/legal/privacy': typeof LegalPrivacyRoute
   '/legal/support': typeof LegalSupportRoute
   '/legal/terms': typeof LegalTermsRoute
@@ -77,6 +86,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/discover'
+    | '/reset-password'
     | '/legal/privacy'
     | '/legal/support'
     | '/legal/terms'
@@ -85,6 +95,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/discover'
+    | '/reset-password'
     | '/legal/privacy'
     | '/legal/support'
     | '/legal/terms'
@@ -93,6 +104,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/discover'
+    | '/reset-password'
     | '/legal/privacy'
     | '/legal/support'
     | '/legal/terms'
@@ -102,6 +114,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DiscoverRoute: typeof DiscoverRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   LegalPrivacyRoute: typeof LegalPrivacyRoute
   LegalSupportRoute: typeof LegalSupportRoute
   LegalTermsRoute: typeof LegalTermsRoute
@@ -110,6 +123,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/discover': {
       id: '/discover'
       path: '/discover'
@@ -158,6 +178,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DiscoverRoute: DiscoverRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   LegalPrivacyRoute: LegalPrivacyRoute,
   LegalSupportRoute: LegalSupportRoute,
   LegalTermsRoute: LegalTermsRoute,
