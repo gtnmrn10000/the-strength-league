@@ -83,7 +83,23 @@ export default function Feed({ onCreate }: { onCreate: () => void }) {
       <h3 className="mb-3 mt-2 text-xs font-black tracking-widest text-arena-muted">FEED</h3>
 
       {loading && (
-        <p className="py-10 text-center text-sm text-arena-muted">Chargement du feed…</p>
+        <div className="flex flex-col gap-4">
+          {[0, 1].map((i) => (
+            <div
+              key={i}
+              className="animate-pulse rounded-2xl border border-arena-border bg-arena-surface p-4"
+            >
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-full bg-secondary" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-3 w-28 rounded bg-secondary" />
+                  <div className="h-2.5 w-16 rounded bg-secondary" />
+                </div>
+              </div>
+              <div className="mt-3 h-40 rounded-xl bg-secondary" />
+            </div>
+          ))}
+        </div>
       )}
 
       {!loading && posts.length === 0 && (

@@ -15,6 +15,7 @@ import {
 } from "@/lib/social";
 import UserAvatar from "@/components/centuria/social/UserAvatar";
 import { PostMedia } from "@/components/centuria/social/PostMedia";
+import PostDetailSheet from "@/components/centuria/social/PostDetailSheet";
 import FollowButton from "@/components/centuria/social/FollowButton";
 import UserListSheet from "@/components/centuria/social/UserListSheet";
 import { GRADE_LABELS, type Grade } from "@/lib/grades";
@@ -41,6 +42,7 @@ function ProfilePage() {
   const [sheet, setSheet] = useState<"followers" | "following" | null>(null);
   const [editing, setEditing] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [detail, setDetail] = useState<FeedPost | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -217,19 +219,42 @@ function ProfilePage() {
         </div>
 
         {/* Posts grid */}
-        <h2 className="mt-6 mb-3 text-xs font-black tracking-widest text-arena-muted">POSTS</h2>
+        <div className="mt-6 mb-3 flex items-center justify-between">
+          <h2 className="text-xs font-black tracking-widest text-arena-muted">PUBLICATIONS</h2>
+          {isMe && (
+            <button
+              onClick={() => {
+                sessionStorage.setItem("centuria:goto-tab", "community");
+                navigate({ to: "/" });
+              }}
+              className="text-[11px] font-black uppercase tracking-wider text-arena"
+            >
+              Publier
+            </button>
+          )}
+        </div>
         {posts.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-arena-border p-6 text-center text-sm text-arena-muted">
-            {isMe ? "Ton premier post arrivera ici." : "Aucun post pour l'instant."}
+            {isMe
+              ? "Tes vidéos, photos et records apparaîtront ici."
+              : "Aucune publication pour l'instant."}
           </div>
         ) : (
           <div className="grid grid-cols-3 gap-1">
             {posts.map((p) => (
-              <PostThumb key={p.id} post={p} />
+              <PostThumb key={p.id} post={p} onOpen={() => setDetail(p)} />
             ))}
           </div>
         )}
       </div>
+
+      <PostDetailSheet
+        post={detail}
+        open={!!detail}
+        onOpenChange={(v) => {
+          if (!v) setDetail(null);
+        }}
+      />
 
       {sheet && (
         <UserListSheet
@@ -280,10 +305,15 @@ function StatCell({ label, value, onClick }: { label: string; value: number; onC
   return <div className="flex flex-col items-center justify-center py-1">{inner}</div>;
 }
 
-function PostThumb({ post }: { post: FeedPost }) {
+function PostThumb({ post, onOpen }: { post: FeedPost; onOpen: () => void }) {
   const bg = post.media_url;
   return (
-    <div className="relative aspect-square overflow-hidden rounded bg-arena-surface">
+    <button
+      type="button"
+      onClick={onOpen}
+      aria-label="Ouvrir la publication"
+      className="relative aspect-square w-full overflow-hidden rounded bg-arena-surface transition-transform active:scale-[0.98]"
+    >
       {bg ? (
         <PostMedia
           path={bg}
@@ -293,16 +323,21 @@ function PostThumb({ post }: { post: FeedPost }) {
           className="h-full w-full bg-black object-cover"
         />
       ) : (
-        <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-arena/20 to-arena-gold/10 p-2 text-center">
-          <span className="text-[10px] font-black uppercase tracking-wider text-arena">
-            {post.type === "pr" ? "PR" : post.type === "level_up" ? "LEVEL" : post.type}
+        <div className="flex h-full w-full flex-col items-center justify-center bg-arena-surface p-2 text-center">
+          <span className="text-[10px] font-black uppercase tracking-wider text-arena-muted">
+            {post.type === "pr" ? "Record" : post.type === "level_up" ? "Grade" : "Publication"}
           </span>
           {post.pr && (
-            <span className="mt-1 text-xs font-black text-foreground">{post.pr.weight_kg}kg</span>
+            <span className="mt-1 text-xs font-black text-foreground">{post.pr.weight_kg} kg</span>
           )}
         </div>
       )}
-    </div>
+      {post.type === "pr" && bg && (
+        <span className="absolute left-1 top-1 rounded bg-black/55 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider text-arena-gold">
+          Record
+        </span>
+      )}
+    </button>
   );
 }
 

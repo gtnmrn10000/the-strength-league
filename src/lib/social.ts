@@ -172,6 +172,7 @@ async function attachFeedRelations(rows: PostRow[], hypedSet = new Set<string>()
         prBlock = {
           id: raw.id,
           exercise: raw.exercise,
+          exercise_name: raw.exercise_name,
           weight_kg: raw.weight_kg,
           reps: raw.reps,
           status: raw.status,
