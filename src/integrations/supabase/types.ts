@@ -89,6 +89,51 @@ export type Database = {
         }
         Relationships: []
       }
+      custom_exercises: {
+        Row: {
+          created_at: string
+          equipment: string
+          id: string
+          name: string
+          primary_muscle: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          equipment?: string
+          id?: string
+          name: string
+          primary_muscle: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          equipment?: string
+          id?: string
+          name?: string
+          primary_muscle?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      exercise_favorites: {
+        Row: {
+          created_at: string
+          exercise_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          exercise_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          exercise_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       exercises: {
         Row: {
           created_at: string

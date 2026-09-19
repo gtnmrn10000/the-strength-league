@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1789821887434,
+      "tag": "0000_exercise_favorites_and_custom",
+      "breakpoints": true
+    }
+  ]
+}

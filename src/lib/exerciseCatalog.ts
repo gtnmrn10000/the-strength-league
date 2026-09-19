@@ -1,5 +1,6 @@
-// Bibliothèque d'exercices — catégorisés par grand groupe musculaire visible.
-// Chaque exercice cible un ou plusieurs muscles fins (clés recovery.ts).
+// Bibliothèque d'exercices CENTURIA — couverture salle complète.
+// `muscles` n'utilise QUE les clés canoniques de recovery.ts (11 groupes),
+// `focus` décrit le détail affichable (trapèzes, adducteurs, deltoïde arrière…).
 import type { LucideIcon } from "lucide-react";
 import {
   Dumbbell,
@@ -11,19 +12,88 @@ import {
   LayoutGrid,
 } from "lucide-react";
 
+export type MuscleCategory =
+  | "pectoraux"
+  | "dos"
+  | "jambes"
+  | "epaules"
+  | "bras"
+  | "abdos";
+
+export type Equipment =
+  | "barre"
+  | "halteres"
+  | "poulie"
+  | "machine"
+  | "smith"
+  | "poids_du_corps"
+  | "kettlebell"
+  | "elastique";
+
+export type Difficulty = "debutant" | "intermediaire" | "avance";
+
 export type LibraryExercise = {
   id: string;
   name: string;
-  primary: string; // muscle principal (clé normalisée)
-  muscles: string[]; // muscles secondaires inclus
+  aliases: string[];
+  primary: string; // muscle principal (clé recovery)
+  muscles: string[]; // muscles sollicités (clés recovery)
+  focus?: string; // détail lisible (ex: "Trapèzes", "Adducteurs")
   category: MuscleCategory;
-  image_url?: string; // photo officielle (free-exercise-db, domaine public)
+  equipment: Equipment;
+  difficulty: Difficulty;
+  image_url?: string;
+  custom?: boolean;
 };
+
+export const EQUIPMENT_LABEL: Record<Equipment, string> = {
+  barre: "Barre",
+  halteres: "Haltères",
+  poulie: "Poulie",
+  machine: "Machine",
+  smith: "Smith",
+  poids_du_corps: "Poids du corps",
+  kettlebell: "Kettlebell",
+  elastique: "Élastique",
+};
+
+export const CATEGORY_LABEL: Record<MuscleCategory, string> = {
+  pectoraux: "Pecs",
+  dos: "Dos",
+  jambes: "Jambes",
+  epaules: "Épaules",
+  bras: "Bras",
+  abdos: "Abdos",
+};
+
+export const CATEGORY_ICON: Record<MuscleCategory, LucideIcon> = {
+  pectoraux: Grip,
+  dos: Anchor,
+  jambes: Footprints,
+  epaules: MountainSnow,
+  bras: Zap,
+  abdos: LayoutGrid,
+};
+
+export const CATEGORY_ACCENT: Record<MuscleCategory, string> = {
+  pectoraux: "#ef4444",
+  dos: "#3b82f6",
+  jambes: "#22c55e",
+  epaules: "#f59e0b",
+  bras: "#a855f7",
+  abdos: "#eab308",
+};
+
+/** Icône par défaut pour un exercice — dérivée de sa catégorie. */
+export function exerciseIcon(ex: LibraryExercise): LucideIcon {
+  return CATEGORY_ICON[ex.category] ?? Dumbbell;
+}
 
 /**
  * Images officielles issues du dataset public free-exercise-db
  * (https://github.com/yuhonas/free-exercise-db, licence Unlicense).
- * Une entrée par id d'exercice de la bibliothèque ci-dessous.
+ * Seuls les ids listés ici ont une image : les autres tombent sur le
+ * fallback iconographique (jamais d'URL cassée).
  */
 const FREE_EXDB = "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/";
 const IMG: Record<string, string> = {
@@ -84,122 +154,273 @@ const IMG: Record<string, string> = {
 const imageFor = (id: string): string | undefined =>
   IMG[id] ? FREE_EXDB + IMG[id] : undefined;
 
-export type MuscleCategory =
-  | "pectoraux"
-  | "dos"
-  | "jambes"
-  | "epaules"
-  | "bras"
-  | "abdos";
-
-export const CATEGORY_LABEL: Record<MuscleCategory, string> = {
-  pectoraux: "Pecs",
-  dos: "Dos",
-  jambes: "Jambes",
-  epaules: "Épaules",
-  bras: "Bras",
-  abdos: "Abdos",
+type Row = {
+  id: string;
+  name: string;
+  cat: MuscleCategory;
+  primary: string;
+  muscles?: string[];
+  eq: Equipment;
+  diff?: Difficulty;
+  focus?: string;
+  alias?: string[];
 };
 
-export const CATEGORY_ICON: Record<MuscleCategory, LucideIcon> = {
-  pectoraux: Grip,
-  dos: Anchor,
-  jambes: Footprints,
-  epaules: MountainSnow,
-  bras: Zap,
-  abdos: LayoutGrid,
-};
+const ROWS: Row[] = [
+  /* ---------------- PECTORAUX (26) ---------------- */
+  { id: "bench", name: "Développé couché barre", cat: "pectoraux", primary: "pectoraux", muscles: ["pectoraux", "triceps", "epaules"], eq: "barre", alias: ["bench press", "dc", "bench"] },
+  { id: "bench-wide", name: "Développé couché prise large", cat: "pectoraux", primary: "pectoraux", muscles: ["pectoraux", "epaules"], eq: "barre", alias: ["wide bench"] },
+  { id: "incline-bench", name: "Développé incliné barre", cat: "pectoraux", primary: "pectoraux", muscles: ["pectoraux", "epaules"], eq: "barre", alias: ["incline bench", "di barre"] },
+  { id: "decline-bench", name: "Développé décliné barre", cat: "pectoraux", primary: "pectoraux", muscles: ["pectoraux", "triceps"], eq: "barre", alias: ["decline bench"] },
+  { id: "db-bench", name: "Développé couché haltères", cat: "pectoraux", primary: "pectoraux", muscles: ["pectoraux", "triceps"], eq: "halteres", alias: ["dumbbell press", "dc halteres"] },
+  { id: "incline-db", name: "Développé incliné haltères", cat: "pectoraux", primary: "pectoraux", muscles: ["pectoraux", "epaules"], eq: "halteres", alias: ["incline dumbbell press"] },
+  { id: "decline-db", name: "Développé décliné haltères", cat: "pectoraux", primary: "pectoraux", muscles: ["pectoraux", "triceps"], eq: "halteres" },
+  { id: "smith-bench", name: "Développé couché Smith", cat: "pectoraux", primary: "pectoraux", muscles: ["pectoraux", "triceps"], eq: "smith", alias: ["smith machine bench"] },
+  { id: "smith-incline", name: "Développé incliné Smith", cat: "pectoraux", primary: "pectoraux", muscles: ["pectoraux", "epaules"], eq: "smith" },
+  { id: "chest-press", name: "Chest press machine", cat: "pectoraux", primary: "pectoraux", muscles: ["pectoraux", "triceps"], eq: "machine", diff: "debutant", alias: ["presse pectoraux", "chest press"] },
+  { id: "incline-chest-press", name: "Chest press incliné machine", cat: "pectoraux", primary: "pectoraux", muscles: ["pectoraux", "epaules"], eq: "machine", diff: "debutant" },
+  { id: "converging-press", name: "Presse convergente pectoraux", cat: "pectoraux", primary: "pectoraux", muscles: ["pectoraux", "triceps"], eq: "machine", alias: ["convergente", "hammer strength press"] },
+  { id: "pec-deck", name: "Pec deck (butterfly)", cat: "pectoraux", primary: "pectoraux", muscles: ["pectoraux"], eq: "machine", diff: "debutant", alias: ["butterfly", "peck deck"] },
+  { id: "dumbbell-fly", name: "Écarté haltères", cat: "pectoraux", primary: "pectoraux", muscles: ["pectoraux"], eq: "halteres", alias: ["fly", "ecarte"] },
+  { id: "incline-fly", name: "Écarté incliné haltères", cat: "pectoraux", primary: "pectoraux", muscles: ["pectoraux"], eq: "halteres" },
+  { id: "cable-crossover", name: "Écarté poulie haute", cat: "pectoraux", primary: "pectoraux", muscles: ["pectoraux"], eq: "poulie", alias: ["crossover", "cable crossover"] },
+  { id: "cable-fly-low", name: "Écarté poulie basse", cat: "pectoraux", primary: "pectoraux", muscles: ["pectoraux", "epaules"], eq: "poulie" },
+  { id: "cable-press", name: "Développé poulie debout", cat: "pectoraux", primary: "pectoraux", muscles: ["pectoraux", "triceps"], eq: "poulie" },
+  { id: "dips", name: "Dips pectoraux", cat: "pectoraux", primary: "pectoraux", muscles: ["pectoraux", "triceps"], eq: "poids_du_corps", diff: "avance", alias: ["dips"] },
+  { id: "push-up", name: "Pompes", cat: "pectoraux", primary: "pectoraux", muscles: ["pectoraux", "triceps"], eq: "poids_du_corps", diff: "debutant", alias: ["pushup", "push up"] },
+  { id: "push-up-incline", name: "Pompes inclinées", cat: "pectoraux", primary: "pectoraux", muscles: ["pectoraux"], eq: "poids_du_corps", diff: "debutant" },
+  { id: "push-up-decline", name: "Pompes déclinées", cat: "pectoraux", primary: "pectoraux", muscles: ["pectoraux", "epaules"], eq: "poids_du_corps" },
+  { id: "diamond-push-up", name: "Pompes diamant", cat: "pectoraux", primary: "triceps", muscles: ["triceps", "pectoraux"], eq: "poids_du_corps" },
+  { id: "pullover-db", name: "Pull-over haltère", cat: "pectoraux", primary: "pectoraux", muscles: ["pectoraux", "dos"], eq: "halteres", alias: ["pullover"] },
+  { id: "pullover-cable", name: "Pull-over poulie", cat: "pectoraux", primary: "dos", muscles: ["dos", "pectoraux"], eq: "poulie" },
+  { id: "band-chest-press", name: "Développé élastique", cat: "pectoraux", primary: "pectoraux", muscles: ["pectoraux", "triceps"], eq: "elastique", diff: "debutant" },
 
-export const CATEGORY_ACCENT: Record<MuscleCategory, string> = {
-  pectoraux: "#ef4444",
-  dos: "#3b82f6",
-  jambes: "#22c55e",
-  epaules: "#f59e0b",
-  bras: "#a855f7",
-  abdos: "#eab308",
-};
+  /* ---------------- DOS + TRAPÈZES (32) ---------------- */
+  { id: "deadlift", name: "Soulevé de terre", cat: "dos", primary: "dos", muscles: ["dos", "ischios", "fessiers"], eq: "barre", diff: "avance", alias: ["deadlift", "sdt"] },
+  { id: "sumo-deadlift", name: "Soulevé de terre sumo", cat: "dos", primary: "dos", muscles: ["dos", "fessiers", "quadriceps"], eq: "barre", diff: "avance", alias: ["sumo"] },
+  { id: "trap-bar-deadlift", name: "Soulevé de terre trap bar", cat: "dos", primary: "dos", muscles: ["dos", "quadriceps", "fessiers"], eq: "barre", alias: ["trap bar"] },
+  { id: "rack-pull", name: "Rack pull", cat: "dos", primary: "dos", muscles: ["dos", "ischios"], eq: "barre" },
+  { id: "pull-up", name: "Tractions pronation", cat: "dos", primary: "dos", muscles: ["dos", "biceps"], eq: "poids_du_corps", diff: "avance", alias: ["pull up", "traction"] },
+  { id: "chin-up", name: "Tractions supination", cat: "dos", primary: "dos", muscles: ["dos", "biceps"], eq: "poids_du_corps", diff: "avance", alias: ["chin up"] },
+  { id: "neutral-pull-up", name: "Tractions prise neutre", cat: "dos", primary: "dos", muscles: ["dos", "biceps"], eq: "poids_du_corps", diff: "avance" },
+  { id: "assisted-pull-up", name: "Tractions assistées machine", cat: "dos", primary: "dos", muscles: ["dos", "biceps"], eq: "machine", diff: "debutant" },
+  { id: "lat-pulldown", name: "Tirage vertical prise large", cat: "dos", primary: "dos", muscles: ["dos", "biceps"], eq: "poulie", diff: "debutant", alias: ["lat pulldown", "tirage poitrine"] },
+  { id: "pulldown-supine", name: "Tirage vertical supination", cat: "dos", primary: "dos", muscles: ["dos", "biceps"], eq: "poulie" },
+  { id: "pulldown-neutral", name: "Tirage vertical prise neutre", cat: "dos", primary: "dos", muscles: ["dos", "biceps"], eq: "poulie" },
+  { id: "pulldown-unilateral", name: "Tirage vertical unilatéral", cat: "dos", primary: "dos", muscles: ["dos", "biceps"], eq: "poulie" },
+  { id: "straight-arm-pulldown", name: "Pull-over poulie haute bras tendus", cat: "dos", primary: "dos", muscles: ["dos"], eq: "poulie", alias: ["straight arm"] },
+  { id: "row-barbell", name: "Rowing barre buste penché", cat: "dos", primary: "dos", muscles: ["dos", "biceps"], eq: "barre", alias: ["barbell row", "rowing"] },
+  { id: "pendlay-row", name: "Pendlay row", cat: "dos", primary: "dos", muscles: ["dos", "biceps"], eq: "barre", diff: "avance" },
+  { id: "row-yates", name: "Rowing Yates supination", cat: "dos", primary: "dos", muscles: ["dos", "biceps"], eq: "barre" },
+  { id: "row-dumbbell", name: "Rowing haltère un bras", cat: "dos", primary: "dos", muscles: ["dos", "biceps"], eq: "halteres", diff: "debutant", alias: ["one arm row"] },
+  { id: "row-dumbbell-bench", name: "Rowing haltères buste penché", cat: "dos", primary: "dos", muscles: ["dos", "biceps"], eq: "halteres" },
+  { id: "chest-supported-row", name: "Rowing buste soutenu", cat: "dos", primary: "dos", muscles: ["dos", "biceps"], eq: "machine", diff: "debutant" },
+  { id: "t-bar-row", name: "T-bar row", cat: "dos", primary: "dos", muscles: ["dos", "biceps"], eq: "barre", alias: ["t bar"] },
+  { id: "seated-row", name: "Tirage horizontal poulie", cat: "dos", primary: "dos", muscles: ["dos", "biceps"], eq: "poulie", diff: "debutant", alias: ["seated row", "rowing assis"] },
+  { id: "row-machine", name: "Rowing machine convergente", cat: "dos", primary: "dos", muscles: ["dos", "biceps"], eq: "machine", diff: "debutant" },
+  { id: "low-row-unilateral", name: "Tirage horizontal unilatéral", cat: "dos", primary: "dos", muscles: ["dos", "biceps"], eq: "poulie" },
+  { id: "smith-row", name: "Rowing Smith machine", cat: "dos", primary: "dos", muscles: ["dos", "biceps"], eq: "smith" },
+  { id: "inverted-row", name: "Rowing australien", cat: "dos", primary: "dos", muscles: ["dos", "biceps"], eq: "poids_du_corps", diff: "debutant" },
+  { id: "kb-row", name: "Rowing kettlebell", cat: "dos", primary: "dos", muscles: ["dos", "biceps"], eq: "kettlebell" },
+  { id: "band-row", name: "Tirage élastique", cat: "dos", primary: "dos", muscles: ["dos", "biceps"], eq: "elastique", diff: "debutant" },
+  { id: "shrugs", name: "Shrugs barre", cat: "dos", primary: "dos", muscles: ["dos"], focus: "Trapèzes", eq: "barre", diff: "debutant", alias: ["shrug", "haussement epaules"] },
+  { id: "shrugs-db", name: "Shrugs haltères", cat: "dos", primary: "dos", muscles: ["dos"], focus: "Trapèzes", eq: "halteres", diff: "debutant" },
+  { id: "shrugs-smith", name: "Shrugs Smith machine", cat: "dos", primary: "dos", muscles: ["dos"], focus: "Trapèzes", eq: "smith" },
+  { id: "hyperextension", name: "Extension lombaire (banc 45°)", cat: "dos", primary: "dos", muscles: ["dos", "fessiers", "ischios"], focus: "Lombaires", eq: "poids_du_corps", diff: "debutant", alias: ["hyperextension", "lombaire"] },
+  { id: "good-morning", name: "Good morning", cat: "dos", primary: "ischios", muscles: ["ischios", "dos", "fessiers"], eq: "barre", diff: "avance" },
 
-/** Icône par défaut pour un exercice — dérivée de sa catégorie. */
-export function exerciseIcon(ex: LibraryExercise): LucideIcon {
-  return CATEGORY_ICON[ex.category] ?? Dumbbell;
+  /* ---------------- ÉPAULES (24) ---------------- */
+  { id: "ohp", name: "Développé militaire barre", cat: "epaules", primary: "epaules", muscles: ["epaules", "triceps"], eq: "barre", alias: ["ohp", "military press", "dm"] },
+  { id: "seated-ohp", name: "Développé militaire assis", cat: "epaules", primary: "epaules", muscles: ["epaules", "triceps"], eq: "barre" },
+  { id: "db-press", name: "Développé épaules haltères", cat: "epaules", primary: "epaules", muscles: ["epaules", "triceps"], eq: "halteres", diff: "debutant", alias: ["shoulder press"] },
+  { id: "arnold", name: "Arnold press", cat: "epaules", primary: "epaules", muscles: ["epaules", "triceps"], eq: "halteres" },
+  { id: "smith-ohp", name: "Développé épaules Smith", cat: "epaules", primary: "epaules", muscles: ["epaules", "triceps"], eq: "smith" },
+  { id: "shoulder-press-machine", name: "Développé épaules machine", cat: "epaules", primary: "epaules", muscles: ["epaules", "triceps"], eq: "machine", diff: "debutant" },
+  { id: "push-press", name: "Push press", cat: "epaules", primary: "epaules", muscles: ["epaules", "triceps", "quadriceps"], eq: "barre", diff: "avance" },
+  { id: "landmine-press", name: "Landmine press", cat: "epaules", primary: "epaules", muscles: ["epaules", "pectoraux"], eq: "barre" },
+  { id: "lateral-raise", name: "Élévations latérales haltères", cat: "epaules", primary: "epaules", muscles: ["epaules"], focus: "Deltoïde latéral", eq: "halteres", diff: "debutant", alias: ["lateral raise", "elevations laterales"] },
+  { id: "lateral-raise-cable", name: "Élévations latérales poulie", cat: "epaules", primary: "epaules", muscles: ["epaules"], focus: "Deltoïde latéral", eq: "poulie" },
+  { id: "lateral-raise-machine", name: "Élévations latérales machine", cat: "epaules", primary: "epaules", muscles: ["epaules"], focus: "Deltoïde latéral", eq: "machine", diff: "debutant" },
+  { id: "lateral-raise-band", name: "Élévations latérales élastique", cat: "epaules", primary: "epaules", muscles: ["epaules"], focus: "Deltoïde latéral", eq: "elastique", diff: "debutant" },
+  { id: "lean-away-raise", name: "Élévations latérales penché", cat: "epaules", primary: "epaules", muscles: ["epaules"], focus: "Deltoïde latéral", eq: "halteres" },
+  { id: "front-raise", name: "Élévations frontales haltères", cat: "epaules", primary: "epaules", muscles: ["epaules"], focus: "Deltoïde avant", eq: "halteres", diff: "debutant" },
+  { id: "front-raise-cable", name: "Élévations frontales poulie", cat: "epaules", primary: "epaules", muscles: ["epaules"], focus: "Deltoïde avant", eq: "poulie" },
+  { id: "front-raise-plate", name: "Élévations frontales disque", cat: "epaules", primary: "epaules", muscles: ["epaules"], focus: "Deltoïde avant", eq: "barre", diff: "debutant" },
+  { id: "rear-delt-fly", name: "Oiseau haltères", cat: "epaules", primary: "epaules", muscles: ["epaules"], focus: "Deltoïde arrière", eq: "halteres", alias: ["rear delt", "oiseau"] },
+  { id: "rear-delt-machine", name: "Pec deck inversé", cat: "epaules", primary: "epaules", muscles: ["epaules"], focus: "Deltoïde arrière", eq: "machine", diff: "debutant", alias: ["reverse pec deck"] },
+  { id: "rear-delt-cable", name: "Oiseau poulie croisée", cat: "epaules", primary: "epaules", muscles: ["epaules"], focus: "Deltoïde arrière", eq: "poulie" },
+  { id: "face-pull", name: "Face pull", cat: "epaules", primary: "epaules", muscles: ["epaules", "dos"], focus: "Deltoïde arrière", eq: "poulie", alias: ["face pull"] },
+  { id: "upright-row", name: "Rowing menton barre", cat: "epaules", primary: "epaules", muscles: ["epaules", "dos"], eq: "barre" },
+  { id: "upright-row-cable", name: "Rowing menton poulie", cat: "epaules", primary: "epaules", muscles: ["epaules", "dos"], eq: "poulie" },
+  { id: "kb-press", name: "Développé kettlebell", cat: "epaules", primary: "epaules", muscles: ["epaules", "triceps"], eq: "kettlebell" },
+  { id: "pike-push-up", name: "Pompes piquées", cat: "epaules", primary: "epaules", muscles: ["epaules", "triceps"], eq: "poids_du_corps" },
+
+  /* ---------------- BRAS : BICEPS / TRICEPS / AVANT-BRAS (32) ---------------- */
+  { id: "curl-barbell", name: "Curl barre", cat: "bras", primary: "biceps", muscles: ["biceps"], eq: "barre", diff: "debutant", alias: ["barbell curl"] },
+  { id: "curl-ez", name: "Curl barre EZ", cat: "bras", primary: "biceps", muscles: ["biceps"], eq: "barre", diff: "debutant" },
+  { id: "curl-dumbbell", name: "Curl haltères", cat: "bras", primary: "biceps", muscles: ["biceps"], eq: "halteres", diff: "debutant" },
+  { id: "curl-incline", name: "Curl incliné haltères", cat: "bras", primary: "biceps", muscles: ["biceps"], eq: "halteres" },
+  { id: "hammer-curl", name: "Curl marteau", cat: "bras", primary: "biceps", muscles: ["biceps", "avant_bras"], eq: "halteres", diff: "debutant", alias: ["hammer"] },
+  { id: "curl-concentration", name: "Curl concentration", cat: "bras", primary: "biceps", muscles: ["biceps"], eq: "halteres" },
+  { id: "preacher-curl", name: "Curl pupitre barre", cat: "bras", primary: "biceps", muscles: ["biceps"], eq: "barre", alias: ["preacher", "larry scott"] },
+  { id: "preacher-curl-machine", name: "Curl pupitre machine", cat: "bras", primary: "biceps", muscles: ["biceps"], eq: "machine", diff: "debutant" },
+  { id: "curl-cable", name: "Curl poulie basse", cat: "bras", primary: "biceps", muscles: ["biceps"], eq: "poulie", diff: "debutant" },
+  { id: "curl-cable-high", name: "Curl poulie haute (double biceps)", cat: "bras", primary: "biceps", muscles: ["biceps"], eq: "poulie" },
+  { id: "curl-rope", name: "Curl corde poulie", cat: "bras", primary: "biceps", muscles: ["biceps", "avant_bras"], eq: "poulie" },
+  { id: "spider-curl", name: "Spider curl", cat: "bras", primary: "biceps", muscles: ["biceps"], eq: "halteres" },
+  { id: "drag-curl", name: "Drag curl", cat: "bras", primary: "biceps", muscles: ["biceps"], eq: "barre" },
+  { id: "curl-band", name: "Curl élastique", cat: "bras", primary: "biceps", muscles: ["biceps"], eq: "elastique", diff: "debutant" },
+  { id: "tricep-pushdown", name: "Extension triceps poulie barre", cat: "bras", primary: "triceps", muscles: ["triceps"], eq: "poulie", diff: "debutant", alias: ["pushdown"] },
+  { id: "tricep-pushdown-rope", name: "Extension triceps corde", cat: "bras", primary: "triceps", muscles: ["triceps"], eq: "poulie", diff: "debutant" },
+  { id: "tricep-pushdown-reverse", name: "Extension triceps prise inversée", cat: "bras", primary: "triceps", muscles: ["triceps"], eq: "poulie" },
+  { id: "tricep-extension", name: "Extension nuque haltère", cat: "bras", primary: "triceps", muscles: ["triceps"], eq: "halteres" },
+  { id: "overhead-rope-ext", name: "Extension nuque corde poulie", cat: "bras", primary: "triceps", muscles: ["triceps"], eq: "poulie" },
+  { id: "skullcrusher", name: "Barre au front (skullcrusher)", cat: "bras", primary: "triceps", muscles: ["triceps"], eq: "barre", alias: ["skullcrusher", "barre au front"] },
+  { id: "close-grip-bench", name: "Développé couché prise serrée", cat: "bras", primary: "triceps", muscles: ["triceps", "pectoraux"], eq: "barre", alias: ["close grip"] },
+  { id: "jm-press", name: "JM press", cat: "bras", primary: "triceps", muscles: ["triceps"], eq: "barre", diff: "avance" },
+  { id: "kickback", name: "Kickback triceps haltère", cat: "bras", primary: "triceps", muscles: ["triceps"], eq: "halteres", diff: "debutant" },
+  { id: "kickback-cable", name: "Kickback triceps poulie", cat: "bras", primary: "triceps", muscles: ["triceps"], eq: "poulie" },
+  { id: "dips-bench", name: "Dips sur banc", cat: "bras", primary: "triceps", muscles: ["triceps", "pectoraux"], eq: "poids_du_corps", diff: "debutant" },
+  { id: "dips-machine", name: "Dips machine assistée", cat: "bras", primary: "triceps", muscles: ["triceps", "pectoraux"], eq: "machine", diff: "debutant" },
+  { id: "tricep-extension-machine", name: "Extension triceps machine", cat: "bras", primary: "triceps", muscles: ["triceps"], eq: "machine", diff: "debutant" },
+  { id: "forearm-curl", name: "Curl poignets barre", cat: "bras", primary: "avant_bras", muscles: ["avant_bras"], eq: "barre", diff: "debutant" },
+  { id: "reverse-curl", name: "Curl inversé barre", cat: "bras", primary: "avant_bras", muscles: ["avant_bras", "biceps"], eq: "barre" },
+  { id: "wrist-extension", name: "Extension poignets", cat: "bras", primary: "avant_bras", muscles: ["avant_bras"], eq: "halteres", diff: "debutant" },
+  { id: "farmer-walk", name: "Farmer walk", cat: "bras", primary: "avant_bras", muscles: ["avant_bras", "dos"], eq: "halteres" },
+  { id: "dead-hang", name: "Suspension à la barre", cat: "bras", primary: "avant_bras", muscles: ["avant_bras", "dos"], eq: "poids_du_corps", diff: "debutant" },
+
+  /* ---------------- JAMBES (46) ---------------- */
+  { id: "squat", name: "Squat barre (back squat)", cat: "jambes", primary: "quadriceps", muscles: ["quadriceps", "fessiers", "dos"], eq: "barre", alias: ["back squat", "squat"] },
+  { id: "front-squat", name: "Front squat", cat: "jambes", primary: "quadriceps", muscles: ["quadriceps", "abdos"], eq: "barre", diff: "avance" },
+  { id: "high-bar-squat", name: "Squat barre haute", cat: "jambes", primary: "quadriceps", muscles: ["quadriceps", "fessiers"], eq: "barre" },
+  { id: "low-bar-squat", name: "Squat barre basse", cat: "jambes", primary: "quadriceps", muscles: ["quadriceps", "fessiers", "dos"], eq: "barre", diff: "avance" },
+  { id: "pause-squat", name: "Squat avec pause", cat: "jambes", primary: "quadriceps", muscles: ["quadriceps", "fessiers"], eq: "barre", diff: "avance" },
+  { id: "box-squat", name: "Box squat", cat: "jambes", primary: "quadriceps", muscles: ["quadriceps", "fessiers"], eq: "barre" },
+  { id: "smith-squat", name: "Squat Smith machine", cat: "jambes", primary: "quadriceps", muscles: ["quadriceps", "fessiers"], eq: "smith", diff: "debutant" },
+  { id: "goblet-squat", name: "Goblet squat", cat: "jambes", primary: "quadriceps", muscles: ["quadriceps", "fessiers"], eq: "kettlebell", diff: "debutant" },
+  { id: "hack-squat", name: "Hack squat machine", cat: "jambes", primary: "quadriceps", muscles: ["quadriceps", "fessiers"], eq: "machine", alias: ["hacksquat"] },
+  { id: "pendulum-squat", name: "Pendulum squat", cat: "jambes", primary: "quadriceps", muscles: ["quadriceps", "fessiers"], eq: "machine" },
+  { id: "belt-squat", name: "Belt squat", cat: "jambes", primary: "quadriceps", muscles: ["quadriceps", "fessiers"], eq: "machine" },
+  { id: "leg-press", name: "Presse à cuisses", cat: "jambes", primary: "quadriceps", muscles: ["quadriceps", "fessiers"], eq: "machine", diff: "debutant", alias: ["leg press", "presse"] },
+  { id: "leg-press-high", name: "Presse pieds hauts (fessiers/ischios)", cat: "jambes", primary: "fessiers", muscles: ["fessiers", "ischios"], eq: "machine" },
+  { id: "leg-press-narrow", name: "Presse pieds serrés (quadriceps)", cat: "jambes", primary: "quadriceps", muscles: ["quadriceps"], eq: "machine" },
+  { id: "leg-press-unilateral", name: "Presse unilatérale", cat: "jambes", primary: "quadriceps", muscles: ["quadriceps", "fessiers"], eq: "machine" },
+  { id: "leg-extension", name: "Leg extension", cat: "jambes", primary: "quadriceps", muscles: ["quadriceps"], eq: "machine", diff: "debutant", alias: ["leg extension"] },
+  { id: "leg-extension-uni", name: "Leg extension unilatéral", cat: "jambes", primary: "quadriceps", muscles: ["quadriceps"], eq: "machine" },
+  { id: "sissy-squat", name: "Sissy squat", cat: "jambes", primary: "quadriceps", muscles: ["quadriceps"], eq: "poids_du_corps", diff: "avance" },
+  { id: "bulgarian", name: "Fentes bulgares", cat: "jambes", primary: "quadriceps", muscles: ["quadriceps", "fessiers"], eq: "halteres", alias: ["bulgarian split squat"] },
+  { id: "walking-lunge", name: "Fentes marchées", cat: "jambes", primary: "quadriceps", muscles: ["quadriceps", "fessiers"], eq: "halteres" },
+  { id: "reverse-lunge", name: "Fentes arrière", cat: "jambes", primary: "quadriceps", muscles: ["quadriceps", "fessiers"], eq: "halteres", diff: "debutant" },
+  { id: "static-lunge", name: "Fentes statiques", cat: "jambes", primary: "quadriceps", muscles: ["quadriceps", "fessiers"], eq: "halteres", diff: "debutant" },
+  { id: "step-up", name: "Step-up sur banc", cat: "jambes", primary: "quadriceps", muscles: ["quadriceps", "fessiers"], eq: "halteres", diff: "debutant" },
+  { id: "split-squat-smith", name: "Fentes Smith machine", cat: "jambes", primary: "quadriceps", muscles: ["quadriceps", "fessiers"], eq: "smith" },
+  { id: "pistol-squat", name: "Pistol squat", cat: "jambes", primary: "quadriceps", muscles: ["quadriceps", "fessiers"], eq: "poids_du_corps", diff: "avance" },
+  { id: "wall-sit", name: "Chaise murale", cat: "jambes", primary: "quadriceps", muscles: ["quadriceps"], eq: "poids_du_corps", diff: "debutant" },
+  { id: "rdl", name: "Soulevé de terre roumain", cat: "jambes", primary: "ischios", muscles: ["ischios", "fessiers", "dos"], eq: "barre", alias: ["rdl", "romanian deadlift"] },
+  { id: "rdl-db", name: "Soulevé de terre roumain haltères", cat: "jambes", primary: "ischios", muscles: ["ischios", "fessiers"], eq: "halteres" },
+  { id: "stiff-leg-deadlift", name: "Soulevé de terre jambes tendues", cat: "jambes", primary: "ischios", muscles: ["ischios", "dos"], eq: "barre" },
+  { id: "single-leg-rdl", name: "RDL unilatéral", cat: "jambes", primary: "ischios", muscles: ["ischios", "fessiers"], eq: "halteres", diff: "avance" },
+  { id: "leg-curl", name: "Leg curl allongé", cat: "jambes", primary: "ischios", muscles: ["ischios"], eq: "machine", diff: "debutant", alias: ["lying leg curl"] },
+  { id: "leg-curl-seated", name: "Leg curl assis", cat: "jambes", primary: "ischios", muscles: ["ischios"], eq: "machine", diff: "debutant" },
+  { id: "leg-curl-standing", name: "Leg curl debout unilatéral", cat: "jambes", primary: "ischios", muscles: ["ischios"], eq: "machine" },
+  { id: "nordic-curl", name: "Nordic hamstring curl", cat: "jambes", primary: "ischios", muscles: ["ischios"], eq: "poids_du_corps", diff: "avance" },
+  { id: "hip-thrust", name: "Hip thrust barre", cat: "jambes", primary: "fessiers", muscles: ["fessiers", "ischios"], eq: "barre", alias: ["hip thrust"] },
+  { id: "hip-thrust-machine", name: "Hip thrust machine", cat: "jambes", primary: "fessiers", muscles: ["fessiers", "ischios"], eq: "machine", diff: "debutant" },
+  { id: "hip-thrust-smith", name: "Hip thrust Smith machine", cat: "jambes", primary: "fessiers", muscles: ["fessiers"], eq: "smith" },
+  { id: "glute-bridge", name: "Pont fessier au sol", cat: "jambes", primary: "fessiers", muscles: ["fessiers"], eq: "poids_du_corps", diff: "debutant" },
+  { id: "glute-kickback", name: "Kickback fessier poulie", cat: "jambes", primary: "fessiers", muscles: ["fessiers"], eq: "poulie", diff: "debutant" },
+  { id: "glute-kickback-machine", name: "Kickback fessier machine", cat: "jambes", primary: "fessiers", muscles: ["fessiers"], eq: "machine", diff: "debutant" },
+  { id: "cable-pull-through", name: "Pull-through poulie", cat: "jambes", primary: "fessiers", muscles: ["fessiers", "ischios"], eq: "poulie" },
+  { id: "abduction-machine", name: "Abducteurs machine", cat: "jambes", primary: "fessiers", muscles: ["fessiers"], focus: "Abducteurs", eq: "machine", diff: "debutant", alias: ["abduction"] },
+  { id: "abduction-cable", name: "Abduction poulie", cat: "jambes", primary: "fessiers", muscles: ["fessiers"], focus: "Abducteurs", eq: "poulie" },
+  { id: "adduction-machine", name: "Adducteurs machine", cat: "jambes", primary: "quadriceps", muscles: ["quadriceps"], focus: "Adducteurs", eq: "machine", diff: "debutant", alias: ["adduction"] },
+  { id: "copenhagen-plank", name: "Copenhagen plank", cat: "jambes", primary: "quadriceps", muscles: ["quadriceps", "abdos"], focus: "Adducteurs", eq: "poids_du_corps", diff: "avance" },
+  { id: "kb-swing", name: "Kettlebell swing", cat: "jambes", primary: "fessiers", muscles: ["fessiers", "ischios", "dos"], eq: "kettlebell" },
+  { id: "calf-raise", name: "Mollets debout", cat: "jambes", primary: "mollets", muscles: ["mollets"], eq: "machine", diff: "debutant", alias: ["calf raise", "mollet"] },
+  { id: "calf-raise-seated", name: "Mollets assis", cat: "jambes", primary: "mollets", muscles: ["mollets"], eq: "machine", diff: "debutant" },
+  { id: "calf-press", name: "Mollets à la presse", cat: "jambes", primary: "mollets", muscles: ["mollets"], eq: "machine", diff: "debutant" },
+  { id: "calf-raise-smith", name: "Mollets Smith machine", cat: "jambes", primary: "mollets", muscles: ["mollets"], eq: "smith" },
+  { id: "calf-raise-db", name: "Mollets haltères unilatéral", cat: "jambes", primary: "mollets", muscles: ["mollets"], eq: "halteres", diff: "debutant" },
+
+  /* ---------------- ABDOS / CORE / LOMBAIRES (22) ---------------- */
+  { id: "plank", name: "Gainage planche", cat: "abdos", primary: "abdos", muscles: ["abdos"], eq: "poids_du_corps", diff: "debutant", alias: ["plank", "gainage"] },
+  { id: "side-plank", name: "Gainage latéral", cat: "abdos", primary: "abdos", muscles: ["abdos"], focus: "Obliques", eq: "poids_du_corps", diff: "debutant" },
+  { id: "hollow-hold", name: "Hollow hold", cat: "abdos", primary: "abdos", muscles: ["abdos"], eq: "poids_du_corps" },
+  { id: "dead-bug", name: "Dead bug", cat: "abdos", primary: "abdos", muscles: ["abdos"], eq: "poids_du_corps", diff: "debutant" },
+  { id: "crunch", name: "Crunch au sol", cat: "abdos", primary: "abdos", muscles: ["abdos"], eq: "poids_du_corps", diff: "debutant" },
+  { id: "cable-crunch", name: "Crunch poulie à genoux", cat: "abdos", primary: "abdos", muscles: ["abdos"], eq: "poulie" },
+  { id: "crunch-machine", name: "Crunch machine", cat: "abdos", primary: "abdos", muscles: ["abdos"], eq: "machine", diff: "debutant" },
+  { id: "sit-up", name: "Sit-up", cat: "abdos", primary: "abdos", muscles: ["abdos"], eq: "poids_du_corps", diff: "debutant" },
+  { id: "decline-sit-up", name: "Sit-up banc décliné", cat: "abdos", primary: "abdos", muscles: ["abdos"], eq: "poids_du_corps" },
+  { id: "hanging-leg-raise", name: "Relevé de jambes suspendu", cat: "abdos", primary: "abdos", muscles: ["abdos"], eq: "poids_du_corps", diff: "avance" },
+  { id: "hanging-knee-raise", name: "Relevé de genoux suspendu", cat: "abdos", primary: "abdos", muscles: ["abdos"], eq: "poids_du_corps" },
+  { id: "captain-chair", name: "Relevé de jambes chaise romaine", cat: "abdos", primary: "abdos", muscles: ["abdos"], eq: "machine", diff: "debutant" },
+  { id: "lying-leg-raise", name: "Relevé de jambes au sol", cat: "abdos", primary: "abdos", muscles: ["abdos"], eq: "poids_du_corps", diff: "debutant" },
+  { id: "ab-wheel", name: "Roue abdominale", cat: "abdos", primary: "abdos", muscles: ["abdos"], eq: "poids_du_corps", diff: "avance" },
+  { id: "russian-twist", name: "Russian twist", cat: "abdos", primary: "abdos", muscles: ["abdos"], focus: "Obliques", eq: "poids_du_corps", diff: "debutant" },
+  { id: "cable-woodchop", name: "Woodchopper poulie", cat: "abdos", primary: "abdos", muscles: ["abdos"], focus: "Obliques", eq: "poulie" },
+  { id: "pallof-press", name: "Pallof press", cat: "abdos", primary: "abdos", muscles: ["abdos"], focus: "Anti-rotation", eq: "poulie" },
+  { id: "side-bend", name: "Flexion latérale haltère", cat: "abdos", primary: "abdos", muscles: ["abdos"], focus: "Obliques", eq: "halteres", diff: "debutant" },
+  { id: "mountain-climber", name: "Mountain climber", cat: "abdos", primary: "abdos", muscles: ["abdos"], eq: "poids_du_corps", diff: "debutant" },
+  { id: "bird-dog", name: "Bird dog", cat: "abdos", primary: "abdos", muscles: ["abdos", "dos"], focus: "Lombaires", eq: "poids_du_corps", diff: "debutant" },
+  { id: "superman", name: "Superman au sol", cat: "abdos", primary: "dos", muscles: ["dos"], focus: "Lombaires", eq: "poids_du_corps", diff: "debutant" },
+  { id: "reverse-hyper", name: "Reverse hyperextension", cat: "abdos", primary: "fessiers", muscles: ["fessiers", "dos"], focus: "Lombaires", eq: "machine" },
+];
+
+export const EXERCISE_LIBRARY: LibraryExercise[] = ROWS.map((r) => ({
+  id: r.id,
+  name: r.name,
+  aliases: r.alias ?? [],
+  primary: r.primary,
+  muscles: r.muscles ?? [r.primary],
+  focus: r.focus,
+  category: r.cat,
+  equipment: r.eq,
+  difficulty: r.diff ?? "intermediaire",
+  image_url: imageFor(r.id),
+}));
+
+export const EXERCISE_COUNT = EXERCISE_LIBRARY.length;
+
+/** Normalise une chaîne : minuscules, sans accents, sans ponctuation. */
+export function normalizeSearch(s: string): string {
+  return s
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9 ]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
-export const EXERCISE_LIBRARY: LibraryExercise[] = ([
-  // Pectoraux (8)
-  { id: "bench", name: "Bench Press", primary: "pectoraux", muscles: ["pectoraux", "triceps"], category: "pectoraux" },
-  { id: "incline-bench", name: "Développé incliné barre", primary: "pectoraux", muscles: ["pectoraux", "epaules"], category: "pectoraux" },
-  { id: "incline-db", name: "Développé incliné haltères", primary: "pectoraux", muscles: ["pectoraux", "epaules"], category: "pectoraux" },
-  { id: "decline-bench", name: "Développé décliné", primary: "pectoraux", muscles: ["pectoraux", "triceps"], category: "pectoraux" },
-  { id: "dumbbell-fly", name: "Écarté haltères", primary: "pectoraux", muscles: ["pectoraux"], category: "pectoraux" },
-  { id: "cable-crossover", name: "Cable crossover", primary: "pectoraux", muscles: ["pectoraux"], category: "pectoraux" },
-  { id: "dips", name: "Dips", primary: "pectoraux", muscles: ["pectoraux", "triceps"], category: "pectoraux" },
-  { id: "push-up", name: "Pompes", primary: "pectoraux", muscles: ["pectoraux", "triceps"], category: "pectoraux" },
+/** Recherche tolérante aux accents + aliases (ex: "dc" → Développé couché). */
+export function searchExercises(list: LibraryExercise[], query: string): LibraryExercise[] {
+  const q = normalizeSearch(query);
+  if (!q) return list;
+  const terms = q.split(" ");
+  return list.filter((e) => {
+    const hay = normalizeSearch(
+      [e.name, e.aliases.join(" "), e.focus ?? "", e.muscles.join(" "), EQUIPMENT_LABEL[e.equipment]].join(" "),
+    );
+    return terms.every((t) => hay.includes(t));
+  });
+}
 
-  // Dos (9)
-  { id: "deadlift", name: "Deadlift", primary: "dos", muscles: ["dos", "ischios", "fessiers"], category: "dos" },
-  { id: "pull-up", name: "Tractions pronation", primary: "dos", muscles: ["dos", "biceps"], category: "dos" },
-  { id: "chin-up", name: "Tractions supination", primary: "dos", muscles: ["dos", "biceps"], category: "dos" },
-  { id: "row-barbell", name: "Rowing barre", primary: "dos", muscles: ["dos", "biceps"], category: "dos" },
-  { id: "row-dumbbell", name: "Rowing haltère 1 bras", primary: "dos", muscles: ["dos"], category: "dos" },
-  { id: "t-bar-row", name: "T-bar row", primary: "dos", muscles: ["dos", "biceps"], category: "dos" },
-  { id: "lat-pulldown", name: "Tirage vertical", primary: "dos", muscles: ["dos", "biceps"], category: "dos" },
-  { id: "seated-row", name: "Tirage horizontal", primary: "dos", muscles: ["dos", "biceps"], category: "dos" },
-  { id: "shrugs", name: "Shrugs", primary: "dos", muscles: ["dos"], category: "dos" },
+const BY_NAME = new Map<string, LibraryExercise>();
+for (const e of EXERCISE_LIBRARY) BY_NAME.set(normalizeSearch(e.name), e);
 
-  // Jambes (10)
-  { id: "squat", name: "Back squat", primary: "quadriceps", muscles: ["quadriceps", "fessiers"], category: "jambes" },
-  { id: "front-squat", name: "Front squat", primary: "quadriceps", muscles: ["quadriceps", "abdos"], category: "jambes" },
-  { id: "bulgarian", name: "Fentes bulgares", primary: "quadriceps", muscles: ["quadriceps", "fessiers"], category: "jambes" },
-  { id: "walking-lunge", name: "Fentes marchées", primary: "quadriceps", muscles: ["quadriceps", "fessiers"], category: "jambes" },
-  { id: "leg-press", name: "Presse à cuisses", primary: "quadriceps", muscles: ["quadriceps", "fessiers"], category: "jambes" },
-  { id: "leg-extension", name: "Leg extension", primary: "quadriceps", muscles: ["quadriceps"], category: "jambes" },
-  { id: "hip-thrust", name: "Hip thrust", primary: "fessiers", muscles: ["fessiers", "ischios"], category: "jambes" },
-  { id: "leg-curl", name: "Leg curl", primary: "ischios", muscles: ["ischios"], category: "jambes" },
-  { id: "rdl", name: "Soulevé de terre roumain", primary: "ischios", muscles: ["ischios", "fessiers"], category: "jambes" },
-  { id: "calf-raise", name: "Mollets debout", primary: "mollets", muscles: ["mollets"], category: "jambes" },
-
-  // Épaules (8)
-  { id: "ohp", name: "Développé militaire", primary: "epaules", muscles: ["epaules", "triceps"], category: "epaules" },
-  { id: "db-press", name: "Développé haltères", primary: "epaules", muscles: ["epaules", "triceps"], category: "epaules" },
-  { id: "arnold", name: "Arnold press", primary: "epaules", muscles: ["epaules"], category: "epaules" },
-  { id: "lateral-raise", name: "Élévations latérales", primary: "epaules", muscles: ["epaules"], category: "epaules" },
-  { id: "front-raise", name: "Élévations frontales", primary: "epaules", muscles: ["epaules"], category: "epaules" },
-  { id: "rear-delt-fly", name: "Oiseau (rear delts)", primary: "epaules", muscles: ["epaules"], category: "epaules" },
-  { id: "face-pull", name: "Face pull", primary: "epaules", muscles: ["epaules", "dos"], category: "epaules" },
-  { id: "upright-row", name: "Rowing menton", primary: "epaules", muscles: ["epaules", "dos"], category: "epaules" },
-
-  // Bras (9)
-  { id: "curl-barbell", name: "Curl barre", primary: "biceps", muscles: ["biceps"], category: "bras" },
-  { id: "curl-dumbbell", name: "Curl haltères", primary: "biceps", muscles: ["biceps"], category: "bras" },
-  { id: "hammer-curl", name: "Curl marteau", primary: "biceps", muscles: ["biceps", "avant_bras"], category: "bras" },
-  { id: "preacher-curl", name: "Curl pupitre", primary: "biceps", muscles: ["biceps"], category: "bras" },
-  { id: "tricep-pushdown", name: "Extension poulie", primary: "triceps", muscles: ["triceps"], category: "bras" },
-  { id: "tricep-extension", name: "Extension nuque", primary: "triceps", muscles: ["triceps"], category: "bras" },
-  { id: "skullcrusher", name: "Skullcrusher", primary: "triceps", muscles: ["triceps"], category: "bras" },
-  { id: "close-grip-bench", name: "Bench prise serrée", primary: "triceps", muscles: ["triceps", "pectoraux"], category: "bras" },
-  { id: "forearm-curl", name: "Curl avant-bras", primary: "avant_bras", muscles: ["avant_bras"], category: "bras" },
-
-  // Abdos (8)
-  { id: "plank", name: "Gainage", primary: "abdos", muscles: ["abdos"], category: "abdos" },
-  { id: "side-plank", name: "Gainage latéral", primary: "abdos", muscles: ["abdos"], category: "abdos" },
-  { id: "hanging-leg-raise", name: "Relevé de jambes suspendu", primary: "abdos", muscles: ["abdos"], category: "abdos" },
-  { id: "cable-crunch", name: "Crunch poulie", primary: "abdos", muscles: ["abdos"], category: "abdos" },
-  { id: "ab-wheel", name: "Roue abdominale", primary: "abdos", muscles: ["abdos"], category: "abdos" },
-  { id: "russian-twist", name: "Russian twist", primary: "abdos", muscles: ["abdos"], category: "abdos" },
-  { id: "dead-bug", name: "Dead bug", primary: "abdos", muscles: ["abdos"], category: "abdos" },
-  { id: "hollow-hold", name: "Hollow hold", primary: "abdos", muscles: ["abdos"], category: "abdos" },
-] as LibraryExercise[]).map((e) => ({ ...e, image_url: imageFor(e.id) }));
+export function findExerciseByName(name: string): LibraryExercise | undefined {
+  const n = normalizeSearch(name);
+  const exact = BY_NAME.get(n);
+  if (exact) return exact;
+  return EXERCISE_LIBRARY.find(
+    (e) => n.includes(normalizeSearch(e.name)) || normalizeSearch(e.name).includes(n),
+  );
+}
 
 /** Retrouve l'image officielle d'un exercice à partir de son nom d'affichage. */
 export function imageForExerciseName(name: string): string | undefined {
-  const norm = name.trim().toLowerCase();
-  const hit = EXERCISE_LIBRARY.find((e) => e.name.toLowerCase() === norm);
-  if (hit?.image_url) return hit.image_url;
-  // fallback: contains
-  const loose = EXERCISE_LIBRARY.find(
-    (e) => norm.includes(e.name.toLowerCase()) || e.name.toLowerCase().includes(norm),
-  );
-  return loose?.image_url;
+  return findExerciseByName(name)?.image_url;
 }
 
 /** Image officielle pour les 3 exercices du log de PR. */

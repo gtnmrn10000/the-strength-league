@@ -7,8 +7,9 @@ import WorkoutLogger from "./WorkoutLogger";
 import GoalEditor from "./GoalEditor";
 import ExerciseLibrary from "./ExerciseLibrary";
 import BodyDiagram, { type MuscleRecovery } from "./BodyDiagram";
-import { TEMPLATES, normalizeMuscle, type Template, type WorkoutExercise } from "@/lib/workoutTemplates";
+import { TEMPLATES, PROGRAMS, templateById, normalizeMuscle, type Template, type WorkoutExercise } from "@/lib/workoutTemplates";
 import { imageForExerciseName, type LibraryExercise } from "@/lib/exerciseCatalog";
+import { fetchLastPerformances, lastPerfFor, pushRecentId, type LastPerf } from "@/lib/exerciseUserData";
 import { computeRecovery, type MuscleGroup } from "@/lib/recovery";
 
 interface VerifiedPR {
@@ -103,6 +104,12 @@ export default function Training({ onPR, refreshKey }: { onPR: () => void; refre
   const [recentSessions, setRecentSessions] = useState<Array<{ muscle_groups: string[] | null; completed_at: string }>>([]);
   const [history, setHistory] = useState<WorkoutHistoryRow[]>([]);
   const [planned, setPlanned] = useState<PlannedRow[]>([]);
+  const [perfs, setPerfs] = useState<Record<string, LastPerf>>({});
+
+  useEffect(() => {
+    void fetchLastPerformances().then(setPerfs);
+  }, [refreshKey, localTick]);
+
 
   useEffect(() => {
     let cancelled = false;
@@ -235,23 +242,24 @@ export default function Training({ onPR, refreshKey }: { onPR: () => void; refre
   };
 
   const addExerciseFromLibrary = (ex: LibraryExercise) => {
+    const p = lastPerfFor(perfs, ex.name);
+    pushRecentId(ex.id);
     setExercises((list) => [
       ...list,
       {
         name: ex.name,
         muscle_groups: ex.muscles,
-        sets: [
-          { reps: 10, weight_kg: 0 },
-          { reps: 10, weight_kg: 0 },
-          { reps: 8, weight_kg: 0 },
-        ],
+        sets: Array.from({ length: 3 }, () => ({
+          reps: p?.reps || 10,
+          weight_kg: p?.weight_kg || 0,
+        })),
       },
     ]);
     setLibraryOpen(false);
   };
 
   const switchTemplate = (id: string) => {
-    const t = TEMPLATES.find((x) => x.id === id);
+    const t = templateById(id);
     if (t) setSession(cloneTemplate(t));
   };
 
@@ -339,6 +347,32 @@ export default function Training({ onPR, refreshKey }: { onPR: () => void; refre
         ))}
       </div>
 
+      <div className="mt-3 rounded-2xl border border-arena-border bg-arena-surface p-3">
+        <p className="text-[10px] font-black tracking-widest text-arena-muted">PROGRAMMES</p>
+        <div className="mt-2 flex flex-col gap-2">
+          {PROGRAMS.map((p) => (
+            <div key={p.id}>
+              <p className="text-xs font-black text-foreground">
+                {p.name} <span className="font-medium text-arena-sub">· {p.subtitle}</span>
+              </p>
+              <div className="mt-1 flex gap-1.5 overflow-x-auto pb-1">
+                {p.days.map((d, i) => (
+                  <button
+                    key={`${p.id}-${i}`}
+                    onClick={() => switchTemplate(d.templateId)}
+                    className="min-h-[36px] shrink-0 rounded-full border border-arena-border bg-secondary px-3 text-[10px] font-black tracking-widest text-arena-sub active:scale-95"
+                  >
+                    {d.label.toUpperCase()}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+        <p className="mt-1 text-[10px] text-arena-sub">
+          Chaque jour est chargé dans ta séance et reste modifiable avant de démarrer.
+        </p>
+      </div>
 
       <p className="mt-2 text-[10px] text-arena-sub">
         {session.exercises.length} exos · {totalSets} séries · repos {session.restSec}s
@@ -349,6 +383,7 @@ export default function Training({ onPR, refreshKey }: { onPR: () => void; refre
           <ExerciseCard
             key={exIdx}
             ex={ex}
+            lastPerf={lastPerfFor(perfs, ex.name)}
             onAddSet={() => addSet(exIdx)}
             onRemoveSet={(sIdx) => removeSet(exIdx, sIdx)}
             onUpdateSet={(sIdx, field, value) => updateSet(exIdx, sIdx, field, value)}
@@ -532,12 +567,14 @@ export default function Training({ onPR, refreshKey }: { onPR: () => void; refre
 
 function ExerciseCard({
   ex,
+  lastPerf,
   onAddSet,
   onRemoveSet,
   onUpdateSet,
   onRemove,
 }: {
   ex: WorkoutExercise;
+  lastPerf?: LastPerf | null;
   onAddSet: () => void;
   onRemoveSet: (setIdx: number) => void;
   onUpdateSet: (setIdx: number, field: "reps" | "weight_kg", value: number) => void;
@@ -563,6 +600,11 @@ function ExerciseCard({
           )}
           <div className="min-w-0">
             <p className="font-black text-foreground truncate">{ex.name}</p>
+            {lastPerf && (
+              <p className="truncate text-[10px] text-arena-sub">
+                Dernière fois : {lastPerf.weight_kg} kg × {lastPerf.reps}
+              </p>
+            )}
             <div className="mt-1 flex flex-wrap gap-1">
               {ex.muscle_groups.map((m) => (
                 <span
