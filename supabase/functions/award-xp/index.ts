@@ -124,7 +124,7 @@ Deno.serve(async (req) => {
       .eq("kind", "session_complete")
       .gte("day", week);
     if ((weekCount ?? 0) < SESSIONS_PER_WEEK_CAP) {
-      const isNew = await tryRecordXpEvent(supabase, userId, "session_complete", day);
+      const isNew = await tryRecordXpEvent(admin, userId, "session_complete", day);
       if (isNew) sessionGained += XP_SESSION_COMPLETE;
     }
 
@@ -135,14 +135,14 @@ Deno.serve(async (req) => {
       .eq("kind", "session_complete")
       .gte("day", week);
     if ((distinctDaysCount ?? 0) >= SESSIONS_FOR_WEEKLY_BONUS) {
-      const isNewBonus = await tryRecordXpEvent(supabase, userId, "weekly_regularity", week);
+      const isNewBonus = await tryRecordXpEvent(admin, userId, "weekly_regularity", week);
       if (isNewBonus) sessionGained += XP_WEEKLY_REGULARITY;
     }
 
     let prGained = 0;
     const isNewPr = await hasNewPersonalRecord(supabase, userId, session.exercises, session.completed_at as string);
     if (isNewPr) {
-      const isNew = await tryRecordXpEvent(supabase, userId, "personal_record", day);
+      const isNew = await tryRecordXpEvent(admin, userId, "personal_record", day);
       if (isNew) prGained = XP_PERSONAL_RECORD;
     }
 
@@ -150,7 +150,7 @@ Deno.serve(async (req) => {
 
     const { data: profile } = await supabase.rpc("get_my_profile").maybeSingle();
     if (!profile) {
-      await supabase.from("profiles").upsert(
+      await admin.from("profiles").upsert(
         { user_id: userId, pseudo: `athlete_${userId.slice(0, 6)}`, onboarded: true, updated_at: new Date().toISOString() },
         { onConflict: "user_id" },
       );
@@ -162,7 +162,7 @@ Deno.serve(async (req) => {
     const newGrade = gradeForXp(newXp);
     const leveledUp = GRADES.indexOf(newGrade) > GRADES.indexOf(previousGrade);
 
-    const { error: uErr } = await supabase
+    const { error: uErr } = await admin
       .from("profiles")
       .update({ xp: newXp, current_grade: newGrade, updated_at: new Date().toISOString() })
       .eq("user_id", userId);
