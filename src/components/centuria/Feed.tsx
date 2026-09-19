@@ -4,6 +4,7 @@ import { Plus, Search, Trophy, Target, Flame, Bell } from "lucide-react";
 import NotificationsSheet from "./social/NotificationsSheet";
 import { countUnread } from "@/lib/notifications";
 import PostCard from "./social/PostCard";
+import PostComposer from "./social/PostComposer";
 import { fetchFeed, type FeedPost } from "@/lib/social";
 import { loadUserProfile, goalLabel } from "./userProfile";
 import { GoalIcon } from "@/lib/gradeIcons";
@@ -12,6 +13,7 @@ import { fetchProgress } from "@/lib/progress";
 import { GRADE_LABELS, type Grade } from "@/lib/grades";
 
 export default function Feed({ onCreate }: { onCreate: () => void }) {
+  const [composerOpen, setComposerOpen] = useState(false);
   const [posts, setPosts] = useState<FeedPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [feedError, setFeedError] = useState(false);
@@ -105,7 +107,7 @@ export default function Feed({ onCreate }: { onCreate: () => void }) {
       </div>
 
       <button
-        onClick={onCreate}
+        onClick={() => setComposerOpen(true)}
         className="fixed bottom-20 right-6 z-20 flex h-14 w-14 items-center justify-center rounded-full bg-arena text-arena-foreground shadow-[0_0_25px_var(--arena-glow)] active:scale-90 transition-transform"
         aria-label="Log un PR"
       >

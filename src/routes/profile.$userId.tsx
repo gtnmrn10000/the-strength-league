@@ -14,6 +14,7 @@ import {
   type FeedPost,
 } from "@/lib/social";
 import UserAvatar from "@/components/centuria/social/UserAvatar";
+import { PostMedia } from "@/components/centuria/social/PostMedia";
 import FollowButton from "@/components/centuria/social/FollowButton";
 import UserListSheet from "@/components/centuria/social/UserListSheet";
 import { GRADE_LABELS, type Grade } from "@/lib/grades";
