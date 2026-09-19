@@ -49,3 +49,10 @@
 - [x] Harmoniser boutons, icônes, espacements, rayons et animations courtes
 - [x] Simplifier Coach, nutrition et paywall sans modifier leur logique
 - [x] QA visuelle 320 / 360 / 375 / 390 px, TypeScript et build
+
+## Animations premium des grades élevés
+- [ ] Signatures animées Spartiate à Divin selon le contexte
+- [ ] Galerie : reveal unique et pause hors viewport
+- [ ] Home / Profil : micro-reflet compact uniquement
+- [ ] Level-up : cérémonies propres à chaque grade élevé
+- [ ] Reduced motion et QA 320 / 360 / 375 / 390
