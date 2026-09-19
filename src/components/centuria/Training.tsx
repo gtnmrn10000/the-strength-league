@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Camera, NotebookPen, Target, Sparkles, Dumbbell, Trophy, Plus, Minus, X, Library, Play, CalendarClock, Trash2 } from "lucide-react";
+import { Camera, NotebookPen, Target, MessageCircle, Dumbbell, Trophy, Plus, Minus, X, Library, Play, CalendarClock, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import CoachSheet from "./coach/CoachSheet";
 import PremiumBadge from "./paywall/PremiumBadge";
@@ -338,7 +338,7 @@ export default function Training({ onPR, refreshKey, autoStart }: { onPR: () => 
         <ActionCard icon={Camera} title="Publier un record" glow onClick={onPR} />
         <ActionCard icon={NotebookPen} title="Mon entraînement" onClick={() => setWorkoutOpen(true)} />
         <ActionCard icon={Target} title="Mes objectifs" onClick={() => setGoalOpen(true)} />
-        <ActionCard icon={Sparkles} title="Coach" premium onClick={() => setCoachOpen(true)} />
+        <ActionCard icon={MessageCircle} title="Coach" premium onClick={() => setCoachOpen(true)} />
       </div>
 
       {/* Progression réelle (séances terminées) */}

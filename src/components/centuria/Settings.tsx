@@ -23,7 +23,7 @@ import {
 const FAQ_ITEMS: { q: string; a: string }[] = [
   { q: 'Comment enregistrer une séance ?', a: "Depuis l'onglet Entraînement, choisis un exercice, renseigne poids et répétitions puis valide ta série. La séance se termine automatiquement dans ton historique." },
   { q: 'Comment un record devient-il « vérifié » ?', a: "Un PR envoyé avec une vidéo est soumis au vote de la communauté (Valide / Douteux). Au-delà d'un seuil de votes valides, il passe automatiquement au statut Vérifié." },
-  { q: "Que comprend l'abonnement Premium ?", a: "Le Coach IA, la reconnaissance de repas par photo et l'analyse avancée de progression. Le suivi de base reste gratuit." },
+  { q: "Que comprend l'abonnement Premium ?", a: "Le Coach, l'analyse photo des repas et le suivi avancé de progression. Le suivi de base reste gratuit." },
   { q: 'Mes données sont-elles privées ?', a: 'Ton e-mail, ton poids, ton alimentation et tes séances restent privés. Seuls pseudo, photo, bio, grade et posts sont visibles des autres membres.' },
   { q: 'Comment supprimer mon compte ?', a: 'Dans Réglages → Compte, en bas de la section : « Supprimer mon compte ». Cette action est définitive et efface tes contenus.' },
   { q: 'Un compte me harcèle, que faire ?', a: 'Bloque-le (il disparaît de ton fil, ne peut plus interagir avec toi) et signale-le via le menu « … » sur son contenu.' },
@@ -208,17 +208,17 @@ export default function Settings({
                     </p>
                     <p className="text-[11px] text-arena-sub">
                       {isPremium
-                        ? "Accès complet : Coach, Photo IA, Analyse avancée"
-                        : "Accède au Coach et à Photo IA"}
+                        ? "Accès complet : Coach, analyse photo, suivi avancé"
+                        : "Accède au Coach et à l'analyse photo"}
                     </p>
                   </div>
                 </div>
                 {!isPremium && (
                   <button
                     onClick={() => openPaywall("generic")}
-                    className="rounded-full bg-arena-gold px-3 py-1.5 text-[10px] font-black tracking-widest text-black active:scale-95 transition"
+                    className="min-h-11 rounded-lg bg-foreground px-3 text-xs font-semibold text-background active:scale-[0.98] transition"
                   >
-                    UPGRADE
+                    Découvrir
                   </button>
                 )}
               </div>

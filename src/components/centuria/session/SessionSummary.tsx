@@ -135,7 +135,7 @@ function Stat({
   value: string;
 }) {
   return (
-    <div className="rounded-2xl border border-arena-border bg-arena-surface p-3">
+    <div className="border-r border-arena-border p-3 last:border-r-0">
       <Icon size={14} className="text-arena-muted" />
       <p className="mt-2 truncate text-base font-black leading-none text-foreground">{value}</p>
       <p className="mt-1 text-[10px] text-arena-muted">{label}</p>
