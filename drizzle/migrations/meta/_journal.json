@@ -15,6 +15,13 @@
       "when": 1789822580497,
       "tag": "0001_leaderboard_functions",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1789823239476,
+      "tag": "0002_social_phase4",
+      "breakpoints": true
     }
   ]
 }

@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, useParams, Link, useNavigate } from "@tanstack/react-router";
-import { ChevronLeft, Settings, Camera } from "lucide-react";
+import { ChevronLeft, Settings, Camera, MoreHorizontal, Flag, Ban, Undo2 } from "lucide-react";
+import { toast } from "sonner";
+import ReportSheet from "@/components/centuria/social/ReportSheet";
+import { blockUser, unblockUser, isBlockedByMe } from "@/lib/moderation";
 import { supabase } from "@/integrations/supabase/client";
 import {
   fetchPublicProfile,
@@ -57,6 +60,38 @@ function ProfilePage() {
   }, [userId]);
 
   const isMe = me && me === userId;
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
+  const [blocked, setBlocked] = useState(false);
+
+  useEffect(() => {
+    if (isMe) return;
+    let cancelled = false;
+    void isBlockedByMe(userId).then((v) => {
+      if (!cancelled) setBlocked(v);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [userId, isMe]);
+
+  const toggleBlock = async () => {
+    setMenuOpen(false);
+    try {
+      if (blocked) {
+        await unblockUser(userId);
+        setBlocked(false);
+        toast.success("Utilisateur débloqué.");
+      } else {
+        await blockUser(userId);
+        setBlocked(true);
+        toast.success("Utilisateur bloqué.");
+      }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Action impossible.");
+    }
+  };
+
 
   if (loading) {
     return <div className="mx-auto flex h-dvh max-w-md items-center justify-center bg-background text-arena-muted">Chargement…</div>;
@@ -86,13 +121,50 @@ function ProfilePage() {
         >
           <ChevronLeft size={18} />
         </button>
-        {isMe && (
+        {isMe ? (
           <button
             onClick={() => setEditing(true)}
             className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-background/70 backdrop-blur"
           >
             <Settings size={16} />
           </button>
+        ) : (
+          <div className="absolute right-3 top-3">
+            <button
+              onClick={() => setMenuOpen((v) => !v)}
+              aria-label="Options du profil"
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-background/70 backdrop-blur"
+            >
+              <MoreHorizontal size={16} />
+            </button>
+            {menuOpen && (
+              <>
+                <button
+                  aria-label="Fermer le menu"
+                  className="fixed inset-0 z-10 cursor-default"
+                  onClick={() => setMenuOpen(false)}
+                />
+                <div className="absolute right-0 z-20 mt-1 w-44 overflow-hidden rounded-xl border border-arena-border bg-arena-surface shadow-lg">
+                  <button
+                    onClick={() => {
+                      setMenuOpen(false);
+                      setReportOpen(true);
+                    }}
+                    className="flex w-full items-center gap-2 px-3 py-3 text-left text-xs font-semibold text-foreground"
+                  >
+                    <Flag size={14} /> Signaler
+                  </button>
+                  <button
+                    onClick={toggleBlock}
+                    className={`flex w-full items-center gap-2 border-t border-arena-border px-3 py-3 text-left text-xs font-semibold ${blocked ? "text-foreground" : "text-red-400"}`}
+                  >
+                    {blocked ? <Undo2 size={14} /> : <Ban size={14} />}
+                    {blocked ? "Débloquer" : "Bloquer"}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
         )}
       </div>
 
@@ -108,7 +180,13 @@ function ProfilePage() {
               Éditer le profil
             </button>
           ) : (
-            <FollowButton targetId={userId} initialFollowing={initialFollowing} onChange={load} />
+            blocked ? (
+              <span className="rounded-full border border-arena-border px-4 py-2 text-xs font-black text-arena-muted">
+                Bloqué
+              </span>
+            ) : (
+              <FollowButton targetId={userId} initialFollowing={initialFollowing} onChange={load} />
+            )
           )}
         </div>
 
@@ -169,7 +247,18 @@ function ProfilePage() {
           onSaved={load}
         />
       )}
+
+      {!isMe && (
+        <ReportSheet
+          open={reportOpen}
+          onOpenChange={setReportOpen}
+          targetType="profile"
+          targetId={userId}
+          targetUserId={userId}
+        />
+      )}
     </div>
+
   );
 }
 

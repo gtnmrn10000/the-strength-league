@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Plus, Search, Trophy, Target, Flame } from "lucide-react";
+import { Plus, Search, Trophy, Target, Flame, Bell } from "lucide-react";
+import NotificationsSheet from "./social/NotificationsSheet";
+import { countUnread } from "@/lib/notifications";
 import PostCard from "./social/PostCard";
 import { fetchFeed, type FeedPost } from "@/lib/social";
 import { loadUserProfile, goalLabel } from "./userProfile";
@@ -13,6 +15,8 @@ export default function Feed({ onCreate }: { onCreate: () => void }) {
   const [posts, setPosts] = useState<FeedPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [feedError, setFeedError] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [unread, setUnread] = useState(0);
   const profile = loadUserProfile();
 
   useEffect(() => {
@@ -37,17 +41,41 @@ export default function Feed({ onCreate }: { onCreate: () => void }) {
     };
   }, []);
 
+  useEffect(() => {
+    let active = true;
+    void countUnread().then((n) => {
+      if (active) setUnread(n);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+
   return (
     <div className="px-4 pt-2 pb-4">
       <div className="mb-3 flex items-center justify-between">
         <QuickStats goal={profile?.goal ?? null} />
-        <Link
-          to="/discover"
-          className="ml-3 flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-arena-border bg-arena-surface active:scale-95 transition-transform"
-          aria-label="Découvrir"
-        >
-          <Search size={18} className="text-arena" />
-        </Link>
+        <div className="ml-3 flex shrink-0 items-center gap-2">
+          <button
+            onClick={() => setNotifOpen(true)}
+            className="relative flex h-11 w-11 items-center justify-center rounded-full border border-arena-border bg-arena-surface transition-transform active:scale-95"
+            aria-label="Notifications"
+          >
+            <Bell size={18} className="text-arena" />
+            {unread > 0 && (
+              <span className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-arena px-1 text-[10px] font-black text-arena-foreground">
+                {unread > 9 ? "9+" : unread}
+              </span>
+            )}
+          </button>
+          <Link
+            to="/discover"
+            className="flex h-11 w-11 items-center justify-center rounded-full border border-arena-border bg-arena-surface active:scale-95 transition-transform"
+            aria-label="Découvrir"
+          >
+            <Search size={18} className="text-arena" />
+          </Link>
+        </div>
       </div>
 
       <h3 className="mb-3 mt-2 text-xs font-black tracking-widest text-arena-muted">FEED</h3>
@@ -83,6 +111,12 @@ export default function Feed({ onCreate }: { onCreate: () => void }) {
       >
         <Plus size={24} />
       </button>
+
+      <NotificationsSheet
+        open={notifOpen}
+        onOpenChange={setNotifOpen}
+        onRead={() => setUnread(0)}
+      />
     </div>
   );
 }

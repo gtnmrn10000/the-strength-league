@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Globe, Scale as ScaleIcon, Crown, LogOut, Info, Shield, Loader2, ChevronRight } from "lucide-react";
+import { Globe, Scale as ScaleIcon, Crown, LogOut, Info, Shield, Loader2, ChevronRight, Ban } from "lucide-react";
+import UserAvatar from "./social/UserAvatar";
+import { fetchBlockedProfiles, unblockUser } from "@/lib/moderation";
 import { supabase } from "@/integrations/supabase/client";
 import { useSubscription } from "@/hooks/useSubscription";
 import { toast } from "sonner";
@@ -30,6 +32,24 @@ export default function Settings({
   const [units, setUnits] = useState<Units>("metric");
   const [lang, setLang] = useState<Lang>("fr");
   const [signingOut, setSigningOut] = useState(false);
+  const [blockedList, setBlockedList] = useState<
+    { user_id: string; pseudo: string; avatar_url: string | null }[]
+  >([]);
+
+  useEffect(() => {
+    if (!open) return;
+    void fetchBlockedProfiles().then(setBlockedList);
+  }, [open]);
+
+  const removeBlock = async (id: string) => {
+    try {
+      await unblockUser(id);
+      setBlockedList((l) => l.filter((b) => b.user_id !== id));
+      toast.success("Utilisateur débloqué.");
+    } catch {
+      toast.error("Action impossible.");
+    }
+  };
 
   useEffect(() => {
     if (!open) return;
@@ -153,6 +173,35 @@ export default function Settings({
             <p className="mt-2 px-1 text-[10px] text-arena-muted">
               La traduction complète arrive prochainement.
             </p>
+          </Section>
+
+          {/* Comptes bloqués */}
+          <Section title="COMPTES BLOQUÉS">
+            {blockedList.length === 0 ? (
+              <p className="px-1 text-[11px] text-arena-muted">
+                Tu n'as bloqué personne. Les comptes bloqués n'apparaissent plus dans ton feed.
+              </p>
+            ) : (
+              <div className="flex flex-col gap-2">
+                {blockedList.map((b) => (
+                  <div
+                    key={b.user_id}
+                    className="flex items-center gap-3 rounded-2xl border border-arena-border bg-arena-surface p-3"
+                  >
+                    <UserAvatar src={b.avatar_url} pseudo={b.pseudo} size={32} />
+                    <span className="min-w-0 flex-1 truncate text-sm font-bold text-foreground">
+                      {b.pseudo}
+                    </span>
+                    <button
+                      onClick={() => removeBlock(b.user_id)}
+                      className="flex items-center gap-1 rounded-full border border-arena-border px-3 py-1.5 text-[11px] font-black text-arena-sub"
+                    >
+                      <Ban size={12} /> Débloquer
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </Section>
 
           {/* Légal */}

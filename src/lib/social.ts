@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { fetchBlockedIds } from "./moderation";
 
 export type PostType = "pr" | "meal" | "workout" | "level_up";
 
@@ -12,6 +13,7 @@ export interface FeedPost {
   macros: Record<string, number> | null;
   pr_id: string | null;
   hype_count: number;
+  comment_count: number;
   created_at: string;
   author: {
     user_id: string;
@@ -60,6 +62,7 @@ type PostRow = {
   macros: Record<string, number> | null;
   pr_id: string | null;
   hype_count: number;
+  comment_count: number;
   created_at: string;
 };
 
@@ -191,12 +194,15 @@ export async function fetchFeed(): Promise<FeedPost[]> {
 
   const { data: posts, error } = await supabase
     .from("posts")
-    .select("id, user_id, type, media_url, caption, muscle_groups, macros, pr_id, hype_count, created_at")
+    .select("id, user_id, type, media_url, caption, muscle_groups, macros, pr_id, hype_count, comment_count, created_at")
     .order("created_at", { ascending: false })
     .limit(100);
 
   if (error) throw error;
   if (!posts) return [];
+
+  const blocked = await fetchBlockedIds();
+  const visible = (posts as PostRow[]).filter((p) => !blocked.has(p.user_id));
 
   // Load follows and hypes for current user
   let followingSet = new Set<string>();
@@ -211,9 +217,9 @@ export async function fetchFeed(): Promise<FeedPost[]> {
   }
 
   // Score: 0.5*recency + 0.3*hype_norm + 0.2*follow_bonus
-  const maxHype = Math.max(1, ...posts.map((p: any) => p.hype_count));
+  const maxHype = Math.max(1, ...visible.map((p) => p.hype_count));
   const now = Date.now();
-  const feedPosts = await attachFeedRelations(posts as PostRow[], hypedSet);
+  const feedPosts = await attachFeedRelations(visible, hypedSet);
   const scored = feedPosts.map((p) => {
     const ageHours = (now - new Date(p.created_at).getTime()) / 3_600_000;
     const recency = Math.exp(-ageHours / 24);
@@ -245,7 +251,7 @@ export async function fetchPublicProfile(userId: string): Promise<PublicProfile 
 export async function fetchUserPosts(userId: string): Promise<FeedPost[]> {
   const { data, error } = await supabase
     .from("posts")
-    .select("id, user_id, type, media_url, caption, muscle_groups, macros, pr_id, hype_count, created_at")
+    .select("id, user_id, type, media_url, caption, muscle_groups, macros, pr_id, hype_count, comment_count, created_at")
     .eq("user_id", userId)
     .order("created_at", { ascending: false });
   if (error) throw error;
@@ -325,6 +331,8 @@ export async function fetchSuggestions(): Promise<PublicProfile[]> {
       .eq("follower_id", user.id);
     excludeIds = (follows ?? []).map((f: any) => f.following_id);
     excludeIds.push(user.id);
+    const blocked = await fetchBlockedIds();
+    excludeIds.push(...blocked);
   }
 
   let query = supabase
@@ -409,5 +417,80 @@ export async function updateMyProfile(patch: {
       updated_at: new Date().toISOString(),
     })
     .eq("user_id", user.id);
+  if (error) throw error;
+}
+
+/* ── Recherche d'athlètes ── */
+export async function searchProfiles(term: string, limit = 20): Promise<PublicProfile[]> {
+  const q = term.trim();
+  if (q.length < 2) return [];
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("user_id, pseudo, bio, avatar_url, cover_url, current_grade, xp, posts_count, followers_count, following_count")
+    .ilike("pseudo", `%${q}%`)
+    .order("followers_count", { ascending: false })
+    .limit(limit);
+  if (error) return [];
+  const blocked = await fetchBlockedIds();
+  return ((data ?? []) as PublicProfile[]).filter((p) => !blocked.has(p.user_id));
+}
+
+/* ── Commentaires ── */
+export interface PostComment {
+  id: string;
+  post_id: string;
+  user_id: string;
+  body: string;
+  created_at: string;
+  author: { pseudo: string; avatar_url: string | null; current_grade: string } | null;
+  is_mine: boolean;
+}
+
+export async function fetchComments(postId: string): Promise<PostComment[]> {
+  const [{ data: { user } }, blocked] = await Promise.all([
+    supabase.auth.getUser(),
+    fetchBlockedIds(),
+  ]);
+  const { data, error } = await supabase
+    .from("post_comments")
+    .select("id, post_id, user_id, body, created_at")
+    .eq("post_id", postId)
+    .order("created_at", { ascending: true });
+  if (error || !data) return [];
+  const rows = data.filter((c) => !blocked.has(c.user_id));
+  if (rows.length === 0) return [];
+
+  const ids = [...new Set(rows.map((c) => c.user_id))];
+  const { data: profiles } = await supabase
+    .from("profiles")
+    .select("user_id, pseudo, avatar_url, current_grade")
+    .in("user_id", ids);
+  const byUser = new Map((profiles ?? []).map((p) => [p.user_id, p]));
+
+  return rows.map((c) => {
+    const p = byUser.get(c.user_id);
+    return {
+      ...c,
+      author: p
+        ? { pseudo: p.pseudo, avatar_url: p.avatar_url, current_grade: p.current_grade }
+        : null,
+      is_mine: !!user && user.id === c.user_id,
+    };
+  });
+}
+
+export async function addComment(postId: string, body: string) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Connecte-toi pour commenter.");
+  const text = body.trim();
+  if (!text) throw new Error("Commentaire vide.");
+  const { error } = await supabase
+    .from("post_comments")
+    .insert({ post_id: postId, user_id: user.id, body: text.slice(0, 500) });
+  if (error) throw error;
+}
+
+export async function deleteComment(id: string) {
+  const { error } = await supabase.from("post_comments").delete().eq("id", id);
   if (error) throw error;
 }
