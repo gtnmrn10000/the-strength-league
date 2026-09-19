@@ -84,6 +84,7 @@ CREATE TRIGGER content_reports_status_trg
 
 GRANT UPDATE ON public.content_reports TO authenticated;
 
+DROP POLICY IF EXISTS "reports select own" ON public.content_reports;
 DROP POLICY IF EXISTS "reports select mods" ON public.content_reports;
 CREATE POLICY "reports select mods" ON public.content_reports
   FOR SELECT TO authenticated USING (auth.uid() = reporter_id OR public.is_moderator(auth.uid()));
@@ -99,8 +100,9 @@ ALTER TABLE public.post_comments ADD COLUMN IF NOT EXISTS hidden_at timestamptz;
 
 -- Posts SELECT: hide hidden content from everyone except owner and moderators
 DROP POLICY IF EXISTS "Posts are viewable by everyone" ON public.posts;
+DROP POLICY IF EXISTS "Posts viewable by authenticated" ON public.posts;
 CREATE POLICY "Posts visible unless hidden" ON public.posts
-  FOR SELECT TO anon, authenticated
+  FOR SELECT TO authenticated
   USING (
     hidden_at IS NULL
     OR auth.uid() = user_id
