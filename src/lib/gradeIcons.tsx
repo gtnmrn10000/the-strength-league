@@ -11,25 +11,6 @@ import {
   Weight,
   type LucideIcon,
 } from "lucide-react";
-import { GRADES, type Grade } from "./grades";
-import { GradeEmblem } from "@/components/centuria/grades/GradeEmblem";
-
-/**
- * Adaptateur compact conservé pour les surfaces historiques.
- */
-export function GradeIcon({
-  grade,
-  size = 14,
-  className = "",
-}: {
-  grade: Grade;
-  size?: number;
-  className?: string;
-}) {
-  void GRADES;
-  return <GradeEmblem grade={grade} size={size} className={className} />;
-}
-
 /** Goals — semantic Lucide icons. */
 export const GOAL_ICON: Record<string, LucideIcon> = {
   masse: TrendingUp,

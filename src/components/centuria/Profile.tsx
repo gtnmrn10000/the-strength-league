@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { loadUserProfile, goalLabel } from "./userProfile";
 import { supabase } from "@/integrations/supabase/client";
 import { GRADES, GRADE_LABELS, THRESHOLDS, nextGradeInfo, type Grade } from "@/lib/grades";
-import { GradeIcon, GoalIcon } from "@/lib/gradeIcons";
+import { GoalIcon } from "@/lib/gradeIcons";
 import { GradeEmblem } from "./grades/GradeEmblem";
 import { fetchNutritionStreak, type NutritionStreak } from "@/lib/foodLogs";
 import GradeGallery from "./GradeGallery";
@@ -150,14 +150,14 @@ export default function Profile() {
       <h3 className="mb-3 mt-6 text-xs font-black tracking-widest text-arena-muted">PROGRESSION</h3>
       <div className="border-y border-arena-border py-4">
         <div className="flex items-center gap-3">
-          <GradeEmblem grade={grade} size={52} state="current" progress={progressPct} />
+          <GradeEmblem grade={grade} size={36} active progress={progressPct} />
           <div className="min-w-0 flex-1">
             <span className="text-sm font-bold text-foreground">{GRADE_LABELS[grade]}</span>
             <p className="mt-0.5 text-xs text-arena-muted"><span className="font-bold text-arena-gold">{xp.toLocaleString()}</span> XP</p>
           </div>
           {!isMaxGrade && (
             <span className="flex items-center gap-1 text-xs text-arena-sub">
-              <ArrowRight size={12} /> <GradeIcon grade={nextGrade} size={12} className="text-arena-gold" /> {GRADE_LABELS[nextGrade]}
+              <ArrowRight size={12} /> <GradeEmblem grade={nextGrade} size={18} /> {GRADE_LABELS[nextGrade]}
             </span>
           )}
         </div>
@@ -238,11 +238,11 @@ export default function Profile() {
                   <span className="flex items-center gap-1 text-arena-sub">
                     {isMax ? (
                       <>
-                        <GradeIcon grade={nextGradeForLift} size={12} className="text-arena-gold" /> MAX
+                        <GradeEmblem grade={nextGradeForLift} size={18} /> MAX
                       </>
                     ) : (
                       <>
-                        <ArrowRight size={10} /> <GradeIcon grade={nextGradeForLift} size={12} className="text-arena-gold" /> {GRADE_LABELS[nextGradeForLift]}
+                        <ArrowRight size={10} /> <GradeEmblem grade={nextGradeForLift} size={18} /> {GRADE_LABELS[nextGradeForLift]}
                       </>
                     )}
                   </span>
@@ -415,7 +415,7 @@ function CombatCard({
           )}
         </div>
         <div className="flex flex-col items-center">
-          <GradeEmblem grade={grade} size={52} state="current" />
+          <GradeEmblem grade={grade} size={36} active />
           <span className="mt-0.5 text-[10px] font-bold text-arena">{GRADE_LABELS[grade]}</span>
         </div>
       </div>

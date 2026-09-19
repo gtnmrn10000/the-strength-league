@@ -5,7 +5,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { fetchProgress, EMPTY_PROGRESS, type ProgressData } from "@/lib/progress";
 import { computeRecovery, MUSCLE_LABEL, type RecoveryState } from "@/lib/recovery";
 import { GRADE_LABELS, nextGradeInfo, type Grade } from "@/lib/grades";
-import { GradeIcon } from "@/lib/gradeIcons";
 import { GradeEmblem } from "./grades/GradeEmblem";
 import { fetchMyProfile } from "@/lib/profileStore";
 import { readActiveSession, type ActiveSessionInfo } from "@/lib/activeSession";
@@ -167,7 +166,7 @@ export default function Home({
       {/* Grade */}
       <section className="border-y border-arena-border py-4">
         <div className="flex items-center gap-3">
-          <GradeEmblem grade={grade} size={46} state="current" progress={gradeInfo.progressPct} />
+          <GradeEmblem grade={grade} size={36} active progress={gradeInfo.progressPct} />
           <div className="min-w-0 flex-1">
             <span className="text-sm font-bold text-foreground">{GRADE_LABELS[grade]}</span>
             <p className="mt-0.5 text-xs text-arena-sub">

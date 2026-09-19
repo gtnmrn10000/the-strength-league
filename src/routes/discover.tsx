@@ -5,7 +5,7 @@ import { fetchSuggestions, searchProfiles, type PublicProfile } from "@/lib/soci
 import UserAvatar from "@/components/centuria/social/UserAvatar";
 import FollowButton from "@/components/centuria/social/FollowButton";
 import { GRADE_LABELS, type Grade } from "@/lib/grades";
-import { GradeIcon } from "@/lib/gradeIcons";
+import { GradeEmblem } from "@/components/centuria/grades/GradeEmblem";
 
 export const Route = createFileRoute("/discover")({
   component: DiscoverPage,
@@ -112,8 +112,8 @@ function DiscoverPage() {
                   <UserAvatar src={p.avatar_url} pseudo={p.pseudo} size={48} />
                   <div className="flex-1 min-w-0">
                     <p className="truncate font-black text-foreground">{p.pseudo}</p>
-                    <p className="inline-flex items-center gap-1 truncate text-[10px] font-black tracking-wider text-arena-gold">
-                      <GradeIcon grade={grade} size={10} /> {GRADE_LABELS[grade]?.toUpperCase()}
+                    <p className="inline-flex items-center gap-1 truncate text-[10px] font-semibold text-arena-gold">
+                      <GradeEmblem grade={grade} size={22} /> {GRADE_LABELS[grade]}
                     </p>
                     <p className="text-[11px] text-arena-sub">
                       {p.followers_count} followers · {p.posts_count} posts

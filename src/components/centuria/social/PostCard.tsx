@@ -26,7 +26,7 @@ import { blockUser } from "@/lib/moderation";
 import { friendlyError } from "@/lib/errors";
 import { supabase } from "@/integrations/supabase/client";
 import { GRADE_LABELS, type Grade } from "@/lib/grades";
-import { GradeIcon } from "@/lib/gradeIcons";
+import { GradeEmblem } from "../grades/GradeEmblem";
 import { voteOnPR } from "@/lib/api";
 
 function timeAgo(iso: string): string {
@@ -100,8 +100,8 @@ export default function PostCard({ post }: { post: FeedPost }) {
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
               <span className="truncate font-bold text-foreground">{post.author?.pseudo}</span>
-              <span className="inline-flex shrink-0 items-center gap-1 text-[10px] font-black tracking-wider text-arena-gold">
-                <GradeIcon grade={grade} size={10} /> {GRADE_LABELS[grade]?.toUpperCase()}
+              <span className="inline-flex shrink-0 items-center gap-1 text-[10px] font-semibold text-arena-gold">
+                <GradeEmblem grade={grade} size={22} /> {GRADE_LABELS[grade]}
               </span>
             </div>
             <span className="text-xs text-arena-sub">{timeAgo(post.created_at)}</span>

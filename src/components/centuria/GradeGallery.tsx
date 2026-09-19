@@ -45,7 +45,7 @@ export default function GradeGallery({
                   initial={reduceMotion ? false : { opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: reduceMotion ? 0 : idx * 0.035, duration: 0.18 }}
-                  className={`relative flex min-h-[76px] items-center gap-3 border-b px-1 py-3 ${
+                   className={`relative flex min-h-[84px] items-center gap-4 border-b px-1 py-3 ${
                     isCurrent
                       ? "border-arena-gold/40 bg-arena-gold/[0.035]"
                       : "border-arena-border"
@@ -53,7 +53,7 @@ export default function GradeGallery({
                 >
                   <GradeEmblem
                     grade={g}
-                    size={54}
+                     size={62}
                     state={isCurrent ? "current" : isUnlocked ? "unlocked" : "locked"}
                     progress={isCurrent ? Math.max(3, Math.min(100, idx === GRADES.length - 1 ? 100 : ((xp - required) / (GRADE_XP[GRADES[idx + 1]] - required)) * 100)) : undefined}
                   />
@@ -61,7 +61,7 @@ export default function GradeGallery({
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <p className="truncate font-black text-foreground">{GRADE_LABELS[g]}</p>
-                      {isCurrent && <span className="text-[10px] text-arena-gold">Grade actuel</span>}
+                       {isCurrent && <span className="text-[10px] text-arena-gold">Actuel</span>}
                     </div>
                     <p className="mt-0.5 text-[10px] text-arena-sub">
                       {required.toLocaleString()} XP requis

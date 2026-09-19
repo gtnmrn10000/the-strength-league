@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Info, Trophy } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { GRADE_LABELS, type Grade } from "@/lib/grades";
-import { GradeIcon } from "@/lib/gradeIcons";
+import { GradeEmblem } from "./grades/GradeEmblem";
 
 type Row = {
   user_id: string;
@@ -97,8 +97,8 @@ export default function Rankings() {
                         {r.pseudo}
                         {isMe ? " · toi" : ""}
                       </p>
-                      <p className="flex items-center gap-1 text-xs uppercase tracking-widest text-arena-sub">
-                        <GradeIcon grade={grade} size={11} className="text-arena-gold" />
+                      <p className="flex items-center gap-1.5 text-xs text-arena-sub">
+                        <GradeEmblem grade={grade} size={24} />
                         {GRADE_LABELS[grade] ?? "—"}
                       </p>
                     </div>
