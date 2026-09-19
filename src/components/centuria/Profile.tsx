@@ -84,15 +84,11 @@ export default function Profile() {
 
   const grade = (dbProfile?.current_grade || "recruit") as Grade;
   const xp = dbProfile?.xp ?? 0;
-  const nextGradeIdx = Math.min(GRADES.indexOf(grade) + 1, GRADES.length - 1);
-  const nextGrade = GRADES[nextGradeIdx];
-  const isMaxGrade = grade === "divin";
-
-  // XP thresholds per grade (rough: 500 XP per PR, ~3 PRs per grade)
-  const xpPerGrade = 1500;
-  const currentGradeBaseXp = GRADES.indexOf(grade) * xpPerGrade;
-  const progressXp = xp - currentGradeBaseXp;
-  const progressPct = isMaxGrade ? 100 : Math.min(100, Math.round((progressXp / xpPerGrade) * 100));
+  const gradeInfo = nextGradeInfo(xp);
+  const nextGrade = gradeInfo.nextGrade ?? grade;
+  const nextGradeIdx = GRADES.indexOf(nextGrade);
+  const isMaxGrade = gradeInfo.nextGrade === null;
+  const progressPct = gradeInfo.progressPct;
 
   // Best PRs per exercise
   const bestPRs: Record<string, VerifiedPR> = {};
@@ -164,14 +160,16 @@ export default function Profile() {
             <span className="font-bold text-arena-gold">{xp.toLocaleString()}</span> XP
           </p>
           <p className="text-[10px] text-arena-muted">
-            {isMaxGrade ? "Grade maximum atteint !" : `${progressPct}%`}
+            {isMaxGrade
+              ? "Grade maximum atteint"
+              : `Encore ${gradeInfo.xpRemaining.toLocaleString()} XP`}
           </p>
         </div>
         <button
           onClick={() => setGalleryOpen(true)}
           className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-arena-gold/40 bg-arena-gold/5 py-2 text-xs font-black tracking-widest text-arena-gold active:scale-[0.98] transition"
         >
-          <LayoutGrid size={14} /> VOIR TOUS LES GRADES
+          <LayoutGrid size={14} /> Voir tous les grades
         </button>
       </div>
 
@@ -179,7 +177,7 @@ export default function Profile() {
       {!isMaxGrade && dbProfile?.poids && dbProfile.poids > 0 && (
         <div className="mt-3 rounded-2xl border border-arena-gold/20 bg-arena-gold/5 p-3">
           <p className="text-[10px] font-black tracking-widest text-arena-gold">
-            POUR PASSER {GRADE_LABELS[nextGrade].toUpperCase()} — UN LIFT SUFFIT
+            BADGES DE FORCE — PROCHAIN PALIER
           </p>
           <div className="mt-1.5 grid grid-cols-3 gap-2 text-center">
             {(["squat", "bench", "deadlift"] as const).map((ex) => {
