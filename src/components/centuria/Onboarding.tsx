@@ -77,9 +77,16 @@ function saveDraft(data: OnboardingData) {
   localStorage.setItem(OB_KEY, JSON.stringify(data));
 }
 
-export default function Onboarding({ onDone }: { onDone: () => void }) {
-  // Steps: 0=hero, 1=auth, 2=profile, 3=goal
-  const TOTAL_STEPS = 4;
+export default function Onboarding({
+  authed,
+  onDone,
+}: {
+  authed: boolean;
+  onDone: () => void;
+}) {
+  // Non connecté : 0=hero, 1=auth. Connecté : 0=profil, 1=objectif.
+  const stepNames = authed ? ["profile", "goal"] : ["hero", "auth"];
+  const TOTAL_STEPS = stepNames.length;
   const [step, setStep] = useState(0);
   const [selectedGoal, setSelectedGoal] = useState<string | null>(null);
   const [pseudo, setPseudo] = useState("");
@@ -88,11 +95,12 @@ export default function Onboarding({ onDone }: { onDone: () => void }) {
   const [poids, setPoids] = useState("");
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [triedContinue, setTriedContinue] = useState(false);
+  const [saving, setSaving] = useState(false);
 
+  // Reprend le brouillon local (jamais source de vérité du compte).
   useEffect(() => {
     const saved = loadSaved();
-    if (saved.step > 0 || saved.pseudo) {
-      setStep(Math.min(saved.step, TOTAL_STEPS - 1));
+    if (saved.pseudo || saved.goal) {
       setSelectedGoal(saved.goal);
       setPseudo(saved.pseudo);
       setAge(saved.age);
@@ -101,49 +109,75 @@ export default function Onboarding({ onDone }: { onDone: () => void }) {
     }
   }, []);
 
-  const titles = [
-    "PROUVE TA FORCE.",
-    "CRÉE TON COMPTE",
-    "FORGE TON PROFIL",
-    "FIXE TON PREMIER OBJECTIF",
-  ];
+  // Le passage connecté / non connecté remet le wizard au début de sa liste.
+  useEffect(() => {
+    setStep(0);
+    setTriedContinue(false);
+  }, [authed]);
+
+  const titles = authed
+    ? ["FORGE TON PROFIL", "FIXE TON PREMIER OBJECTIF"]
+    : ["PROUVE TA FORCE.", "CRÉE TON COMPTE"];
 
   const statsErrors = validateStats(pseudo, age, taille, poids);
+  const current = stepNames[step];
 
   const canContinue = useCallback(() => {
-    if (step === 2) return !hasErrors(statsErrors) && pseudo.trim().length >= 3;
-    if (step === 3) return selectedGoal !== null;
+    if (current === "profile") return !hasErrors(statsErrors) && pseudo.trim().length >= 3;
+    if (current === "goal") return selectedGoal !== null;
+    if (current === "auth") return false; // l'auth se fait dans le panneau
     return true;
-  }, [step, selectedGoal, statsErrors, pseudo]);
+  }, [current, selectedGoal, statsErrors, pseudo]);
 
   const persist = (overrides: Partial<OnboardingData> = {}) => {
     saveDraft({ step, goal: selectedGoal, pseudo, age, taille, poids, ...overrides });
   };
 
-  const stepNames = ["hero", "auth", "profile", "goal"];
+  const num = (v: string): number | null => {
+    const n = Number(v.replace(",", "."));
+    return v.trim() && isFinite(n) ? n : null;
+  };
 
-  const handleContinue = () => {
-    if (step === 2) {
+  const handleContinue = async () => {
+    if (current === "profile") {
       setTriedContinue(true);
-      if (!canContinue()) return;
     }
     if (!canContinue()) return;
-    if (step === TOTAL_STEPS - 1) {
-      localStorage.removeItem(OB_KEY);
-      saveUserProfile({ pseudo, age, taille, poids, goal: selectedGoal });
-      track("onboarding_completed", { goal: selectedGoal, pseudo });
-      onDone();
-    } else {
-      const next = step + 1;
-      const props: Record<string, string | number | boolean | null> = { from_step: stepNames[step], to_step: stepNames[next] };
-      if (step === 2) props.pseudo = pseudo;
-      track("onboarding_step_completed", props);
 
-      setTriedContinue(false);
-      setTouched({});
-      setStep(next);
-      persist({ step: next });
+    if (step === TOTAL_STEPS - 1 && authed) {
+      setSaving(true);
+      try {
+        await saveMyProfile({
+          pseudo: pseudo.trim().replace(/^@/, ""),
+          age: num(age),
+          taille: num(taille),
+          poids: num(poids),
+          goal: (selectedGoal as "masse" | "seche" | "performance" | null) ?? null,
+        });
+        localStorage.removeItem(OB_KEY);
+        saveUserProfile({ pseudo, age, taille, poids, goal: selectedGoal });
+        track("onboarding_completed", { goal: selectedGoal, pseudo });
+        onDone();
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : "Impossible d'enregistrer ton profil");
+      } finally {
+        setSaving(false);
+      }
+      return;
     }
+
+    const next = step + 1;
+    const props: Record<string, string | number | boolean | null> = {
+      from_step: stepNames[step],
+      to_step: stepNames[next],
+    };
+    if (current === "profile") props.pseudo = pseudo;
+    track("onboarding_step_completed", props);
+
+    setTriedContinue(false);
+    setTouched({});
+    setStep(next);
+    persist({ step: next });
   };
 
   const markTouched = (field: string) => {
@@ -157,7 +191,7 @@ export default function Onboarding({ onDone }: { onDone: () => void }) {
   return (
     <div className="relative mx-auto flex h-dvh max-w-md flex-col bg-background">
       {/* Header */}
-      <div className="flex items-center justify-between px-5 pt-5">
+      <div className="flex items-center justify-between px-5 pt-[calc(env(safe-area-inset-top)+1.25rem)]">
         <div className="flex items-center gap-2">
           {step > 0 ? (
             <button
@@ -187,9 +221,9 @@ export default function Onboarding({ onDone }: { onDone: () => void }) {
         <h1 className="mb-6 text-2xl font-black uppercase leading-tight tracking-tight text-foreground">
           {titles[step]}
         </h1>
-        {step === 0 && <HeroCard />}
-        {step === 1 && <AuthStep />}
-        {step === 2 && (
+        {current === "hero" && <HeroCard />}
+        {current === "auth" && <AuthPanel />}
+        {current === "profile" && (
           <StatsStep
             pseudo={pseudo} setPseudo={(v) => { setPseudo(v); markTouched("pseudo"); persist({ pseudo: v }); }}
             age={age} setAge={(v) => { setAge(v); markTouched("age"); persist({ age: v }); }}
@@ -203,33 +237,41 @@ export default function Onboarding({ onDone }: { onDone: () => void }) {
             }}
           />
         )}
-        {step === 3 && <GoalStep selected={selectedGoal} onSelect={(v) => { setSelectedGoal(v); persist({ goal: v }); track("goal_selected", { goal: v }); }} />}
+        {current === "goal" && <GoalStep selected={selectedGoal} onSelect={(v) => { setSelectedGoal(v); persist({ goal: v }); track("goal_selected", { goal: v }); }} />}
       </div>
 
       {/* Footer */}
-      <div className="px-5 pb-6">
-        <button
-          onClick={handleContinue}
-          disabled={step !== 2 && !canContinue()}
-          className={`h-14 w-full rounded-2xl font-black uppercase tracking-wide transition-all duration-200 active:scale-95
-            ${canContinue()
-              ? "bg-arena text-arena-foreground shadow-[0_0_35px_var(--arena-glow)]"
-              : "bg-arena/30 text-arena-foreground/50 cursor-not-allowed"
-            }`}
-        >
-          {step === TOTAL_STEPS - 1 ? (
-            <span className="inline-flex items-center justify-center gap-2"><Swords size={16} /> Entrer dans l'arène</span>
-          ) : "Continuer"}
-        </button>
-        {step === 0 && (
-          <button className="mt-3 w-full text-center text-xs font-semibold text-arena-sub hover:text-foreground transition-colors">
-            J'ai déjà un compte
+      {current !== "auth" && (
+        <div className="px-5 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] pt-2">
+          <button
+            onClick={handleContinue}
+            disabled={saving || (current === "goal" && !canContinue())}
+            className={`h-14 w-full rounded-2xl font-black uppercase tracking-wide transition-all duration-200 active:scale-95
+              ${canContinue()
+                ? "bg-arena text-arena-foreground shadow-[0_0_35px_var(--arena-glow)]"
+                : "bg-arena/30 text-arena-foreground/50"
+              }`}
+          >
+            {saving ? (
+              <span className="inline-flex items-center justify-center gap-2"><Loader2 size={16} className="animate-spin" /> Enregistrement…</span>
+            ) : step === TOTAL_STEPS - 1 && authed ? (
+              <span className="inline-flex items-center justify-center gap-2"><Swords size={16} /> Entrer dans l'arène</span>
+            ) : "Continuer"}
           </button>
-        )}
-      </div>
+          {current === "hero" && (
+            <button
+              onClick={() => setStep(1)}
+              className="mt-3 w-full text-center text-xs font-semibold text-arena-sub hover:text-foreground transition-colors"
+            >
+              J'ai déjà un compte
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }
+
 
 /* ── Step 0: Hero ── */
 function HeroCard() {
@@ -263,34 +305,6 @@ function HeroCard() {
   );
 }
 
-/* ── Step 1: Auth ── */
-function AuthStep() {
-  return (
-    <div className="flex flex-col gap-3">
-      <AuthBtn icon={Apple} label="Continuer avec Apple" highlight />
-      <AuthBtn icon={Mail} label="Continuer avec Google" />
-      <div className="flex items-center gap-3 py-2">
-        <div className="h-px flex-1 bg-arena-border" />
-        <span className="text-xs text-arena-muted">ou</span>
-        <div className="h-px flex-1 bg-arena-border" />
-      </div>
-      <AuthBtn icon={Lock} label="S'inscrire avec e-mail" />
-      <p className="mt-2 text-center text-[10px] text-arena-muted leading-relaxed">
-        En continuant, tu acceptes les <span className="text-arena-sub underline">CGU</span> et la <span className="text-arena-sub underline">politique de confidentialité</span>.
-      </p>
-    </div>
-  );
-}
-
-function AuthBtn({ icon: Icon, label, highlight }: { icon: React.ElementType; label: string; highlight?: boolean }) {
-  return (
-    <button className={`flex h-14 w-full items-center gap-3 rounded-2xl border px-5 text-sm font-bold text-foreground active:scale-[0.98] transition-transform
-      ${highlight ? "border-arena/40 bg-arena/10" : "border-arena-border bg-arena-surface"}`}>
-      <Icon size={18} />
-      {label}
-    </button>
-  );
-}
 
 
 /* ── Step 3: Profile Stats ── */
