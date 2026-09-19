@@ -6,6 +6,7 @@ import { loadUserProfile, goalLabel } from "./userProfile";
 import { supabase } from "@/integrations/supabase/client";
 import { GRADES, GRADE_LABELS, THRESHOLDS, nextGradeInfo, type Grade } from "@/lib/grades";
 import { GradeIcon, GoalIcon } from "@/lib/gradeIcons";
+import { GradeEmblem } from "./grades/GradeEmblem";
 import { fetchNutritionStreak, type NutritionStreak } from "@/lib/foodLogs";
 import GradeGallery from "./GradeGallery";
 import Settings from "./Settings";
@@ -147,30 +148,21 @@ export default function Profile() {
 
       {/* XP + Grade progression */}
       <h3 className="mb-3 mt-6 text-xs font-black tracking-widest text-arena-muted">PROGRESSION</h3>
-      <div className="rounded-2xl border border-arena-border bg-arena-surface p-4">
-        <div className="flex items-center justify-between">
-          <span className="flex items-center gap-2 text-sm font-bold text-foreground">
-            <GradeIcon grade={grade} size={16} className="text-arena-gold" /> {GRADE_LABELS[grade]}
-          </span>
+      <div className="border-y border-arena-border py-4">
+        <div className="flex items-center gap-3">
+          <GradeEmblem grade={grade} size={52} state="current" progress={progressPct} />
+          <div className="min-w-0 flex-1">
+            <span className="text-sm font-bold text-foreground">{GRADE_LABELS[grade]}</span>
+            <p className="mt-0.5 text-xs text-arena-muted"><span className="font-bold text-arena-gold">{xp.toLocaleString()}</span> XP</p>
+          </div>
           {!isMaxGrade && (
             <span className="flex items-center gap-1 text-xs text-arena-sub">
               <ArrowRight size={12} /> <GradeIcon grade={nextGrade} size={12} className="text-arena-gold" /> {GRADE_LABELS[nextGrade]}
             </span>
           )}
         </div>
-        <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-secondary">
-          <motion.div
-            className="h-full rounded-full bg-arena"
-            initial={{ width: 0 }}
-            animate={{ width: `${progressPct}%` }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
-          />
-        </div>
         <div className="mt-2 flex items-center justify-between">
-          <p className="flex items-center gap-1 text-xs text-arena-muted">
-            <Zap size={12} className="text-arena-gold" />
-            <span className="font-bold text-arena-gold">{xp.toLocaleString()}</span> XP
-          </p>
+          <span />
           <p className="text-[10px] text-arena-muted">
             {isMaxGrade
               ? "Grade maximum atteint"
@@ -179,7 +171,7 @@ export default function Profile() {
         </div>
         <button
           onClick={() => setGalleryOpen(true)}
-          className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-arena-gold/40 bg-arena-gold/5 py-2 text-xs font-black tracking-widest text-arena-gold active:scale-[0.98] transition"
+          className="mt-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-arena-border text-xs font-semibold text-foreground active:scale-[0.98] transition"
         >
           <LayoutGrid size={14} /> Voir tous les grades
         </button>
@@ -423,7 +415,7 @@ function CombatCard({
           )}
         </div>
         <div className="flex flex-col items-center">
-          <GradeIcon grade={grade} size={28} className="text-arena-gold" />
+          <GradeEmblem grade={grade} size={52} state="current" />
           <span className="mt-0.5 text-[10px] font-bold text-arena">{GRADE_LABELS[grade]}</span>
         </div>
       </div>
@@ -432,12 +424,6 @@ function CombatCard({
         <Mini icon={Flame} label="XP" value={xp.toLocaleString()} />
         <Mini icon={Dumbbell} label="PRs" value={String(prCount)} />
         <Mini icon={Trophy} label="Grade" value={GRADE_LABELS[grade]} />
-      </div>
-
-      <div className="mt-3 flex flex-wrap gap-2">
-        <span className="inline-flex items-center gap-1 rounded-full bg-arena/10 px-2 py-0.5 text-[10px] font-bold text-arena">
-          <GradeIcon grade={grade} size={10} /> {GRADE_LABELS[grade].toUpperCase()}
-        </span>
       </div>
 
       <h4 className="mb-2 mt-4 text-xs font-black text-arena-muted">PR VÉRIFIÉS</h4>

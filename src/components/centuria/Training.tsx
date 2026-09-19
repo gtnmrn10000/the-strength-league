@@ -453,11 +453,11 @@ export default function Training({ onPR, refreshKey, autoStart }: { onPR: () => 
       <button
         onClick={() => setWorkoutOpen(true)}
         disabled={session.exercises.length === 0 && !activeSession}
-        className="mt-4 flex w-full flex-col items-center justify-center gap-0.5 rounded-2xl bg-arena-gold py-3.5 font-black tracking-widest text-black shadow-[0_0_24px_rgba(212,175,55,0.35)] disabled:opacity-40 disabled:shadow-none active:scale-[0.98] transition"
+          className="mt-4 flex min-h-14 w-full flex-col items-center justify-center gap-0.5 rounded-lg bg-foreground py-3 font-semibold text-background disabled:opacity-40 active:scale-[0.98] transition"
       >
         <span className="flex items-center gap-2">
           <Play size={16} strokeWidth={3} />
-          {activeSession ? "REPRENDRE LA SÉANCE" : "DÉMARRER LA SÉANCE"}
+          {activeSession ? "Reprendre la séance" : "Démarrer la séance"}
         </span>
         {activeSession && (
           <span className="text-[10px] font-bold tracking-normal opacity-70">

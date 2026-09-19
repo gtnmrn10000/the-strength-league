@@ -406,8 +406,8 @@ function GoalStep({ selected, onSelect }: { selected: string | null; onSelect: (
           </div>
         </button>
       ))}
-      <div className="mt-2 flex items-start gap-2 rounded-xl bg-arena-gold/5 p-3">
-        <Sparkles size={14} className="mt-0.5 shrink-0 text-arena-gold" />
+      <div className="mt-2 flex items-start gap-2 border-t border-arena-border pt-3">
+        <Target size={14} className="mt-0.5 shrink-0 text-arena-gold" />
         <p className="text-[11px] text-arena-gold leading-relaxed">
           Tu pourras changer d'objectif à tout moment dans les réglages.
         </p>
