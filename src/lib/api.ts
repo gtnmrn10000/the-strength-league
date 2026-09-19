@@ -106,6 +106,18 @@ export type PlannedWorkout = {
   scheduled_for: string;
 };
 
+export function coachChat(message: string): Promise<AssistantContent> {
+  return callFunction("coach", { action: "chat", message });
+}
+
+export function coachHistory(): Promise<ChatMsg[]> {
+  return callFunction("coach", { action: "history" });
+}
+
+export function coachClearHistory(): Promise<{ ok: true }> {
+  return callFunction("coach", { action: "clearHistory" });
+}
+
 export function coachRecovery(): Promise<Array<{ muscle_groups: string[]; completed_at: string; name: string }>> {
   return callFunction("coach", { action: "recovery" });
 }
