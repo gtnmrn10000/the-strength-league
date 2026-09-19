@@ -140,53 +140,78 @@ function Insignia({ grade, fill, shade, metal, animated, context, compact }: { g
           <path d="M28 16c4-7 13-10 21-6l-3 5c-6-2-12-1-18 5Z" fill={metal.accent} stroke={metal.edge} strokeWidth="1" />
         </motion.g>
       </g>;
-    case "centurion":
-      return <g filter="url(#relief)">
-        <motion.circle cx="36" cy="36" r="29.5" fill={dark} stroke={metal.edge} strokeWidth="1.5" initial={initialDraw} animate={draw} transition={{ delay, duration: .65 }} />
-        <Laurel metal={metal} animated={animated} delay={delay + .06} />
-        <motion.g initial={animated ? { scaleX: .86, opacity: .35 } : undefined} animate={animated ? { scaleX: [ .86, 1.035, 1 ], opacity: 1 } : undefined} transition={{ delay, duration: .66, ease: "easeOut" }} style={{ transformOrigin: "36px 34px" }}>
-          <path d="M6 29c11 1 19-3 28-13l2 15 2-15c9 10 17 14 28 13-6 4-10 9-13 16l-13-7-4 16-4-16-13 7c-3-7-7-12-13-16Z" fill={`url(#${fill})`} stroke={metal.accent} strokeWidth="1.2" />
-          <path d="M8 29c8 0 16-4 24-11l-1 7c-7 5-13 8-20 8Zm53 0c-8 0-16-4-24-11l1 7c7 5 13 8 20 8ZM13 36c6-1 11-3 17-7l-1 6c-5 4-9 6-13 6Zm46 0c-6-1-11-3-17-7l1 6c5 4 9 6 13 6Z" fill={metal.high} stroke={metal.edge} strokeWidth=".65" />
-          <path d="m36 20 6 7-2 9-4 5-4-5-2-9Z" fill={metal.high} stroke={metal.edge} strokeWidth=".9" />
-          <path d="m39 25 8 2-7 3Z" fill={metal.accent} stroke={metal.edge} strokeWidth=".65" />
-          <circle cx="37.5" cy="25.8" r=".8" fill={metal.shadow} />
-          <path d="m31 47 5 8 5-8M27 50l9 7 9-7" fill="none" stroke={metal.accent} strokeWidth="1.15" />
-        </motion.g>
-        <path d="m30 10 2-6 4 4 4-4 2 6-3 4h-6Z" fill={metal.accent} stroke={metal.edge} strokeWidth=".8" />
+    case "centurion": {
+      const wing = (side: 1 | -1) => <g>
+        {[
+          { d: "M34 28C26 20 18 16 7 16c6 4 9 9 11 14l16-2Z", f: metal.high, o: 1 },
+          { d: "M34 34C26 29 19 26 10 26c4 4 6 7 7 11l17-3Z", f: metal.mid, o: .95 },
+          { d: "M34 40C28 37 22 35 15 35c3 3 4 5 5 8l14-3Z", f: metal.low, o: .95 },
+        ].map((f, i) => <path key={i} d={f.d} fill={f.f} opacity={f.o} stroke={metal.edge} strokeWidth=".85" strokeLinejoin="round" transform={side === -1 ? "translate(72,0) scale(-1,1)" : undefined} />)}
+        <path d="M32 29c-6-5-13-8-21-9m21 15c-5-3-11-5-17-5m17 11c-4-2-8-3-12-3" fill="none" stroke={metal.shadow} strokeWidth=".55" opacity=".55" transform={side === -1 ? "translate(72,0) scale(-1,1)" : undefined} />
       </g>;
+      return <g filter="url(#relief)">
+        <motion.circle cx="36" cy="36" r="29.5" fill={dark} stroke={metal.edge} strokeWidth="1.8" initial={initialDraw} animate={draw} transition={{ delay, duration: .65 }} />
+        <circle cx="36" cy="36" r="25.5" fill="none" stroke={metal.mid} strokeWidth=".8" opacity=".7" />
+        <Laurel metal={metal} animated={animated} delay={delay + .06} />
+        <motion.g initial={animated ? { scaleX: .84, opacity: .35 } : undefined} animate={animated ? { scaleX: [.84, 1.03, 1], opacity: 1 } : undefined} transition={{ delay, duration: .66, ease: "easeOut" }} style={{ transformOrigin: "36px 32px" }}>
+          {wing(1)}{wing(-1)}
+          <path d="M36 21c3 0 5 2 5 5l-1 6-1 15-3 13-3-13-1-15-1-6c0-3 2-5 5-5Z" fill={`url(#${fill})`} stroke={metal.accent} strokeWidth="1.1" strokeLinejoin="round" />
+          <Facet d="M36 21c3 0 5 2 5 5l-1 6-1 15-3 13Z" fill={metal.high} opacity={.55} />
+          <path d="m41 25 6 2-6 2.4Z" fill={metal.accent} stroke={metal.edge} strokeWidth=".6" />
+          <circle cx="38.2" cy="25.4" r=".85" fill={metal.shadow} />
+          <path d="m30 50 6 10 6-10-6 4Z" fill={metal.mid} stroke={metal.edge} strokeWidth=".8" strokeLinejoin="round" />
+        </motion.g>
+        <path d="m29 12 2.5-7 4.5 4.5 4.5-4.5 2.5 7-3 4h-8Z" fill={metal.accent} stroke={metal.edge} strokeWidth=".8" strokeLinejoin="round" />
+      </g>;
+    }
     case "titan":
       return <g filter="url(#relief)">
-        <path d="m36 5 18 9 8 18-7 26-19 9-19-9-7-26 8-18Z" fill={dark} stroke={metal.edge} strokeWidth="2" />
-        <path d="m22 16 14-7 14 7 6 16-7 22-13 8-13-8-7-22Z" fill={`url(#${fill})`} stroke={metal.mid} strokeWidth="1.2" />
-        <Facet d="m22 16 14-7v53l-13-8-7-22Z" fill={metal.low} opacity={.85} /><Facet d="m50 16-14-7v53l13-8 7-22Z" fill={metal.mid} opacity={.7} />
-        <path d="m20 28 12-7 4 9 4-9 12 7-5 9-7-3v19l-4 8-4-8V34l-7 3Z" fill={metal.shadow} stroke={metal.edge} strokeWidth="1.1" />
-        <path d="m24 38 8 3m16-3-8 3" stroke={metal.accent} strokeWidth="1.2" />
-        <motion.path d="m41 13-8 15 6 7-8 18" fill="none" stroke={metal.accent} strokeWidth="1.15" animate={animated ? { opacity: [.18, 1, .3] } : undefined} transition={{ delay: ceremony ? 1.12 : .34, duration: .16, times: [0, .5, 1] }} />
+        <path d="m36 4 19 9 8 19-7 27-20 9-20-9-7-27 8-19Z" fill={dark} stroke={metal.edge} strokeWidth="2.4" />
+        <path d="m22 16 14-7 14 7 6 16-7 22-13 8-13-8-7-22Z" fill={`url(#${fill})`} stroke={metal.mid} strokeWidth="1.3" />
+        <Facet d="m22 16 14-7v53l-13-8-7-22Z" fill={metal.low} opacity={.92} /><Facet d="m50 16-14-7v53l13-8 7-22Z" fill={metal.mid} opacity={.6} />
+        <path d="m20 27 12-7 4 9 4-9 12 7-5 10-7-3.5v19L36 61l-4-8.5v-19L25 37Z" fill={metal.shadow} stroke={metal.edge} strokeWidth="1.2" strokeLinejoin="round" />
+        <path d="m23 31 9 4-1 4-9-4Zm26 0-9 4 1 4 9-4Z" fill={metal.accent} opacity=".9" />
+        <path d="M31 44h10m-9 5h8" stroke={metal.edge} strokeWidth="1.1" />
+        <path d="m28 12 8-4 8 4-8 3Z" fill={metal.high} opacity={.75} />
+        <motion.path d="m41 12-8 16 6 7-8 19" fill="none" stroke="#e9f1f4" strokeWidth="1.25" animate={animated ? { opacity: [.14, 1, .25] } : undefined} transition={{ delay: ceremony ? 1.12 : .34, duration: .18, times: [0, .5, 1] }} />
       </g>;
-    case "legende":
+    case "legende": {
+      const mane = Array.from({ length: 18 }, (_, i) => i * 20);
       return <g filter="url(#relief)">
-        <circle cx="36" cy="37" r="29" fill={dark} stroke={metal.edge} strokeWidth="1.6" />
+        <circle cx="36" cy="37" r="29.5" fill={dark} stroke={metal.edge} strokeWidth="1.8" />
         <Laurel metal={metal} animated={animated} delay={delay} />
-        <motion.g initial={animated ? { opacity: .3, y: 1 } : undefined} animate={animated ? { opacity: 1, y: 0 } : undefined} transition={{ delay: delay + .16, duration: .52 }}>
-          <path d="m24 25 5-8 7 4 7-4 5 8-3 21-9 12-9-12Z" fill={`url(#${fill})`} stroke={metal.accent} strokeWidth="1.15" />
-          <Facet d="m24 25 12-4v37l-9-12Z" fill={metal.mid} opacity={.58} /><Facet d="m48 25-12-4v37l9-12Z" fill={metal.low} opacity={.68} />
-          <path d="m27 31 6 3 3-5 3 5 6-3-3 8 4 6-6 1-4 9-4-9-6-1 4-6Z" fill={metal.shadow} stroke={metal.edge} strokeWidth=".8" />
-          <path d="M31 40h10M33 46l3 3 3-3" fill="none" stroke={metal.accent} strokeWidth="1" />
+        <motion.g initial={animated ? { opacity: .25, scale: .94 } : undefined} animate={animated ? { opacity: 1, scale: 1 } : undefined} transition={{ delay: delay + .16, duration: .52 }} style={{ transformOrigin: "36px 38px" }}>
+          <g>{mane.map((a) => <path key={a} d="M36 38 33.6 20.5 36 14l2.4 6.5Z" fill={a % 40 === 0 ? metal.high : metal.mid} stroke={metal.edge} strokeWidth=".5" transform={`rotate(${a} 36 38)`} opacity={a % 40 === 0 ? .95 : .8} />)}</g>
+          <circle cx="36" cy="38" r="12.5" fill={`url(#${fill})`} stroke={metal.accent} strokeWidth="1.1" />
+          <path d="M28 31.5c2-2 5-2 6 1l-6 1Zm16 0c-2-2-5-2-6 1l6 1Z" fill={metal.shadow} />
+          <path d="M31 40.5h10l-1.6 4.4L36 47.5l-3.4-2.6Z" fill={metal.shadow} stroke={metal.edge} strokeWidth=".6" strokeLinejoin="round" />
+          <path d="m34.2 39.4 1.8 1.6 1.8-1.6Z" fill={metal.accent} />
+          <path d="M30 36.5h4m4 0h4" stroke={metal.accent} strokeWidth=".75" opacity=".8" />
         </motion.g>
-        <motion.path d="m27 14 3-8 6 5 6-5 3 8-3 5H30Z" fill={metal.accent} stroke={metal.edge} strokeWidth="1" initial={animated ? { opacity: 0, y: 3 } : undefined} animate={animated ? { opacity: 1, y: 0 } : undefined} transition={{ delay: delay + .38, duration: .35 }} />
+        <motion.path d="m27 13 3-8 6 5 6-5 3 8-3 5H30Z" fill={metal.accent} stroke={metal.edge} strokeWidth="1" strokeLinejoin="round" initial={animated ? { opacity: 0, y: 3 } : undefined} animate={animated ? { opacity: 1, y: 0 } : undefined} transition={{ delay: delay + .38, duration: .35 }} />
       </g>;
-    case "divin":
+    }
+    case "divin": {
+      const wing = (side: 1 | -1) => <g transform={side === -1 ? "translate(72,0) scale(-1,1)" : undefined}>
+        {[
+          { d: "M33 30C25 24 17 22 6 24c7 3 11 7 14 12l13-6Z", f: metal.high },
+          { d: "M33 37C26 33 18 32 9 34c5 3 8 6 10 10l14-7Z", f: metal.mid },
+          { d: "M33 44C27 42 21 42 15 44c4 2 6 4 8 7l10-7Z", f: metal.low },
+        ].map((f, i) => <path key={i} d={f.d} fill={f.f} stroke={metal.edge} strokeWidth=".7" strokeLinejoin="round" />)}
+      </g>;
       return <g filter="url(#relief)">
-        <motion.circle cx="36" cy="37" r="29" fill={dark} stroke={metal.edge} strokeWidth="1" strokeDasharray="9 4" initial={initialDraw} animate={draw} transition={{ delay, duration: .75 }} />
+        <motion.circle cx="36" cy="37" r="29.5" fill={dark} stroke={metal.edge} strokeWidth="1.2" strokeDasharray="9 4" initial={initialDraw} animate={draw} transition={{ delay, duration: .75 }} />
+        <circle cx="36" cy="37" r="24" fill="none" stroke={metal.mid} strokeWidth=".6" opacity=".55" />
         <motion.g initial={animated ? { scaleX: .82, opacity: .25 } : undefined} animate={animated ? { scaleX: 1, opacity: 1 } : undefined} transition={{ delay: delay + .16, duration: .6, ease: "easeOut" }} style={{ transformOrigin: "36px 38px" }}>
-          <path d="M5 37c9-1 16-6 25-17l6 14 6-14c9 11 16 16 25 17-7 3-14 8-19 16l-12-9-12 9C19 45 12 40 5 37Z" fill={`url(#${fill})`} stroke={metal.accent} strokeWidth="1" />
-          <Facet d="M7 37c9-2 16-7 23-17l6 14v10l-12 9C19 45 13 40 7 37Z" fill={metal.mid} opacity={.48} />
+          {wing(1)}{wing(-1)}
         </motion.g>
-        <path d="m36 5 4 9-2 37-2 12-2-12-2-37Z" fill={metal.high} stroke={metal.edge} strokeWidth="1" />
-        <path d="M36 9v44" stroke={metal.accent} strokeWidth=".65" />
-        <motion.ellipse cx="36" cy="7" rx="7" ry="2.1" fill="none" stroke={metal.edge} strokeWidth="1.2" initial={animated ? { opacity: 0, scaleX: .7 } : undefined} animate={animated ? { opacity: 1, scaleX: 1 } : undefined} transition={{ delay: delay + .46, duration: .32 }} style={{ transformOrigin: "36px 7px" }} />
+        <path d="m36 6 4.2 10-1.4 33-2.8 12-2.8-12-1.4-33Z" fill={metal.high} stroke={metal.edge} strokeWidth="1" strokeLinejoin="round" />
+        <path d="M36 10v43" stroke={metal.accent} strokeWidth=".7" opacity=".9" />
+        <path d="M29 43h14l-2 3.5H31Z" fill={metal.mid} stroke={metal.edge} strokeWidth=".7" strokeLinejoin="round" />
+        <motion.ellipse cx="36" cy="7" rx="7.5" ry="2.2" fill="none" stroke={metal.edge} strokeWidth="1.3" initial={animated ? { opacity: 0, scaleX: .7 } : undefined} animate={animated ? { opacity: 1, scaleX: 1 } : undefined} transition={{ delay: delay + .46, duration: .32 }} style={{ transformOrigin: "36px 7px" }} />
         {!compact && [0, 1, 2, 3].map((i) => <motion.path key={i} d={`M${36 + (i % 2 ? 24 : -24)} ${i < 2 ? 20 : 54}h${i % 2 ? 7 : -7}`} stroke={metal.accent} strokeWidth="1.7" strokeLinecap="round" initial={animated ? { opacity: 0, pathLength: 0 } : undefined} animate={animated ? { opacity: 1, pathLength: 1 } : undefined} transition={{ delay: delay + i * .08, duration: .2 }} />)}
       </g>;
+    }
   }
 }
 
