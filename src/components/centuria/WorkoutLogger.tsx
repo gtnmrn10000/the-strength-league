@@ -318,12 +318,51 @@ export default function WorkoutLogger({
         completed_at: new Date().toISOString(),
       };
 
-      const { data: inserted, error } = await supabase
-        .from("workout_sessions")
-        .insert([payload])
-        .select("id")
-        .single();
-      if (error) throw error;
+      // Hors-ligne : on met la séance en file d'attente sans tenter le réseau,
+      // pour ne jamais perdre les kg/reps saisis.
+      if (typeof navigator !== "undefined" && navigator.onLine === false) {
+        queueSession(payload);
+        clearDraft();
+        setResult({
+          template,
+          durationMin,
+          exercises: savedExercises.length,
+          sets,
+          volume,
+          records,
+          pendingSync: true,
+        });
+        onCompleted?.();
+        return;
+      }
+
+      let inserted: { id: string } | null = null;
+      try {
+        const { data, error } = await supabase
+          .from("workout_sessions")
+          .insert([payload])
+          .select("id")
+          .single();
+        if (error) throw error;
+        inserted = data;
+      } catch (e) {
+        if (isNetworkError(e)) {
+          queueSession(payload);
+          clearDraft();
+          setResult({
+            template,
+            durationMin,
+            exercises: savedExercises.length,
+            sets,
+            volume,
+            records,
+            pendingSync: true,
+          });
+          onCompleted?.();
+          return;
+        }
+        throw e;
+      }
 
       let xpGained: number | undefined;
       try {
