@@ -45,6 +45,25 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>Centuria a besoin de la caméra pour filmer vos PR et scanner vos aliments en photo.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Centuria accède à votre galerie pour importer une vidéo de PR ou une photo d'aliment à analyser.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Centuria peut enregistrer vos vidéos de PR dans votre galerie.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Centuria utilise le micro lors de l'enregistrement vidéo de vos PR.</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>app.centuria</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>app.centuria</string>
+			</array>
+		</dict>
+	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
 </dict>
