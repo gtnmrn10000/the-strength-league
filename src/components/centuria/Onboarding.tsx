@@ -96,6 +96,8 @@ export default function Onboarding({
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [triedContinue, setTriedContinue] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [authMode, setAuthMode] = useState<"signup" | "login">("signup");
+
 
   // Reprend le brouillon local (jamais source de vérité du compte).
   useEffect(() => {
@@ -222,7 +224,7 @@ export default function Onboarding({
           {titles[step]}
         </h1>
         {current === "hero" && <HeroCard />}
-        {current === "auth" && <AuthPanel />}
+        {current === "auth" && <AuthPanel initialMode={authMode} />}
         {current === "profile" && (
           <StatsStep
             pseudo={pseudo} setPseudo={(v) => { setPseudo(v); markTouched("pseudo"); persist({ pseudo: v }); }}
@@ -260,7 +262,7 @@ export default function Onboarding({
           </button>
           {current === "hero" && (
             <button
-              onClick={() => setStep(1)}
+              onClick={() => { setAuthMode("login"); setStep(1); }}
               className="mt-3 w-full text-center text-xs font-semibold text-arena-sub hover:text-foreground transition-colors"
             >
               J'ai déjà un compte
