@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "@tanstack/react-router";
 import { MapPin, Trophy, Flame, Dumbbell, Target, Zap, ArrowRight, LayoutGrid, Settings as SettingsIcon, Scale, Utensils } from "lucide-react";
 import { motion } from "framer-motion";
 import { loadUserProfile, goalLabel } from "./userProfile";
@@ -43,6 +44,7 @@ export default function Profile() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [weighOpen, setWeighOpen] = useState(false);
   const [streak, setStreak] = useState<NutritionStreak | null>(null);
+  const [myId, setMyId] = useState<string | null>(null);
 
 
   useEffect(() => {
@@ -50,6 +52,7 @@ export default function Profile() {
     (async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user || cancelled) return;
+      setMyId(user.id);
 
       const [profileRes, prsRes] = await Promise.all([
         supabase.rpc("get_my_profile").maybeSingle(),
@@ -101,6 +104,15 @@ export default function Profile() {
   return (
     <div className="px-4 pt-2 pb-4">
       <div className="mb-2 flex items-center justify-end gap-2">
+        {myId && (
+          <Link
+            to="/profile/$userId"
+            params={{ userId: myId }}
+            className="flex items-center gap-1.5 rounded-full border border-arena-border bg-arena-surface px-3 py-1.5 text-[10px] font-black tracking-widest text-arena-sub active:scale-95 transition"
+          >
+            <LayoutGrid size={12} /> MES PUBLICATIONS
+          </Link>
+        )}
         <button
           onClick={() => {
             // Un seul sheet à la fois — évite l'empilage Paramètres + Pesées.

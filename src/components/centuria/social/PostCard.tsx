@@ -216,6 +216,20 @@ function PRBadge({ status }: { status: NonNullable<FeedPost["pr"]>["status"] }) 
 }
 
 function PRBody({ post }: { post: FeedPost }) {
+  return (
+    <>
+      <PostMedia
+        path={post.media_url}
+        postType="pr"
+        mediaType={post.media_type ?? "video"}
+        className="mt-3 aspect-[9/16] max-h-[360px] w-full rounded-xl bg-black object-contain"
+      />
+      <PRBlock post={post} />
+    </>
+  );
+}
+
+export function PRBlock({ post }: { post: FeedPost }) {
   const pr = post.pr;
   const [status, setStatus] = useState(pr?.status ?? "pending");
   const [validCount, setValidCount] = useState(pr?.valid_count ?? 0);
@@ -264,12 +278,6 @@ function PRBody({ post }: { post: FeedPost }) {
 
   return (
     <>
-      <PostMedia
-        path={post.media_url}
-        postType="pr"
-        mediaType={post.media_type ?? "video"}
-        className="mt-3 aspect-[9/16] max-h-[420px] w-full rounded-xl bg-black object-contain"
-      />
       <div className="mt-3 rounded-xl bg-secondary p-3">
         <p className="text-xs font-bold text-arena-sub">
           {pr?.exercise_name ?? pr?.exercise ?? "Record"}

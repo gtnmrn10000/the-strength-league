@@ -39,8 +39,13 @@ export function PostMedia({ path, postType, mediaType, alt, className, thumb }: 
 
   if (failed) {
     return (
-      <div className={`${base} flex items-center justify-center bg-arena-surface`}>
+      <div className={`${base} flex flex-col items-center justify-center gap-1 bg-arena-surface`}>
         <ImageOff size={18} className="text-arena-muted" />
+        {!thumb && (
+          <span className="text-[11px] text-arena-muted">
+            {video ? "Vidéo indisponible" : "Image indisponible"}
+          </span>
+        )}
       </div>
     );
   }
@@ -60,8 +65,10 @@ export function PostMedia({ path, postType, mediaType, alt, className, thumb }: 
             preload="metadata"
             className="h-full w-full object-cover"
           />
-          <span className="absolute inset-0 flex items-center justify-center">
-            <Play size={20} className="text-white drop-shadow" fill="currentColor" />
+          <span className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/20">
+            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-black/55 backdrop-blur-sm">
+              <Play size={14} className="ml-0.5 text-white" fill="currentColor" />
+            </span>
           </span>
         </div>
       );
@@ -73,6 +80,12 @@ export function PostMedia({ path, postType, mediaType, alt, className, thumb }: 
         playsInline
         preload="metadata"
         className={base}
+        onPlay={(e) => {
+          const current = e.currentTarget;
+          document.querySelectorAll("video").forEach((v) => {
+            if (v !== current && !v.paused) v.pause();
+          });
+        }}
         onError={() => setFailed(true)}
       />
     );

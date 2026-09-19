@@ -86,6 +86,14 @@ function ShellInner() {
     }
   }, []);
 
+  // Retour depuis une page hors shell (ex. profil public) avec un onglet demandé.
+  useEffect(() => {
+    const wanted = sessionStorage.getItem("centuria:goto-tab");
+    if (!wanted) return;
+    sessionStorage.removeItem("centuria:goto-tab");
+    if (["home", "training", "community", "meals", "profile"].includes(wanted)) setTab(wanted);
+  }, []);
+
   // Plugins natifs (status bar, clavier, splash) + retour OAuth par deep link.
   useEffect(() => {
     void initNativeShell(() => void loadProfile());
