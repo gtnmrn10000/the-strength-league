@@ -1054,6 +1054,16 @@ export type Database = {
         }
         Returns: undefined
       }
+      record_xp_event: {
+        Args: {
+          _amount: number
+          _day: string
+          _kind: string
+          _ref_id: string
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       activity_level:

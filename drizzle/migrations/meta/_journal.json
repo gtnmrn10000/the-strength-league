@@ -120,6 +120,13 @@
       "when": 1789829739932,
       "tag": "0016_analytics_and_client_errors",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1789833125083,
+      "tag": "0017_make_xp_awards_atomic_per_reference",
+      "breakpoints": true
     }
   ]
 }

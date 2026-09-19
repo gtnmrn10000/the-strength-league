@@ -2,7 +2,6 @@
 import { z } from "npm:zod@3";
 import { handleOptions, errorResponse, jsonResponse } from "../_shared/cors.ts";
 import { requireUser, adminClient } from "../_shared/authClient.ts";
-import { GRADES, gradeForXp, type Grade } from "../_shared/grades.ts";
 
 const submitSchema = z.object({
   action: z.literal("submit"),
@@ -102,24 +101,22 @@ Deno.serve(async (req) => {
           // Award XP + recompute grade for the PR owner via service-role
           // (profiles.update RLS only allows the row owner; the voter isn't the owner).
           const admin = adminClient();
-          const { error: xpErr } = await admin
-            .from("xp_events")
-            .insert({ user_id: pr.user_id, kind: `community_pr:${pr.id}`, amount: XP_COMMUNITY_PR, day: new Date().toISOString().slice(0, 10) });
-          const isNewXp = !xpErr || (xpErr as { code?: string }).code !== "23505";
-          if (xpErr && (xpErr as { code?: string }).code !== "23505") {
+          const awardDay = new Date().toISOString().slice(0, 10);
+          const { data: isNewXp, error: xpErr } = await admin.rpc("record_xp_event", {
+            _user_id: pr.user_id,
+            _kind: "community_pr_verified",
+            _amount: XP_COMMUNITY_PR,
+            _day: awardDay,
+            _ref_id: pr.id,
+          });
+          if (xpErr) {
             console.error("[prs] xp_events insert error", xpErr);
           }
           if (isNewXp) {
-            const { data: ownerProfile } = await admin.from("profiles").select("xp, current_grade").eq("user_id", pr.user_id).maybeSingle();
-            const previousXp = Number(ownerProfile?.xp) || 0;
-            const previousGrade = (ownerProfile?.current_grade || "recruit") as Grade;
-            const newXp = previousXp + XP_COMMUNITY_PR;
-            const newGrade = gradeForXp(newXp);
             await admin
               .from("profiles")
-              .update({ xp: newXp, current_grade: newGrade, last_pr_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+              .update({ last_pr_at: new Date().toISOString(), updated_at: new Date().toISOString() })
               .eq("user_id", pr.user_id);
-            void GRADES; void previousGrade;
           }
         }
       }

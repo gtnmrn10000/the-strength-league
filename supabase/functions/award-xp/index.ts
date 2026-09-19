@@ -1,5 +1,5 @@
 // Awards workout-completion / personal-record / weekly-regularity XP.
-// Server-authoritative: idempotent via the unique (user_id, kind, day) xp_events table.
+// Server-authoritative: idempotent per stable server reference in xp_events.ref_id.
 import { z } from "npm:zod@3";
 import { handleOptions, errorResponse, jsonResponse } from "../_shared/cors.ts";
 import { requireUser, adminClient } from "../_shared/authClient.ts";
@@ -20,14 +20,25 @@ function isoWeekMonday(date = new Date()): string {
   return d.toISOString().slice(0, 10);
 }
 
+async function stableUuid(value: string): Promise<string> {
+  const bytes = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value)));
+  bytes[6] = (bytes[6] & 0x0f) | 0x50;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  const hex = [...bytes.slice(0, 16)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+}
+
 // deno-lint-ignore no-explicit-any
-async function tryRecordXpEvent(supabase: any, userId: string, kind: string, day: string): Promise<boolean> {
-  const { error } = await supabase.from("xp_events").insert({ user_id: userId, kind, amount: 0, day });
-  if (error) {
-    if ((error as { code?: string }).code === "23505") return false;
-    throw new Error(`Failed to record xp event: ${error.message}`);
-  }
-  return true;
+async function recordXpEvent(supabase: any, userId: string, kind: string, amount: number, day: string, refId: string): Promise<boolean> {
+  const { data, error } = await supabase.rpc("record_xp_event", {
+    _user_id: userId,
+    _kind: kind,
+    _amount: amount,
+    _day: day,
+    _ref_id: refId,
+  });
+  if (error) throw new Error(`Failed to record xp event: ${error.message}`);
+  return data === true;
 }
 
 type LoggedExercise = { name?: string; sets?: Array<{ weight_kg?: number; weight?: number }> };
@@ -124,7 +135,7 @@ Deno.serve(async (req) => {
       .eq("kind", "session_complete")
       .gte("day", week);
     if ((weekCount ?? 0) < SESSIONS_PER_WEEK_CAP) {
-      const isNew = await tryRecordXpEvent(admin, userId, "session_complete", day);
+      const isNew = await recordXpEvent(admin, userId, "session_complete", XP_SESSION_COMPLETE, day, session.id);
       if (isNew) sessionGained += XP_SESSION_COMPLETE;
     }
 
@@ -135,38 +146,31 @@ Deno.serve(async (req) => {
       .eq("kind", "session_complete")
       .gte("day", week);
     if ((distinctDaysCount ?? 0) >= SESSIONS_FOR_WEEKLY_BONUS) {
-      const isNewBonus = await tryRecordXpEvent(admin, userId, "weekly_regularity", week);
+      const weeklyRef = await stableUuid(`weekly_regularity:${userId}:${week}`);
+      const isNewBonus = await recordXpEvent(admin, userId, "weekly_regularity", XP_WEEKLY_REGULARITY, week, weeklyRef);
       if (isNewBonus) sessionGained += XP_WEEKLY_REGULARITY;
     }
 
     let prGained = 0;
     const isNewPr = await hasNewPersonalRecord(supabase, userId, session.exercises, session.completed_at as string);
     if (isNewPr) {
-      const isNew = await tryRecordXpEvent(admin, userId, "personal_record", day);
+      const isNew = await recordXpEvent(admin, userId, "personal_record", XP_PERSONAL_RECORD, day, session.id);
       if (isNew) prGained = XP_PERSONAL_RECORD;
     }
 
     const totalGained = sessionGained + prGained;
 
-    const { data: profile } = await supabase.rpc("get_my_profile").maybeSingle();
-    if (!profile) {
-      await admin.from("profiles").upsert(
-        { user_id: userId, pseudo: `athlete_${userId.slice(0, 6)}`, onboarded: true, updated_at: new Date().toISOString() },
-        { onConflict: "user_id" },
-      );
-    }
-    const p = (profile ?? {}) as { xp: number | null; current_grade: string | null };
-    const previousXp = Number(p.xp) || 0;
-    const previousGrade = (p.current_grade || "recruit") as Grade;
-    const newXp = Math.max(0, previousXp + totalGained);
-    const newGrade = gradeForXp(newXp);
-    const leveledUp = GRADES.indexOf(newGrade) > GRADES.indexOf(previousGrade);
-
-    const { error: uErr } = await admin
+    const { data: profile, error: profileError } = await admin
       .from("profiles")
-      .update({ xp: newXp, current_grade: newGrade, updated_at: new Date().toISOString() })
-      .eq("user_id", userId);
-    if (uErr) return errorResponse(`Failed to update profile: ${uErr.message}`, 500);
+      .select("xp, current_grade")
+      .eq("user_id", userId)
+      .single();
+    if (profileError || !profile) return errorResponse("Profil introuvable", 404);
+    const newXp = Number(profile.xp) || 0;
+    const newGrade = gradeForXp(newXp);
+    const previousXp = Math.max(0, newXp - totalGained);
+    const previousGrade = gradeForXp(previousXp) as Grade;
+    const leveledUp = GRADES.indexOf(newGrade) > GRADES.indexOf(previousGrade);
 
     return jsonResponse({
       xp: newXp,

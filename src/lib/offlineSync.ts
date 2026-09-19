@@ -143,8 +143,8 @@ async function syncOne(item: QueuedItem): Promise<"ok" | "retry"> {
     if (error) return "retry";
 
     // L'XP est attribué côté serveur (fonction Edge award-xp), jamais par le
-    // client. L'attribution est idempotente (contrainte unique user/kind/day
-    // sur xp_events) : la rappeler ici après un flush hors-ligne ne peut donc
+    // client. L'attribution est idempotente par l'UUID stable de la séance
+    // dans xp_events.ref_id : la rappeler après un flush hors-ligne ne peut donc
     // jamais dupliquer l'XP, même en cas de retry ou de double flush.
     try {
       await awardWorkoutXp(clean.id);
