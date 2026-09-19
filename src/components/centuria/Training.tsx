@@ -312,7 +312,7 @@ export default function Training({ onPR, refreshKey, autoStart }: { onPR: () => 
     <div className="px-4 pt-2 pb-6">
       {/* Actions rapides */}
       <div className="mb-4 grid grid-cols-2 gap-3">
-        <ActionCard icon={Camera} title="Log un PR" glow onClick={onPR} />
+        <ActionCard icon={Camera} title="Publier un record" glow onClick={onPR} />
         <ActionCard icon={NotebookPen} title="Mon entraînement" onClick={() => setWorkoutOpen(true)} />
         <ActionCard icon={Target} title="Mes objectifs" onClick={() => setGoalOpen(true)} />
         <ActionCard icon={Sparkles} title="Coach" premium onClick={() => setCoachOpen(true)} />
@@ -482,7 +482,7 @@ export default function Training({ onPR, refreshKey, autoStart }: { onPR: () => 
         <div className="rounded-2xl border border-arena-border bg-arena-surface p-4 text-center">
           <p className="text-sm text-arena-muted">Aucun PR enregistré</p>
           <p className="mt-1 flex items-center justify-center gap-1 text-xs text-arena-sub">
-            Log ton premier PR pour commencer <Trophy size={12} className="text-arena" />
+            Publie ton premier record pour commencer <Trophy size={12} className="text-arena" />
           </p>
         </div>
       )}
