@@ -25,7 +25,7 @@ import {
   GRADE_LABELS,
   computeGradeForLift,
 } from "@/lib/grades";
-import { GradeIcon } from "@/lib/gradeIcons";
+import { GradeEmblem } from "./grades/GradeEmblem";
 import { track } from "@/lib/analytics";
 import {
   Sheet,
@@ -638,7 +638,7 @@ export default function PRFlow({
                   {strengthBadge && (
                     <Row label="Badge de force visé" border>
                       <span className="inline-flex items-center gap-1 font-bold text-arena-gold">
-                        <GradeIcon grade={strengthBadge} size={14} />
+                        <GradeEmblem grade={strengthBadge} size={24} />
                         {GRADE_LABELS[strengthBadge]}
                       </span>
                     </Row>

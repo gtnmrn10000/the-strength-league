@@ -19,7 +19,7 @@ import PostDetailSheet from "@/components/centuria/social/PostDetailSheet";
 import FollowButton from "@/components/centuria/social/FollowButton";
 import UserListSheet from "@/components/centuria/social/UserListSheet";
 import { GRADE_LABELS, type Grade } from "@/lib/grades";
-import { GradeIcon } from "@/lib/gradeIcons";
+import { GradeEmblem } from "@/components/centuria/grades/GradeEmblem";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
 export const Route = createFileRoute("/profile/$userId")({
@@ -195,8 +195,8 @@ function ProfilePage() {
 
         <div className="mt-3">
           <h1 className="text-xl font-black">{profile.pseudo}</h1>
-          <p className="mt-1 inline-flex items-center gap-1 text-xs font-black tracking-widest text-arena-gold">
-            <GradeIcon grade={grade} size={12} /> {GRADE_LABELS[grade]?.toUpperCase()} · {profile.xp} XP
+          <p className="mt-1 inline-flex items-center gap-1.5 text-xs font-semibold text-arena-gold">
+            <GradeEmblem grade={grade} size={24} /> {GRADE_LABELS[grade]} · {profile.xp} XP
           </p>
           {profile.bio && (
             <p className="mt-2 text-sm text-foreground/90 whitespace-pre-line">{profile.bio}</p>
