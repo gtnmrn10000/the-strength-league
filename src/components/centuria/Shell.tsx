@@ -13,7 +13,7 @@ import Paywall from "./paywall/Paywall";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { fetchMyProfile } from "@/lib/profileStore";
 import { saveUserProfile } from "./userProfile";
-import { initNativeShell } from "@/lib/native";
+import { initNativeShell, isNative } from "@/lib/native";
 
 class TabErrorBoundary extends Component<
   { resetKey: string; children: ReactNode },
@@ -96,8 +96,33 @@ function ShellInner() {
 
   // Plugins natifs (status bar, clavier, splash) + retour OAuth par deep link.
   useEffect(() => {
-    void initNativeShell(() => void loadProfile());
+    void initNativeShell(
+      () => void loadProfile(),
+      () => setRefreshKey((k) => k + 1),
+    );
   }, [loadProfile]);
+
+  // Bouton retour matériel Android : si aucune feuille/dialogue n'a intercepté
+  // l'événement (registre backButton), on revient à l'accueil ou on quitte.
+  useEffect(() => {
+    if (!isNative()) return;
+    const onHardwareBack = () => {
+      if (tab !== "home") {
+        setTab("home");
+        return;
+      }
+      void (async () => {
+        try {
+          const { App } = await import("@capacitor/app");
+          App.exitApp();
+        } catch {
+          /* plugin indisponible : rien à faire */
+        }
+      })();
+    };
+    window.addEventListener("centuria:hardware-back", onHardwareBack);
+    return () => window.removeEventListener("centuria:hardware-back", onHardwareBack);
+  }, [tab]);
 
   useEffect(() => {
     if (!user) {
