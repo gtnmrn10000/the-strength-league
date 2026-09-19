@@ -1,5 +1,5 @@
 import { Check, Sparkles, X } from "lucide-react";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { PLANS, PREMIUM_FEATURES, type PlanId } from "@/lib/paywall/plans";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useState } from "react";
@@ -79,6 +79,9 @@ export default function Paywall() {
         side="bottom"
         className="h-[92dvh] max-w-md mx-auto p-0 flex flex-col bg-background border-arena-border"
       >
+        <SheetHeader className="sr-only">
+          <SheetTitle>Centuria Premium</SheetTitle>
+        </SheetHeader>
         <button
           onClick={closePaywall}
           className="absolute right-3 top-3 z-10 rounded-full bg-arena-surface p-2 text-arena-muted"
