@@ -1,1 +1,15 @@
 project_id = "lhvwdreinxgnpbnakyob"
+[functions.coach]
+verify_jwt = false
+
+[functions.food-photo]
+verify_jwt = false
+
+[functions.account]
+verify_jwt = false
+
+[functions.award-xp]
+verify_jwt = false
+
+[functions.prs]
+verify_jwt = false

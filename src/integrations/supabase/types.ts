@@ -794,6 +794,7 @@ export type Database = {
           day: string
           id: string
           kind: string
+          ref_id: string | null
           user_id: string
         }
         Insert: {
@@ -802,6 +803,7 @@ export type Database = {
           day?: string
           id?: string
           kind: string
+          ref_id?: string | null
           user_id: string
         }
         Update: {
@@ -810,6 +812,7 @@ export type Database = {
           day?: string
           id?: string
           kind?: string
+          ref_id?: string | null
           user_id?: string
         }
         Relationships: []
@@ -930,6 +933,7 @@ export type Database = {
           total_kg: number
         }[]
       }
+      grade_for_xp: { Args: { _xp: number }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

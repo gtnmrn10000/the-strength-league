@@ -12,7 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
  * `msg.includes("PREMIUM_REQUIRED")`, `msg.includes("401")`) keep working
  * unchanged.
  */
-async function callFunction<T>(name: string, body: unknown): Promise<T> {
+async function callFunction<T>(name: string, body: Record<string, unknown>): Promise<T> {
   const { data, error } = await supabase.functions.invoke(name, { body });
   if (error) {
     if (error instanceof FunctionsHttpError) {

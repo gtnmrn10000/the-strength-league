@@ -92,6 +92,13 @@
       "when": 1789829240939,
       "tag": "0012_moderation_roles_hidden_content_blocks_spam",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1789829390943,
+      "tag": "0013_xp_anticheat_rate_limits_indexes",
+      "breakpoints": true
     }
   ]
 }
