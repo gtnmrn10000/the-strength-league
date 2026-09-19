@@ -1,4 +1,6 @@
+import { useEffect, useState } from "react";
 import { User } from "lucide-react";
+import { resolveStorageUrl } from "@/lib/media";
 
 export default function UserAvatar({
   src,
@@ -11,10 +13,19 @@ export default function UserAvatar({
   size?: number;
   className?: string;
 }) {
-  if (src) {
+  const [resolved, setResolved] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    setResolved(null);
+    void resolveStorageUrl("avatars", src ?? null).then((url) => active && setResolved(url));
+    return () => { active = false; };
+  }, [src]);
+
+  if (resolved) {
     return (
       <img
-        src={src}
+        src={resolved}
         alt={pseudo ?? "avatar"}
         style={{ width: size, height: size }}
         className={`rounded-full object-cover ring-2 ring-arena-border ${className}`}
