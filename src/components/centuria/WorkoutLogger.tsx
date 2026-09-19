@@ -400,7 +400,7 @@ export default function WorkoutLogger({
 
       // Hors-ligne : on met la séance en file d'attente sans tenter le réseau,
       // pour ne jamais perdre les kg/reps saisis.
-      if (typeof navigator !== "undefined" && navigator.onLine === false) {
+      if (isOffline) {
         track("workout_sync_failed", { reason: "offline" });
         queueSession(payload);
         clearDraft();
