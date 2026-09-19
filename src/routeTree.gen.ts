@@ -16,6 +16,7 @@ import { Route as ProfileUserIdRouteImport } from './routes/profile.$userId'
 import { Route as LegalTermsRouteImport } from './routes/legal.terms'
 import { Route as LegalSupportRouteImport } from './routes/legal.support'
 import { Route as LegalPrivacyRouteImport } from './routes/legal.privacy'
+import { Route as ApiPublicRevenuecatWebhookRouteImport } from './routes/api/public/revenuecat-webhook'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
@@ -52,6 +53,12 @@ const LegalPrivacyRoute = LegalPrivacyRouteImport.update({
   path: '/legal/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicRevenuecatWebhookRoute =
+  ApiPublicRevenuecatWebhookRouteImport.update({
+    id: '/api/public/revenuecat-webhook',
+    path: '/api/public/revenuecat-webhook',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -61,6 +68,7 @@ export interface FileRoutesByFullPath {
   '/legal/support': typeof LegalSupportRoute
   '/legal/terms': typeof LegalTermsRoute
   '/profile/$userId': typeof ProfileUserIdRoute
+  '/api/public/revenuecat-webhook': typeof ApiPublicRevenuecatWebhookRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -70,6 +78,7 @@ export interface FileRoutesByTo {
   '/legal/support': typeof LegalSupportRoute
   '/legal/terms': typeof LegalTermsRoute
   '/profile/$userId': typeof ProfileUserIdRoute
+  '/api/public/revenuecat-webhook': typeof ApiPublicRevenuecatWebhookRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -80,6 +89,7 @@ export interface FileRoutesById {
   '/legal/support': typeof LegalSupportRoute
   '/legal/terms': typeof LegalTermsRoute
   '/profile/$userId': typeof ProfileUserIdRoute
+  '/api/public/revenuecat-webhook': typeof ApiPublicRevenuecatWebhookRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -91,6 +101,7 @@ export interface FileRouteTypes {
     | '/legal/support'
     | '/legal/terms'
     | '/profile/$userId'
+    | '/api/public/revenuecat-webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -100,6 +111,7 @@ export interface FileRouteTypes {
     | '/legal/support'
     | '/legal/terms'
     | '/profile/$userId'
+    | '/api/public/revenuecat-webhook'
   id:
     | '__root__'
     | '/'
@@ -109,6 +121,7 @@ export interface FileRouteTypes {
     | '/legal/support'
     | '/legal/terms'
     | '/profile/$userId'
+    | '/api/public/revenuecat-webhook'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -119,6 +132,7 @@ export interface RootRouteChildren {
   LegalSupportRoute: typeof LegalSupportRoute
   LegalTermsRoute: typeof LegalTermsRoute
   ProfileUserIdRoute: typeof ProfileUserIdRoute
+  ApiPublicRevenuecatWebhookRoute: typeof ApiPublicRevenuecatWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -172,6 +186,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LegalPrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/revenuecat-webhook': {
+      id: '/api/public/revenuecat-webhook'
+      path: '/api/public/revenuecat-webhook'
+      fullPath: '/api/public/revenuecat-webhook'
+      preLoaderRoute: typeof ApiPublicRevenuecatWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -183,6 +204,7 @@ const rootRouteChildren: RootRouteChildren = {
   LegalSupportRoute: LegalSupportRoute,
   LegalTermsRoute: LegalTermsRoute,
   ProfileUserIdRoute: ProfileUserIdRoute,
+  ApiPublicRevenuecatWebhookRoute: ApiPublicRevenuecatWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

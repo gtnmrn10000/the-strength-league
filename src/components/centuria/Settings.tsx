@@ -23,7 +23,7 @@ export default function Settings({
   onOpenChange: (v: boolean) => void;
   onOpenWeighIns?: () => void;
 }) {
-  const { isPremium, openPaywall, refresh } = useSubscription();
+  const { isPremium, openPaywall, refresh, status, mode, restore } = useSubscription();
 
   // Re-read entitlement chaque fois qu'on ouvre Paramètres — évite d'afficher
   // "Formule gratuite" si le flag a été flip côté DB pendant la session.
@@ -127,6 +127,31 @@ export default function Settings({
                   >
                     UPGRADE
                   </button>
+                )}
+              </div>
+
+              {isPremium && (
+                <p className="mt-2 text-[11px] text-arena-muted">
+                  {status?.expiresAt
+                    ? `${status.willRenew ? "Renouvellement" : "Fin d'accès"} le ${new Date(
+                        status.expiresAt
+                      ).toLocaleDateString("fr-FR")}`
+                    : "Accès actif"}
+                  {status?.provider === "dev" ? " · mode dev (aucun paiement)" : ""}
+                </p>
+              )}
+
+              <div className="mt-3 flex items-center gap-3">
+                <button
+                  onClick={() => void restore()}
+                  className="text-[11px] font-bold text-arena underline"
+                >
+                  Restaurer mes achats
+                </button>
+                {mode === "dev" && (
+                  <span className="text-[10px] font-black tracking-widest text-arena-muted">
+                    ACHATS NON BRANCHÉS
+                  </span>
                 )}
               </div>
             </div>
