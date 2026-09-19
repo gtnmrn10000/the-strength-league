@@ -22,9 +22,11 @@ function frError(message: string): string {
 export default function AuthPanel({
   initialMode = "signup",
   onAuthenticated,
+  onModeChange,
 }: {
   initialMode?: Mode;
   onAuthenticated?: () => void;
+  onModeChange?: (mode: Mode) => void;
 }) {
   const [mode, setMode] = useState<Mode>(initialMode);
   const [email, setEmail] = useState("");

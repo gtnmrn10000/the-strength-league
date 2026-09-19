@@ -225,7 +225,9 @@ export default function Onboarding({
           {titles[step]}
         </h1>
         {current === "hero" && <HeroCard />}
-        {current === "auth" && <AuthPanel initialMode={authMode} />}
+        {current === "auth" && (
+          <AuthPanel initialMode={authMode} onModeChange={setAuthMode} />
+        )}
         {current === "profile" && (
           <StatsStep
             pseudo={pseudo} setPseudo={(v) => { setPseudo(v); markTouched("pseudo"); persist({ pseudo: v }); }}
