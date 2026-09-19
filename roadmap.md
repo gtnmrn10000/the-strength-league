@@ -51,8 +51,8 @@
 - [x] QA visuelle 320 / 360 / 375 / 390 px, TypeScript et build
 
 ## Animations premium des grades élevés
-- [ ] Signatures animées Spartiate à Divin selon le contexte
-- [ ] Galerie : reveal unique et pause hors viewport
-- [ ] Home / Profil : micro-reflet compact uniquement
-- [ ] Level-up : cérémonies propres à chaque grade élevé
-- [ ] Reduced motion et QA 320 / 360 / 375 / 390
+- [x] Signatures animées Spartiate à Divin selon le contexte
+- [x] Galerie : reveal unique et pause hors viewport
+- [x] Home / Profil : micro-reflet compact uniquement
+- [x] Level-up : cérémonies propres à chaque grade élevé
+- [x] Reduced motion et QA 320 / 360 / 375 / 390
