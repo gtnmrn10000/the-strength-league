@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
+import { PostMedia } from "./PostMedia";
 import {
   Flame,
   ShieldCheck,
@@ -263,9 +264,15 @@ function PRBody({ post }: { post: FeedPost }) {
 
   return (
     <>
+      <PostMedia
+        path={post.media_url}
+        postType="pr"
+        mediaType={post.media_type ?? "video"}
+        className="mt-3 aspect-[9/16] max-h-[420px] w-full rounded-xl bg-black object-contain"
+      />
       <div className="mt-3 rounded-xl bg-secondary p-3">
         <p className="text-xs font-bold text-arena-sub">
-          {pr?.exercise?.toUpperCase() ?? "PR"}
+          {pr?.exercise_name ?? pr?.exercise ?? "Record"}
         </p>
         <p className="mt-1 text-xl font-black text-foreground">
           {pr?.weight_kg ?? "—"} KG ·{" "}
@@ -320,13 +327,13 @@ function PRBody({ post }: { post: FeedPost }) {
 function MealBody({ post }: { post: FeedPost }) {
   return (
     <>
-      {post.media_url && (
-        <img
-          src={post.media_url}
-          alt={post.caption ?? "repas"}
-          className="mt-3 h-56 w-full rounded-xl object-cover"
-        />
-      )}
+      <PostMedia
+        path={post.media_url}
+        postType={post.type}
+        mediaType={post.media_type}
+        alt={post.caption ?? "repas"}
+        className="mt-3 h-56 w-full rounded-xl bg-black object-cover"
+      />
       {post.macros && (
         <div className="mt-3 flex flex-wrap gap-2">
           {Object.entries(post.macros).map(([k, v]) => (
@@ -344,9 +351,12 @@ function MealBody({ post }: { post: FeedPost }) {
 function WorkoutBody({ post }: { post: FeedPost }) {
   return (
     <>
-      {post.media_url && (
-        <img src={post.media_url} alt="" className="mt-3 h-56 w-full rounded-xl object-cover" />
-      )}
+      <PostMedia
+        path={post.media_url}
+        postType={post.type}
+        mediaType={post.media_type}
+        className="mt-3 max-h-[420px] w-full rounded-xl bg-black object-cover"
+      />
       {post.muscle_groups && post.muscle_groups.length > 0 && (
         <div className="mt-3 flex flex-wrap gap-2">
           {post.muscle_groups.map((m) => (
