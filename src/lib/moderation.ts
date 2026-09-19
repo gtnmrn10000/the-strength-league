@@ -86,7 +86,7 @@ export async function fetchBlockedProfiles() {
   if (error || !data || data.length === 0) return [];
   const ids = data.map((r) => r.blocked_id);
   const { data: profiles } = await supabase
-    .from("profiles")
+    .from("profiles_public")
     .select("user_id, pseudo, avatar_url, current_grade")
     .in("user_id", ids);
   return (profiles ?? []) as {

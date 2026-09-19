@@ -225,7 +225,9 @@ export default function Onboarding({
           {titles[step]}
         </h1>
         {current === "hero" && <HeroCard />}
-        {current === "auth" && <AuthPanel initialMode={authMode} />}
+        {current === "auth" && (
+          <AuthPanel initialMode={authMode} onModeChange={setAuthMode} />
+        )}
         {current === "profile" && (
           <StatsStep
             pseudo={pseudo} setPseudo={(v) => { setPseudo(v); markTouched("pseudo"); persist({ pseudo: v }); }}
@@ -294,7 +296,7 @@ function HeroCard() {
       </div>
       <div className="grid grid-cols-3 gap-3">
         {[
-          { icon: ShieldCheck, label: "PR vérifiés par IA", color: "text-arena-green" },
+          { icon: ShieldCheck, label: "PR vérifiés par la communauté", color: "text-arena-green" },
           { icon: Trophy, label: "Classement national", color: "text-arena-gold" },
           { icon: Flame, label: "Feed social", color: "text-arena" },
         ].map(({ icon: Icon, label, color }) => (

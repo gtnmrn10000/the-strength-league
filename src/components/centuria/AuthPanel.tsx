@@ -22,9 +22,11 @@ function frError(message: string): string {
 export default function AuthPanel({
   initialMode = "signup",
   onAuthenticated,
+  onModeChange,
 }: {
   initialMode?: Mode;
   onAuthenticated?: () => void;
+  onModeChange?: (mode: Mode) => void;
 }) {
   const [mode, setMode] = useState<Mode>(initialMode);
   const [email, setEmail] = useState("");
@@ -120,7 +122,7 @@ export default function AuthPanel({
           </p>
         </div>
         <button
-          onClick={() => { setPendingConfirm(false); setMode("login"); }}
+          onClick={() => { setPendingConfirm(false); setMode("login"); onModeChange?.("login"); }}
           className="text-center text-xs font-semibold text-arena-sub"
         >
           J'ai confirmé, me connecter
@@ -169,7 +171,12 @@ export default function AuthPanel({
 
       <button
         type="button"
-        onClick={() => { setMode(mode === "signup" ? "login" : "signup"); setError(null); }}
+        onClick={() => {
+          const next = mode === "signup" ? "login" : "signup";
+          setMode(next);
+          onModeChange?.(next);
+          setError(null);
+        }}
         className="mt-1 text-center text-xs font-semibold text-arena-sub transition-colors hover:text-foreground"
       >
         {mode === "signup" ? "J'ai déjà un compte" : "Créer un compte"}

@@ -181,12 +181,16 @@ export default function WorkoutLogger({
 
       const durationMin = startedAt ? Math.max(1, Math.round((Date.now() - startedAt) / 60000)) : null;
 
-      // On enregistre les valeurs réellement saisies : séries cochées en priorité,
-      // sinon l'exercice tel qu'édité (jamais le template d'origine).
-      const savedExercises = template.exercises.map((ex, exIdx) => {
-        const doneSets = ex.sets.filter((_, i) => done[`${exIdx}-${i}`]);
-        return { ...ex, sets: doneSets.length ? doneSets : ex.sets };
-      });
+      // On enregistre uniquement les séries réellement validées dès qu'il y en a
+      // au moins une : jamais de séries non faites (stats et records honnêtes).
+      const savedExercises = doneCount
+        ? template.exercises
+            .map((ex, exIdx) => ({
+              ...ex,
+              sets: ex.sets.filter((_, i) => done[`${exIdx}-${i}`]),
+            }))
+            .filter((ex) => ex.sets.length > 0)
+        : template.exercises;
 
       const payload = {
         user_id: user.id,
