@@ -266,6 +266,39 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_prefs: {
+        Row: {
+          comments: boolean
+          followers: boolean
+          grades: boolean
+          pr_votes: boolean
+          push_enabled: boolean
+          updated_at: string
+          user_id: string
+          workout_reminder: boolean
+        }
+        Insert: {
+          comments?: boolean
+          followers?: boolean
+          grades?: boolean
+          pr_votes?: boolean
+          push_enabled?: boolean
+          updated_at?: string
+          user_id: string
+          workout_reminder?: boolean
+        }
+        Update: {
+          comments?: boolean
+          followers?: boolean
+          grades?: boolean
+          pr_votes?: boolean
+          push_enabled?: boolean
+          updated_at?: string
+          user_id?: string
+          workout_reminder?: boolean
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           actor_id: string | null
@@ -574,6 +607,33 @@ export type Database = {
           user_id?: string
           video_url?: string | null
           weight_kg?: number
+        }
+        Relationships: []
+      }
+      push_devices: {
+        Row: {
+          created_at: string
+          id: string
+          last_seen_at: string
+          platform: string
+          token: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_seen_at?: string
+          platform: string
+          token: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_seen_at?: string
+          platform?: string
+          token?: string
+          user_id?: string
         }
         Relationships: []
       }
