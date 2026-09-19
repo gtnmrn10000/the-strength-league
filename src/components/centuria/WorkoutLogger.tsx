@@ -255,6 +255,7 @@ export default function WorkoutLogger({
   const restLeft = restEndsAt ? Math.max(0, Math.ceil((restEndsAt - now) / 1000)) : 0;
 
   const requestFinish = () => {
+    console.log("[dbg] requestFinish", { hasTemplate: !!template, saving, allDone, totalSets });
     if (!template || saving) return;
     if (!allDone && totalSets > 0) {
       setConfirmFinish(true);
