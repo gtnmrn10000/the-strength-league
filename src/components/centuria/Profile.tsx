@@ -3,7 +3,7 @@ import { MapPin, Trophy, Flame, Dumbbell, Target, Zap, ArrowRight, LayoutGrid, S
 import { motion } from "framer-motion";
 import { loadUserProfile, goalLabel } from "./userProfile";
 import { supabase } from "@/integrations/supabase/client";
-import { GRADES, GRADE_LABELS, THRESHOLDS, type Grade } from "@/lib/grades";
+import { GRADES, GRADE_LABELS, THRESHOLDS, nextGradeInfo, type Grade } from "@/lib/grades";
 import { GradeIcon, GoalIcon } from "@/lib/gradeIcons";
 import { fetchNutritionStreak, type NutritionStreak } from "@/lib/foodLogs";
 import GradeGallery from "./GradeGallery";
