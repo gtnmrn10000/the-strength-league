@@ -13,6 +13,7 @@ export type SessionResult = {
   volume: number;
   records: NewRecord[];
   xpGained?: number;
+  pendingSync?: boolean;
 };
 
 const stagger = { hidden: {}, show: { transition: { staggerChildren: 0.05 } } };
@@ -30,7 +31,7 @@ export default function SessionSummary({
   onClose: () => void;
   onShare?: () => void;
 }) {
-  const { template, durationMin, exercises, sets, volume, records, xpGained } = result;
+  const { template, durationMin, exercises, sets, volume, records, xpGained, pendingSync } = result;
 
   return (
     <div className="flex flex-1 flex-col overflow-hidden">
@@ -45,10 +46,23 @@ export default function SessionSummary({
             <Check size={20} className="text-arena-gold" strokeWidth={3} />
           </div>
           <div className="min-w-0">
-            <p className="text-lg font-black leading-tight text-foreground">Séance enregistrée</p>
+            <p className="text-lg font-black leading-tight text-foreground">
+              {pendingSync ? "Séance enregistrée hors-ligne" : "Séance enregistrée"}
+            </p>
             <p className="truncate text-xs text-arena-sub">{template.name}</p>
           </div>
         </motion.div>
+
+        {pendingSync && (
+          <motion.div
+            variants={item}
+            className="mt-4 rounded-2xl border border-arena-border bg-arena-surface px-4 py-3"
+          >
+            <p className="text-xs font-bold text-arena-sub">
+              À synchroniser — ta séance sera envoyée dès que la connexion revient. Tes données ne sont pas perdues.
+            </p>
+          </motion.div>
+        )}
 
         <motion.div variants={item} className="mt-5 grid grid-cols-3 gap-2">
           <Stat icon={Clock} label="Durée" value={durationMin ? `${durationMin} min` : "—"} />

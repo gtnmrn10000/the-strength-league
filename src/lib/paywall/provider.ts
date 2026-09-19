@@ -16,6 +16,8 @@ import {
   NO_ENTITLEMENT,
   type EntitlementStatus,
 } from "./entitlement";
+import { checkStudentEligibility, studentVerificationConfigured } from "./eligibility";
+import { planById } from "./plans";
 import {
   paywallMode,
   REVENUECAT_ANDROID_KEY,
@@ -27,9 +29,13 @@ import { setDevPremium } from "./dev.functions";
 
 export type { EntitlementStatus };
 
+export type StorePrices = Partial<Record<PlanId, string>>;
+
 export interface PaywallProvider {
   readonly mode: "revenuecat" | "dev";
   getStatus(): Promise<EntitlementStatus>;
+  /** Prix localisés renvoyés par le store (vide si indisponible). */
+  getPrices(): Promise<StorePrices>;
   purchase(planId: PlanId): Promise<EntitlementStatus>;
   restore(): Promise<EntitlementStatus>;
 }
@@ -48,6 +54,10 @@ export class DevPaywallProvider implements PaywallProvider {
     } catch {
       return NO_ENTITLEMENT;
     }
+  }
+
+  async getPrices(): Promise<StorePrices> {
+    return {};
   }
 
   async purchase(planId: PlanId): Promise<EntitlementStatus> {
@@ -69,7 +79,10 @@ type RCPurchases = {
   restorePurchases: () => Promise<unknown>;
   logIn: (opts: { appUserID: string }) => Promise<unknown>;
 };
-type RCPackage = { identifier: string; product: { identifier: string } };
+type RCPackage = {
+  identifier: string;
+  product: { identifier: string; priceString?: string };
+};
 
 /**
  * Achats in-app natifs via RevenueCat (StoreKit / Google Play Billing).
@@ -107,7 +120,39 @@ export class RevenueCatPaywallProvider implements PaywallProvider {
     }
   }
 
+  async getPrices(): Promise<StorePrices> {
+    try {
+      const sdk = await this.load();
+      const offerings = await sdk.getOfferings();
+      const prices: StorePrices = {};
+      for (const pkg of offerings.current?.availablePackages ?? []) {
+        const price = pkg.product.priceString;
+        if (!price) continue;
+        for (const [planId, productId] of Object.entries(STORE_PRODUCT_IDS)) {
+          if (productId && productId === pkg.product.identifier) {
+            prices[planId as PlanId] = price;
+          }
+        }
+      }
+      return prices;
+    } catch {
+      return {};
+    }
+  }
+
   async purchase(planId: PlanId): Promise<EntitlementStatus> {
+    const plan = planById(planId);
+    if (plan.requiresEligibility === "student") {
+      if (!studentVerificationConfigured()) {
+        throw new Error(
+          "La formule Étudiant n'est pas encore ouverte : la vérification du statut étudiant n'est pas branchée."
+        );
+      }
+      const state = await checkStudentEligibility();
+      if (state !== "eligible") {
+        throw new Error("Ton statut étudiant doit être vérifié avant de souscrire cette formule.");
+      }
+    }
     const productId = STORE_PRODUCT_IDS[planId];
     if (!productId) throw new Error("Produit store non configuré pour cette formule.");
     const sdk = await this.load();

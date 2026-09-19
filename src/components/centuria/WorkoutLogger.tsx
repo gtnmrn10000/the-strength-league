@@ -36,6 +36,8 @@ import {
 } from "@/lib/exerciseUserData";
 import { fetchProgress, statsFor } from "@/lib/progress";
 import { awardWorkoutXp } from "@/lib/xp.functions";
+import { queueSession } from "@/lib/offlineSync";
+import { pushBackHandler } from "@/lib/backButton";
 import ExerciseLibrary from "./ExerciseLibrary";
 import SessionSummary, { type NewRecord, type SessionResult } from "./session/SessionSummary";
 
@@ -363,6 +365,18 @@ export default function WorkoutLogger({
     setResult(null);
     onOpenChange(false);
   };
+
+  // Bouton retour matériel : tant que la feuille est ouverte, on la
+  // referme (avec la même logique de confirmation) plutôt que de laisser
+  // remonter l'événement au niveau des onglets.
+  useEffect(() => {
+    if (!open) return;
+    return pushBackHandler(() => {
+      requestClose(false);
+      return true;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, result, template, doneCount]);
 
   const requestClose = (next: boolean) => {
     if (next) return;

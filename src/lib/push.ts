@@ -160,10 +160,12 @@ export async function savePushPrefs(partial: Partial<NotificationPrefs>): Promis
   const userId = auth.user?.id;
   if (!userId) return false;
 
+  const current = await getPushPrefs();
+
   const { error } = await supabase
     .from("notification_prefs")
     .upsert(
-      { user_id: userId, ...DEFAULT_PREFS, ...partial, updated_at: new Date().toISOString() },
+      { user_id: userId, ...current, ...partial, updated_at: new Date().toISOString() },
       { onConflict: "user_id" },
     );
 
