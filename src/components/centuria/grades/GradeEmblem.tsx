@@ -35,6 +35,58 @@ function Facet({ d, fill, opacity = 1 }: { d: string; fill: string; opacity?: nu
   return <path d={d} fill={fill} opacity={opacity} />;
 }
 
+/** Halo / aura premium, intensité croissante par rang. Purement décoratif, derrière l'insigne. */
+const AURA_STRENGTH: Record<Grade, number> = {
+  recruit: 0, soldat: .1, guerrier: .16, spartiate: .3, gladiateur: .42,
+  centurion: .55, titan: .5, legende: .68, divin: .8,
+};
+
+function Aura({ grade, metal, auraId, context, animated, compact }: { grade: Grade; metal: Metal; auraId: string; context: GradeEmblemContext; animated: boolean; compact: boolean }) {
+  const base = AURA_STRENGTH[grade];
+  if (base === 0) return null;
+  const ceremony = context === "level-up";
+  const scale = ceremony ? 1 : context === "gallery" ? .62 : compact ? .3 : .48;
+  const o = base * scale;
+  const delay = ceremony ? .82 : .18;
+  const ember = grade === "spartiate" || grade === "gladiateur" || grade === "centurion";
+
+  return <g aria-hidden="true">
+    <motion.circle
+      cx="36" cy="37" r="33" fill={`url(#${auraId})`}
+      initial={animated ? { opacity: 0, scale: .92 } : { opacity: o }}
+      animate={animated ? { opacity: [0, o * 1.5, o], scale: 1 } : { opacity: o }}
+      transition={{ delay, duration: .9, ease: "easeOut" }}
+      style={{ transformOrigin: "36px 37px" }}
+    />
+    {ember && !compact && [0, 1, 2].map((i) => (
+      <motion.circle key={i} cx={22 + i * 14} cy={58 - i * 3} r={.9 - i * .12} fill={metal.accent}
+        initial={{ opacity: 0 }}
+        animate={animated ? { opacity: [0, .5, 0], cy: [58 - i * 3, 44 - i * 3] } : { opacity: 0 }}
+        transition={{ delay: delay + i * .14, duration: 1.1, ease: "easeOut" }} />
+    ))}
+    {grade === "legende" && !compact && [0, 1, 2, 3].map((i) => (
+      <motion.circle key={i} cx={20 + i * 11} cy={20 + (i % 2) * 30} r=".85" fill={metal.accent}
+        initial={{ opacity: 0 }}
+        animate={animated ? { opacity: [0, .55, 0] } : { opacity: 0 }}
+        transition={{ delay: delay + i * .12, duration: 1.2, ease: "easeInOut" }} />
+    ))}
+    {grade === "titan" && (
+      <motion.circle cx="36" cy="37" r="30" fill="none" stroke={metal.accent} strokeWidth=".7"
+        initial={{ opacity: 0 }}
+        animate={animated ? { opacity: [0, .35, 0], scale: [.97, 1.02, 1] } : { opacity: 0 }}
+        transition={{ delay: delay + .3, duration: .5 }} style={{ transformOrigin: "36px 37px" }} />
+    )}
+    {grade === "divin" && !compact && (
+      <motion.g
+        initial={{ opacity: 0 }} animate={animated ? { opacity: .5, rotate: ceremony ? 8 : 4 } : { opacity: .22 }}
+        transition={{ delay: delay + .1, duration: ceremony ? 2.2 : 1.4, ease: "linear" }}
+        style={{ transformOrigin: "36px 37px" }}>
+        <circle cx="36" cy="37" r="32" fill="none" stroke={metal.accent} strokeWidth=".6" strokeDasharray="5 9" opacity=".7" />
+      </motion.g>
+    )}
+  </g>;
+}
+
 function Insignia({ grade, fill, shade, metal, animated, context, compact }: { grade: Grade; fill: string; shade: string; metal: Metal; animated: boolean; context: GradeEmblemContext; compact: boolean }) {
   const ceremony = context === "level-up";
   const delay = ceremony ? .76 : .08;
