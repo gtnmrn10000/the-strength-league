@@ -1,8 +1,12 @@
 import { useState, useCallback, useEffect } from "react";
-import { Apple, Mail, Lock, ChevronLeft, Sparkles, ShieldCheck, Trophy, Check, Dumbbell, Target, TrendingUp, AlertCircle, Flame, Swords, Zap, type LucideIcon } from "lucide-react";
+import { Mail, Lock, ChevronLeft, Sparkles, ShieldCheck, Trophy, Check, Dumbbell, Target, TrendingUp, AlertCircle, Flame, Swords, Zap, Loader2, type LucideIcon } from "lucide-react";
 import Logo from "./Logo";
 import { saveUserProfile } from "./userProfile";
 import { track } from "./analytics";
+import AuthPanel from "./AuthPanel";
+import { saveMyProfile } from "@/lib/profileStore";
+import { toast } from "sonner";
+
 
 
 /* ── Validation helpers ── */
