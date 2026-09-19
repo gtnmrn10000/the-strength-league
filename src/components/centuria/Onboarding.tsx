@@ -119,7 +119,8 @@ export default function Onboarding({
 
   const titles = authed
     ? ["FORGE TON PROFIL", "FIXE TON PREMIER OBJECTIF"]
-    : ["PROUVE TA FORCE.", "CRÉE TON COMPTE"];
+    : ["PROUVE TA FORCE.", authMode === "login" ? "CONNEXION" : "CRÉE TON COMPTE"];
+
 
   const statsErrors = validateStats(pseudo, age, taille, poids);
   const current = stepNames[step];
