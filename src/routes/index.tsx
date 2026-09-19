@@ -6,7 +6,7 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "CENTURIA — Classe. Vérifie. Récompense." },
-      { name: "description", content: "La première plateforme française qui classe, vérifie et récompense les pratiquants de musculation." },
+      { name: "description", content: "Enregistre tes séances, suis ta progression et fais vérifier tes records par la communauté." },
     ],
   }),
 });

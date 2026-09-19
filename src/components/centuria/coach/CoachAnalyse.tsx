@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Loader2, Dumbbell, Flame, Trophy } from "lucide-react";
-import { getWeeklyStats, type WeeklyStats } from "@/lib/coach.functions";
+import { coachWeeklyStats, type WeeklyStats } from "@/lib/api";
 import { MUSCLE_LABEL, type MuscleGroup } from "@/lib/recovery";
 
 export default function CoachAnalyse({ refreshKey }: { refreshKey?: number }) {
@@ -12,7 +12,7 @@ export default function CoachAnalyse({ refreshKey }: { refreshKey?: number }) {
     (async () => {
       setLoading(true);
       try {
-        const s = await getWeeklyStats();
+        const s = await coachWeeklyStats();
         if (!cancel) setStats(s);
       } catch {
         // silent

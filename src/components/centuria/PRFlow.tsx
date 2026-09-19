@@ -19,7 +19,7 @@ import {
   type LibraryExercise,
 } from "@/lib/exerciseCatalog";
 import { supabase } from "@/integrations/supabase/client";
-import { submitPR } from "@/lib/prs.functions";
+import { submitPR } from "@/lib/api";
 import { captureVideo } from "@/lib/nativeMedia";
 import {
   GRADE_LABELS,
@@ -279,13 +279,11 @@ export default function PRFlow({
       // L'insertion du PR déclenche un trigger DB qui crée automatiquement
       // un post 'pr' dans le feed pour la vérification communautaire.
       await submitPR({
-        data: {
-          exercise: exercise.id,
-          exercise_name: exercise.name,
-          weight_kg: Number(weight),
-          reps,
-          video_url: path,
-        },
+        exercise: exercise.id,
+        exercise_name: exercise.name,
+        weight_kg: Number(weight),
+        reps,
+        video_url: path,
       });
 
       setUploadProgress(85);

@@ -12,7 +12,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { deleteMyAccount, exportMyData, DELETE_CONFIRM_PHRASE } from "@/lib/account.functions";
+import { deleteMyAccount, exportMyData, DELETE_CONFIRM_PHRASE } from "@/lib/api";
 import { toast } from "sonner";
 
 function frError(message: string) {
@@ -104,7 +104,7 @@ export default function AccountSection({ onSignedOut }: { onSignedOut?: () => vo
     }
     setDeleting(true);
     try {
-      await deleteMyAccount({ data: { confirm: DELETE_CONFIRM_PHRASE } });
+      await deleteMyAccount(DELETE_CONFIRM_PHRASE);
       await supabase.auth.signOut();
       localStorage.removeItem("centuria_onboarded");
       localStorage.removeItem("centuria_profile");

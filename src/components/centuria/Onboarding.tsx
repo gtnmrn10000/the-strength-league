@@ -287,7 +287,7 @@ function HeroCard() {
           <Logo size="lg" />
         </div>
         <p className="mb-4 text-sm leading-relaxed text-arena-sub">
-          La première plateforme française qui classe, vérifie et récompense officiellement les pratiquants de muscu.
+          Enregistre tes séances, suis ta progression et fais vérifier tes records par la communauté.
         </p>
         <div className="flex items-center gap-2">
           <Sparkles size={14} className="text-arena-gold" />

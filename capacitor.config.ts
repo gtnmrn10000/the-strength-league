@@ -1,25 +1,27 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 /**
- * L'app est rendue côté serveur (TanStack Start + server functions) : le build
- * client ne contient pas d'index.html autonome. Le shell natif charge donc
- * l'app hébergée. `CAP_SERVER_URL` permet de pointer vers le préview ou un
- * tunnel local pendant le développement.
+ * L'app est EMBARQUÉE dans le binaire : `bun run build:native` produit un SPA
+ * autonome dans `dist/client` (index.html + assets), chargé localement par la
+ * WebView. Seules les API distantes (Supabase, Edge Functions) sortent du
+ * téléphone.
+ *
+ * `CAP_SERVER_URL` sert uniquement au développement (live reload sur un
+ * tunnel ou le préview) et n'est jamais utilisé pour un build de production.
  */
-const serverUrl = process.env['CAP_SERVER_URL'] || 'https://centuriapp.lovable.app';
+const devServerUrl = process.env['CAP_SERVER_URL'];
 
 const config: CapacitorConfig = {
   appId: 'app.centuria',
   appName: 'Centuria',
   webDir: 'dist/client',
   server: {
-    url: serverUrl,
+    ...(devServerUrl ? { url: devServerUrl } : {}),
     cleartext: false,
     androidScheme: 'https',
     iosScheme: 'https',
     // Domaines autorisés à rester dans la WebView (OAuth Google/Apple + Supabase)
     allowNavigation: [
-      'centuriapp.lovable.app',
       '*.lovable.app',
       '*.supabase.co',
       'accounts.google.com',

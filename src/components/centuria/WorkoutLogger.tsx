@@ -35,7 +35,7 @@ import {
   type LastPerf,
 } from "@/lib/exerciseUserData";
 import { fetchProgress, statsFor } from "@/lib/progress";
-import { awardWorkoutXp } from "@/lib/xp.functions";
+import { awardWorkoutXp } from "@/lib/api";
 import { queueSession } from "@/lib/offlineSync";
 import { pushBackHandler } from "@/lib/backButton";
 import ExerciseLibrary from "./ExerciseLibrary";
@@ -58,14 +58,21 @@ function isNetworkError(e: unknown): boolean {
   );
 }
 
-type Draft = { template: Template; done: Record<string, boolean>; startedAt: number };
+type Draft = {
+  id: string;
+  template: Template;
+  done: Record<string, boolean>;
+  startedAt: number;
+  restEndsAt: number | null;
+};
 
 function readDraft(): Draft | null {
   try {
     const raw = localStorage.getItem(DRAFT_KEY);
     if (!raw) return null;
     const d = JSON.parse(raw) as Draft;
-    return d?.template?.exercises ? d : null;
+    if (!d?.template?.exercises) return null;
+    return { ...d, id: d.id ?? crypto.randomUUID(), restEndsAt: d.restEndsAt ?? null };
   } catch {
     return null;
   }
@@ -117,6 +124,7 @@ export default function WorkoutLogger({
   const [restEndsAt, setRestEndsAt] = useState<number | null>(null);
   const [now, setNow] = useState(Date.now());
   const [startedAt, setStartedAt] = useState<number | null>(null);
+  const [sessionId, setSessionId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [perfs, setPerfs] = useState<Record<string, LastPerf>>({});
   const [libOpen, setLibOpen] = useState(false);
@@ -139,6 +147,8 @@ export default function WorkoutLogger({
       setTemplate(draft.template);
       setDone(draft.done ?? {});
       setStartedAt(draft.startedAt ?? Date.now());
+      setSessionId(draft.id);
+      setRestEndsAt(draft.restEndsAt ?? null);
     }
     void (async () => {
       const p = await fetchLastPerformances();
@@ -154,20 +164,59 @@ export default function WorkoutLogger({
     setTemplate(applyLastPerfs(cloneTemplate(sessionOverride), perfs));
     setDone({});
     setStartedAt(Date.now());
+    setSessionId(crypto.randomUUID());
+    setRestEndsAt(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, sessionOverride]);
 
-  // Sauvegarde du brouillon à chaque changement.
-  useEffect(() => {
-    if (!template || !startedAt || result) return;
+  // Sauvegarde du brouillon à chaque changement — débounce léger (<=300ms)
+  // mais toujours suivi d'un flush synchrone à la fermeture/mise en arrière-plan
+  // pour ne jamais perdre la dernière saisie (kg/reps/séries/repos/ordre...).
+  const draftRef = useRef<Draft | null>(null);
+  const draftTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const flushDraft = useCallback(() => {
+    if (draftTimer.current) {
+      clearTimeout(draftTimer.current);
+      draftTimer.current = null;
+    }
+    if (!draftRef.current) return;
     try {
-      localStorage.setItem(DRAFT_KEY, JSON.stringify({ template, done, startedAt }));
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(draftRef.current));
     } catch {
       /* quota — sans gravité */
     }
-  }, [template, done, startedAt, result]);
+  }, []);
+
+  useEffect(() => {
+    if (!template || !startedAt || !sessionId || result) return;
+    draftRef.current = { id: sessionId, template, done, startedAt, restEndsAt };
+    if (draftTimer.current) clearTimeout(draftTimer.current);
+    draftTimer.current = setTimeout(flushDraft, 250);
+    return () => {
+      if (draftTimer.current) clearTimeout(draftTimer.current);
+    };
+  }, [template, done, startedAt, sessionId, restEndsAt, result, flushDraft]);
+
+  useEffect(() => {
+    const onVisibility = () => flushDraft();
+    const onPageHide = () => flushDraft();
+    document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("pagehide", onPageHide);
+    window.addEventListener("beforeunload", onPageHide);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("pagehide", onPageHide);
+      window.removeEventListener("beforeunload", onPageHide);
+    };
+  }, [flushDraft]);
 
   const clearDraft = useCallback(() => {
+    if (draftTimer.current) {
+      clearTimeout(draftTimer.current);
+      draftTimer.current = null;
+    }
+    draftRef.current = null;
     try {
       localStorage.removeItem(DRAFT_KEY);
     } catch {
@@ -282,6 +331,9 @@ export default function WorkoutLogger({
 
   const save = async () => {
     if (!template || saving) return;
+    // Sécurité : une séance doit toujours avoir un id client stable (retry-safe).
+    const sid = sessionId ?? crypto.randomUUID();
+    if (!sessionId) setSessionId(sid);
     setConfirmFinish(false);
     setSaving(true);
     try {
@@ -325,6 +377,7 @@ export default function WorkoutLogger({
       }
 
       const payload = {
+        id: sid,
         user_id: user.id,
         name: template.name,
         exercises: savedExercises as unknown as import("@/integrations/supabase/types").Json,
@@ -353,9 +406,11 @@ export default function WorkoutLogger({
 
       let inserted: { id: string } | null = null;
       try {
+        // upsert sur id (clé cliente générée au démarrage) : un retry après
+        // coupure ou crash ne peut jamais créer une seconde ligne.
         const { data, error } = await supabase
           .from("workout_sessions")
-          .insert([payload])
+          .upsert([payload], { onConflict: "id", ignoreDuplicates: false })
           .select("id")
           .single();
         if (error) throw error;
@@ -382,7 +437,7 @@ export default function WorkoutLogger({
       let xpGained: number | undefined;
       try {
         if (inserted?.id) {
-          const xp = await awardWorkoutXp({ data: { sessionId: inserted.id } });
+          const xp = await awardWorkoutXp(inserted.id);
           xpGained = xp?.gained;
         }
       } catch (e) {
@@ -416,6 +471,7 @@ export default function WorkoutLogger({
     setTemplate(null);
     setDone({});
     setStartedAt(null);
+    setSessionId(null);
     setResult(null);
     onOpenChange(false);
   };
@@ -472,6 +528,8 @@ export default function WorkoutLogger({
                   setTemplate(applyLastPerfs(cloneTemplate(t), perfs));
                   setDone({});
                   setStartedAt(Date.now());
+                  setSessionId(crypto.randomUUID());
+                  setRestEndsAt(null);
                 }}
                 className="flex min-h-[56px] items-center justify-between rounded-2xl border border-arena-border bg-arena-surface p-4 text-left transition active:scale-[0.98]"
               >

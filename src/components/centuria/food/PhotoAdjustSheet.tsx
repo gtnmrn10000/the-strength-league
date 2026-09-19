@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Minus, Plus, Sparkles } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import type { FoodPhotoResult } from "@/lib/foodPhoto.functions";
+import type { FoodPhotoResult } from "@/lib/api";
 
 export default function PhotoAdjustSheet({
   open,

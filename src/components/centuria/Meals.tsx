@@ -1,7 +1,7 @@
 import { Plus, ScanLine, Search, Loader2, Trash2, PackageX, Sparkles, Lock, ChevronLeft, ChevronRight, CalendarDays } from "lucide-react";
 import PremiumBadge from "./paywall/PremiumBadge";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { recognizeFoodPhoto, type FoodPhotoResult } from "@/lib/foodPhoto.functions";
+import { recognizeFoodPhoto, type FoodPhotoResult } from "@/lib/api";
 import BarcodeScanner from "./food/BarcodeScanner";
 import ProductSheet from "./food/ProductSheet";
 import ManualEntrySheet from "./food/ManualEntrySheet";
@@ -45,7 +45,6 @@ export default function Meals() {
   const { isPremium, openPaywall } = useSubscription();
   const [photoLoading, setPhotoLoading] = useState(false);
   const photoInputRef = useRef<HTMLInputElement>(null);
-  const recognizePhoto = recognizeFoodPhoto;
   const [photoResult, setPhotoResult] = useState<FoodPhotoResult | null>(null);
   const [photoAdjustOpen, setPhotoAdjustOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>(() => new Date());
@@ -223,7 +222,7 @@ export default function Meals() {
         r.readAsDataURL(file);
       });
       console.log("[photo-ia] step 2: calling recognizeFoodPhoto", { bytes: dataUrl.length });
-      const result = await recognizePhoto({ data: { image_data_url: dataUrl } });
+      const result = await recognizeFoodPhoto(dataUrl);
       console.log("[photo-ia] step 3: got result", result);
 
       // Ouvre le sheet d'ajustement — l'IA est peu fiable pour estimer un

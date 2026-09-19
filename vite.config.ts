@@ -6,4 +6,16 @@
 // You can pass additional config via defineConfig({ vite: { ... } }) if needed.
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
-export default defineConfig();
+// Build natif (Capacitor) : `CAP_BUILD=1 vite build` produit un SPA autonome
+// dans dist/client (index.html + assets), embarqué dans le binaire iOS/Android.
+// Le build web par défaut reste inchangé (SSR + Nitro).
+const nativeBuild = process.env["CAP_BUILD"] === "1";
+
+export default defineConfig(
+  nativeBuild
+    ? {
+        tanstackStart: { spa: { enabled: true } },
+        nitro: false,
+      }
+    : {}
+);

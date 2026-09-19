@@ -25,7 +25,7 @@ import { blockUser } from "@/lib/moderation";
 import { supabase } from "@/integrations/supabase/client";
 import { GRADE_LABELS, type Grade } from "@/lib/grades";
 import { GradeIcon } from "@/lib/gradeIcons";
-import { voteOnPR } from "@/lib/prs.functions";
+import { voteOnPR } from "@/lib/api";
 
 function timeAgo(iso: string): string {
   const diff = (Date.now() - new Date(iso).getTime()) / 1000;
@@ -255,7 +255,7 @@ export function PRBlock({ post }: { post: FeedPost }) {
     setMyVote(next);
 
     try {
-      const res = await voteOnPR({ data: { prId: pr.id, vote: next } });
+      const res = await voteOnPR({ prId: pr.id, vote: next });
       setValidCount(res.valid_count);
       setDoubtCount(res.doubt_count);
       setStatus(res.status);
@@ -268,8 +268,7 @@ export function PRBlock({ post }: { post: FeedPost }) {
       setDoubtCount(prev.doubtCount);
       setMyVote(prev.myVote);
       setStatus(prev.status);
-      const msg =
-        e instanceof Response ? await e.text().catch(() => "Vote impossible") : "Vote impossible";
+      const msg = e instanceof Error ? e.message : "Vote impossible";
       toast.error(msg);
     } finally {
       setPending(false);

@@ -1,49 +1,27 @@
-import { createServerFn } from "@tanstack/react-start";
-import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { z } from "npm:zod@3";
+import { handleOptions, errorResponse, jsonResponse } from "../_shared/cors.ts";
+import { requireUser } from "../_shared/authClient.ts";
 
-const schema = z.object({
-  image_data_url: z.string().min(20).max(8_000_000),
-});
+const schema = z.object({ image_data_url: z.string().min(20).max(8_000_000) });
 
-export type FoodPhotoResult = {
-  name: string;
-  brand: string | null;
-  estimated_grams: number;
-  nutriments_100g: {
-    energy_kcal_100g: number;
-    proteins_100g: number;
-    carbs_100g: number;
-    fat_100g: number;
-  };
-  confidence: "low" | "medium" | "high";
-  notes?: string;
-};
+Deno.serve(async (req) => {
+  const preflight = handleOptions(req);
+  if (preflight) return preflight;
+  try {
+    const { supabase } = await requireUser(req);
+    const body = await req.json().catch(() => ({}));
+    const data = schema.parse(body);
 
-export const recognizeFoodPhoto = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => schema.parse(d))
-  .handler(async ({ data, context }): Promise<FoodPhotoResult> => {
-    // 1. Gate: subscription check via secure RPC (is_premium is not
-    // readable through the public Data API — only through this RPC).
-    const { data: isPremium, error: pErr } = await context.supabase.rpc(
-      "is_current_user_premium"
-    );
-    if (pErr) throw new Response("Erreur profil", { status: 500 });
-    if (!isPremium) {
-      throw new Response("PREMIUM_REQUIRED", { status: 402 });
-    }
+    const { data: isPremium, error: pErr } = await supabase.rpc("is_current_user_premium");
+    if (pErr) return errorResponse("Erreur profil", 500);
+    if (!isPremium) return errorResponse("PREMIUM_REQUIRED", 402);
 
-    const key = process.env.LOVABLE_API_KEY;
-    if (!key) throw new Response("AI indisponible", { status: 500 });
+    const key = Deno.env.get("LOVABLE_API_KEY");
+    if (!key) return errorResponse("AI indisponible", 500);
 
-    // 2. Call Lovable AI Gateway (vision)
     const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${key}`,
-      },
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
       body: JSON.stringify({
         model: "google/gemini-2.5-pro",
         messages: [
@@ -64,25 +42,25 @@ export const recognizeFoodPhoto = createServerFn({ method: "POST" })
       }),
     });
 
-    if (res.status === 429) throw new Response("Trop de requêtes, réessaie plus tard.", { status: 429 });
-    if (res.status === 402) throw new Response("Crédits IA épuisés.", { status: 402 });
+    if (res.status === 429) return errorResponse("Trop de requêtes, réessaie plus tard.", 429);
+    if (res.status === 402) return errorResponse("Crédits IA épuisés.", 402);
     if (!res.ok) {
       const t = await res.text().catch(() => "");
-      console.error("[foodPhoto] gateway error", res.status, t);
-      throw new Response("Analyse impossible", { status: 500 });
+      console.error("[food-photo] gateway error", res.status, t);
+      return errorResponse("Analyse impossible", 500);
     }
 
     const json = await res.json();
     const content: string = json?.choices?.[0]?.message?.content ?? "";
-    let parsed: FoodPhotoResult;
+    // deno-lint-ignore no-explicit-any
+    let parsed: any;
     try {
       parsed = JSON.parse(content);
     } catch {
-      throw new Response("Réponse IA invalide", { status: 500 });
+      return errorResponse("Réponse IA invalide", 500);
     }
-    // Basic sanitization
-    const n = parsed.nutriments_100g ?? ({} as FoodPhotoResult["nutriments_100g"]);
-    return {
+    const n = parsed.nutriments_100g ?? {};
+    return jsonResponse({
       name: String(parsed.name ?? "Aliment").slice(0, 80),
       brand: parsed.brand ? String(parsed.brand).slice(0, 60) : null,
       estimated_grams: Math.max(1, Math.min(2000, Math.round(Number(parsed.estimated_grams) || 100))),
@@ -92,9 +70,15 @@ export const recognizeFoodPhoto = createServerFn({ method: "POST" })
         carbs_100g: Math.max(0, Math.min(100, Number(n.carbs_100g) || 0)),
         fat_100g: Math.max(0, Math.min(100, Number(n.fat_100g) || 0)),
       },
-      confidence: (["low", "medium", "high"].includes(parsed.confidence as string)
-        ? parsed.confidence
-        : "medium") as FoodPhotoResult["confidence"],
+      confidence: ["low", "medium", "high"].includes(parsed.confidence) ? parsed.confidence : "medium",
       notes: parsed.notes ? String(parsed.notes).slice(0, 200) : undefined,
-    };
-  });
+    });
+  } catch (e) {
+    if (e instanceof Response) {
+      const text = await e.text().catch(() => "Error");
+      return errorResponse(text, e.status);
+    }
+    console.error("[food-photo] error", e);
+    return errorResponse(e instanceof Error ? e.message : "Erreur interne", 500);
+  }
+});

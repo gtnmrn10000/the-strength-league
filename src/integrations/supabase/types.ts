@@ -266,6 +266,39 @@ export type Database = {
         }
         Relationships: []
       }
+      moderation_actions: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          moderator_id: string
+          note: string | null
+          target_id: string
+          target_type: string
+          target_user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          moderator_id: string
+          note?: string | null
+          target_id: string
+          target_type: string
+          target_user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          moderator_id?: string
+          note?: string | null
+          target_id?: string
+          target_type?: string
+          target_user_id?: string | null
+        }
+        Relationships: []
+      }
       notification_prefs: {
         Row: {
           comments: boolean
@@ -339,6 +372,7 @@ export type Database = {
         Row: {
           body: string
           created_at: string
+          hidden_at: string | null
           id: string
           post_id: string
           user_id: string
@@ -346,6 +380,7 @@ export type Database = {
         Insert: {
           body: string
           created_at?: string
+          hidden_at?: string | null
           id?: string
           post_id: string
           user_id: string
@@ -353,6 +388,7 @@ export type Database = {
         Update: {
           body?: string
           created_at?: string
+          hidden_at?: string | null
           id?: string
           post_id?: string
           user_id?: string
@@ -398,6 +434,7 @@ export type Database = {
           caption: string | null
           comment_count: number
           created_at: string
+          hidden_at: string | null
           hype_count: number
           id: string
           macros: Json | null
@@ -412,6 +449,7 @@ export type Database = {
           caption?: string | null
           comment_count?: number
           created_at?: string
+          hidden_at?: string | null
           hype_count?: number
           id?: string
           macros?: Json | null
@@ -426,6 +464,7 @@ export type Database = {
           caption?: string | null
           comment_count?: number
           created_at?: string
+          hidden_at?: string | null
           hype_count?: number
           id?: string
           macros?: Json | null
@@ -655,6 +694,27 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
       weigh_ins: {
         Row: {
           bodyfat_pct: number | null
@@ -734,6 +794,7 @@ export type Database = {
           day: string
           id: string
           kind: string
+          ref_id: string | null
           user_id: string
         }
         Insert: {
@@ -742,6 +803,7 @@ export type Database = {
           day?: string
           id?: string
           kind: string
+          ref_id?: string | null
           user_id: string
         }
         Update: {
@@ -750,6 +812,7 @@ export type Database = {
           day?: string
           id?: string
           kind?: string
+          ref_id?: string | null
           user_id?: string
         }
         Relationships: []
@@ -870,7 +933,26 @@ export type Database = {
           total_kg: number
         }[]
       }
+      grade_for_xp: { Args: { _xp: number }; Returns: string }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      is_blocked_pair: { Args: { _a: string; _b: string }; Returns: boolean }
       is_current_user_premium: { Args: never; Returns: boolean }
+      is_moderator: { Args: { _user_id: string }; Returns: boolean }
+      is_obvious_spam: { Args: { _text: string }; Returns: boolean }
+      moderate_hide_comment: {
+        Args: { _comment_id: string; _note: string }
+        Returns: undefined
+      }
+      moderate_hide_post: {
+        Args: { _note: string; _post_id: string }
+        Returns: undefined
+      }
       push_notification: {
         Args: {
           _actor_id: string
@@ -890,6 +972,7 @@ export type Database = {
         | "modere"
         | "intense"
         | "tres_intense"
+      app_role: "admin" | "moderator" | "user"
       food_source: "barcode" | "photo" | "manual"
       goal_type: "masse" | "seche" | "performance"
       post_type: "pr" | "meal" | "workout" | "level_up"
@@ -1028,6 +1111,7 @@ export const Constants = {
         "intense",
         "tres_intense",
       ],
+      app_role: ["admin", "moderator", "user"],
       food_source: ["barcode", "photo", "manual"],
       goal_type: ["masse", "seche", "performance"],
       post_type: ["pr", "meal", "workout", "level_up"],

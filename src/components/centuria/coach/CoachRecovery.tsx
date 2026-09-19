@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Loader2 } from "lucide-react";
-import { getRecentMuscleWork } from "@/lib/coach.functions";
+import { coachRecovery } from "@/lib/api";
 import { computeRecovery, type RecoveryState } from "@/lib/recovery";
 
 export default function CoachRecovery({ refreshKey }: { refreshKey?: number }) {
@@ -12,7 +12,7 @@ export default function CoachRecovery({ refreshKey }: { refreshKey?: number }) {
     (async () => {
       setLoading(true);
       try {
-        const data = await getRecentMuscleWork();
+        const data = await coachRecovery();
         if (!cancel) setSessions(data);
       } catch {
         // silent
