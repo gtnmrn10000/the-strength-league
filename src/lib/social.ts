@@ -431,8 +431,13 @@ export async function searchProfiles(term: string, limit = 20): Promise<PublicPr
     .order("followers_count", { ascending: false })
     .limit(limit);
   if (error) return [];
-  const blocked = await fetchBlockedIds();
-  return ((data ?? []) as PublicProfile[]).filter((p) => !blocked.has(p.user_id));
+  const [{ data: { user } }, blocked] = await Promise.all([
+    supabase.auth.getUser(),
+    fetchBlockedIds(),
+  ]);
+  return ((data ?? []) as PublicProfile[]).filter(
+    (p) => !blocked.has(p.user_id) && p.user_id !== user?.id,
+  );
 }
 
 /* ── Commentaires ── */
