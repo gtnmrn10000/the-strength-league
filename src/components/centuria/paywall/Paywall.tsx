@@ -142,17 +142,45 @@ export default function Paywall() {
               );
             })}
           </div>
+
+          {isDev && (
+            <div className="mx-6 mb-6 rounded-2xl border border-arena-border bg-arena-surface p-3">
+              <p className="text-[11px] font-black tracking-widest text-arena-muted">
+                MODE DÉVELOPPEMENT — AUCUN PAIEMENT
+              </p>
+              <p className="mt-1 text-[11px] text-arena-muted">
+                Les achats in-app ne sont pas encore branchés sur cet environnement.
+                {devUnlockEnabled
+                  ? " Le bouton ci-dessous active l'accès Premium pour ton compte, sans facturation."
+                  : " L'activation est désactivée ici."}
+              </p>
+              <button
+                onClick={() => setShowTodo((v) => !v)}
+                className="mt-2 text-[11px] font-bold text-arena underline"
+              >
+                {showTodo ? "Masquer" : "Voir ce qu'il reste à brancher"}
+              </button>
+              {showTodo && (
+                <ul className="mt-2 list-disc space-y-1 pl-4 text-[11px] text-arena-muted">
+                  {setupTodo.map((t) => (
+                    <li key={t}>{t}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
         </div>
 
-        <div className="border-t border-arena-border bg-background px-6 py-4">
+        <div className="border-t border-arena-border bg-background px-6 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
           <button
             onClick={handleSubscribe}
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-arena text-sm font-black tracking-widest text-arena-on active:scale-[0.98]"
+            disabled={purchasing !== null}
+            className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-arena text-sm font-black tracking-widest text-arena-on active:scale-[0.98] disabled:opacity-60"
           >
-            S'ABONNER
+            {purchasing ? "PATIENTE…" : isDev ? "ACTIVER (MODE DEV)" : "S'ABONNER"}
           </button>
           <div className="mt-2 flex justify-center gap-4 text-[10px] text-arena-muted">
-            <button onClick={handleRestore}>Restaurer un achat</button>
+            <button onClick={handleRestore}>Restaurer mes achats</button>
             <span>•</span>
             <span>Résiliable à tout moment</span>
           </div>
