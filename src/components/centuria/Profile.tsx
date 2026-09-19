@@ -198,7 +198,7 @@ export default function Profile() {
         </div>
       )}
 
-      <GradeGallery open={galleryOpen} onOpenChange={setGalleryOpen} currentGrade={grade} />
+      <GradeGallery open={galleryOpen} onOpenChange={setGalleryOpen} currentGrade={grade} xp={xp} />
 
 
 
