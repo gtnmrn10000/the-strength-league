@@ -1,16 +1,56 @@
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Search, Plus } from "lucide-react";
+import { Search, Plus, Star, X, Check } from "lucide-react";
+import { toast } from "sonner";
 import {
   EXERCISE_LIBRARY,
   CATEGORY_LABEL,
   CATEGORY_ICON,
   CATEGORY_ACCENT,
+  EQUIPMENT_LABEL,
+  searchExercises,
+  type Equipment,
   type LibraryExercise,
   type MuscleCategory,
 } from "@/lib/exerciseCatalog";
+import {
+  createCustomExercise,
+  fetchCustomExercises,
+  fetchFavorites,
+  fetchLastPerformances,
+  getRecentIds,
+  lastPerfFor,
+  pushRecentId,
+  toggleFavorite,
+  type LastPerf,
+} from "@/lib/exerciseUserData";
 
 const CATEGORIES: (MuscleCategory | "all")[] = ["all", "pectoraux", "dos", "jambes", "epaules", "bras", "abdos"];
+const EQUIPMENTS: (Equipment | "all")[] = [
+  "all",
+  "barre",
+  "halteres",
+  "poulie",
+  "machine",
+  "smith",
+  "poids_du_corps",
+  "kettlebell",
+  "elastique",
+];
+
+const PRIMARY_OPTIONS: { key: string; label: string }[] = [
+  { key: "pectoraux", label: "Pectoraux" },
+  { key: "dos", label: "Dos" },
+  { key: "epaules", label: "Épaules" },
+  { key: "biceps", label: "Biceps" },
+  { key: "triceps", label: "Triceps" },
+  { key: "avant_bras", label: "Avant-bras" },
+  { key: "quadriceps", label: "Quadriceps" },
+  { key: "ischios", label: "Ischios" },
+  { key: "fessiers", label: "Fessiers" },
+  { key: "mollets", label: "Mollets" },
+  { key: "abdos", label: "Abdos" },
+];
 
 export default function ExerciseLibrary({
   open,
@@ -22,16 +62,68 @@ export default function ExerciseLibrary({
   onAdd?: (ex: LibraryExercise) => void;
 }) {
   const [cat, setCat] = useState<(typeof CATEGORIES)[number]>("all");
+  const [eq, setEq] = useState<(typeof EQUIPMENTS)[number]>("all");
   const [q, setQ] = useState("");
+  const [favorites, setFavorites] = useState<string[]>([]);
+  const [custom, setCustom] = useState<LibraryExercise[]>([]);
+  const [perfs, setPerfs] = useState<Record<string, LastPerf>>({});
+  const [recents, setRecents] = useState<string[]>([]);
+  const [creating, setCreating] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    setRecents(getRecentIds());
+    void (async () => {
+      const [f, c, p] = await Promise.all([
+        fetchFavorites(),
+        fetchCustomExercises(),
+        fetchLastPerformances(),
+      ]);
+      setFavorites(f);
+      setCustom(c);
+      setPerfs(p);
+    })();
+  }, [open]);
+
+  const all = useMemo(() => [...custom, ...EXERCISE_LIBRARY], [custom]);
 
   const filtered = useMemo(() => {
-    const norm = q.trim().toLowerCase();
-    return EXERCISE_LIBRARY.filter((e) => {
+    const base = all.filter((e) => {
       if (cat !== "all" && e.category !== cat) return false;
-      if (norm && !e.name.toLowerCase().includes(norm)) return false;
+      if (eq !== "all" && e.equipment !== eq) return false;
       return true;
     });
-  }, [cat, q]);
+    return searchExercises(base, q);
+  }, [all, cat, eq, q]);
+
+  const showSections = !q.trim() && cat === "all" && eq === "all";
+  const favList = useMemo(
+    () => all.filter((e) => favorites.includes(e.id)),
+    [all, favorites],
+  );
+  const recentList = useMemo(
+    () => recents.map((id) => all.find((e) => e.id === id)).filter((e): e is LibraryExercise => !!e),
+    [all, recents],
+  );
+
+  const onToggleFav = useCallback(
+    async (ex: LibraryExercise) => {
+      const isFav = favorites.includes(ex.id);
+      setFavorites((f) => (isFav ? f.filter((x) => x !== ex.id) : [...f, ex.id]));
+      const ok = await toggleFavorite(ex.id, isFav);
+      if (!ok) {
+        setFavorites((f) => (isFav ? [...f, ex.id] : f.filter((x) => x !== ex.id)));
+        toast.error("Favori non enregistré. Reconnecte-toi.");
+      }
+    },
+    [favorites],
+  );
+
+  const handleAdd = (ex: LibraryExercise) => {
+    pushRecentId(ex.id);
+    setRecents(getRecentIds());
+    onAdd?.(ex);
+  };
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -40,8 +132,14 @@ export default function ExerciseLibrary({
         className="h-[92dvh] max-w-md mx-auto p-0 flex flex-col bg-background border-arena-border"
       >
         <SheetHeader className="border-b border-arena-border px-4 py-3">
-          <SheetTitle className="text-sm font-black tracking-widest text-foreground">
-            BIBLIOTHÈQUE D'EXERCICES
+          <SheetTitle className="flex items-center justify-between text-sm font-black tracking-widest text-foreground">
+            <span>BIBLIOTHÈQUE</span>
+            <button
+              onClick={() => setCreating((c) => !c)}
+              className="flex items-center gap-1 rounded-full border border-arena-border px-2 py-1 text-[10px] font-black text-arena"
+            >
+              {creating ? <X size={12} /> : <Plus size={12} />} EXO PERSO
+            </button>
           </SheetTitle>
         </SheetHeader>
 
@@ -52,82 +150,256 @@ export default function ExerciseLibrary({
               type="text"
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              placeholder="Rechercher un exercice…"
-              className="w-full rounded-xl border border-arena-border bg-secondary py-2 pl-9 pr-3 text-sm text-foreground placeholder:text-arena-muted focus:border-arena focus:outline-none"
+              placeholder="Rechercher (dc, squat, poulie…)"
+              className="h-11 w-full rounded-xl border border-arena-border bg-secondary pl-9 pr-3 text-sm text-foreground placeholder:text-arena-muted focus:border-arena focus:outline-none"
             />
           </div>
+
           <div className="mt-3 flex gap-1.5 overflow-x-auto scrollbar-hide">
             {CATEGORIES.map((c) => (
-              <button
-                key={c}
-                onClick={() => setCat(c)}
-                className={`shrink-0 rounded-full border px-3 py-1 text-[10px] font-black tracking-widest transition ${
-                  cat === c
-                    ? "border-arena-gold bg-arena-gold text-black"
-                    : "border-arena-border bg-arena-surface text-arena-sub"
-                }`}
-              >
+              <Chip key={c} active={cat === c} onClick={() => setCat(c)}>
                 {c === "all" ? "TOUT" : CATEGORY_LABEL[c].toUpperCase()}
-              </button>
+              </Chip>
+            ))}
+          </div>
+          <div className="mt-2 flex gap-1.5 overflow-x-auto scrollbar-hide">
+            {EQUIPMENTS.map((e) => (
+              <Chip key={e} active={eq === e} muted onClick={() => setEq(e)}>
+                {e === "all" ? "TOUT MATÉRIEL" : EQUIPMENT_LABEL[e].toUpperCase()}
+              </Chip>
             ))}
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-4 py-3">
+        {creating && (
+          <CustomExerciseForm
+            onCreated={(ex) => {
+              setCustom((c) => [ex, ...c]);
+              setCreating(false);
+              toast.success("Exercice ajouté à ta bibliothèque");
+            }}
+          />
+        )}
+
+        <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 py-3">
+          {showSections && favList.length > 0 && (
+            <Section title="FAVORIS">
+              {favList.map((ex) => (
+                <Row
+                  key={`fav-${ex.id}`}
+                  ex={ex}
+                  fav
+                  perf={lastPerfFor(perfs, ex.name)}
+                  onAdd={onAdd ? () => handleAdd(ex) : undefined}
+                  onFav={() => onToggleFav(ex)}
+                />
+              ))}
+            </Section>
+          )}
+
+          {showSections && recentList.length > 0 && (
+            <Section title="RÉCENTS">
+              {recentList.map((ex) => (
+                <Row
+                  key={`rec-${ex.id}`}
+                  ex={ex}
+                  fav={favorites.includes(ex.id)}
+                  perf={lastPerfFor(perfs, ex.name)}
+                  onAdd={onAdd ? () => handleAdd(ex) : undefined}
+                  onFav={() => onToggleFav(ex)}
+                />
+              ))}
+            </Section>
+          )}
+
           {filtered.length === 0 ? (
             <p className="mt-8 text-center text-xs text-arena-muted">Aucun exercice trouvé</p>
           ) : (
-            <ul className="flex flex-col gap-2">
-              {filtered.map((ex) => {
-                const Icon = CATEGORY_ICON[ex.category];
-                const accent = CATEGORY_ACCENT[ex.category];
-                return (
-                <li
+            <Section title={`TOUS LES EXERCICES · ${filtered.length}`}>
+              {filtered.map((ex) => (
+                <Row
                   key={ex.id}
-                  className="flex items-center justify-between rounded-2xl border border-arena-border bg-arena-surface p-3"
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    {ex.image_url ? (
-                      <img
-                        src={ex.image_url}
-                        alt={ex.name}
-                        loading="lazy"
-                        className="h-14 w-14 shrink-0 rounded-xl object-cover border border-arena-border bg-black"
-                        onError={(e) => {
-                          (e.currentTarget as HTMLImageElement).style.display = "none";
-                        }}
-                      />
-                    ) : (
-                      <div
-                        className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl"
-                        style={{ background: `${accent}1a`, boxShadow: `0 0 0 1px ${accent}33 inset` }}
-                      >
-                        <Icon size={22} style={{ color: accent }} />
-                      </div>
-                    )}
-                    <div className="min-w-0">
-                      <p className="text-sm font-black text-foreground truncate">{ex.name}</p>
-                      <p className="mt-0.5 text-[10px] text-arena-sub truncate">
-                        {CATEGORY_LABEL[ex.category]} · {ex.muscles.join(" · ")}
-                      </p>
-                    </div>
-                  </div>
-                  {onAdd && (
-                    <button
-                      onClick={() => onAdd(ex)}
-                      className="ml-2 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-arena-gold text-black active:scale-90 transition"
-                      aria-label="Ajouter à la séance"
-                    >
-                      <Plus size={16} strokeWidth={3} />
-                    </button>
-                  )}
-                </li>
-                );
-              })}
-            </ul>
+                  ex={ex}
+                  fav={favorites.includes(ex.id)}
+                  perf={lastPerfFor(perfs, ex.name)}
+                  onAdd={onAdd ? () => handleAdd(ex) : undefined}
+                  onFav={() => onToggleFav(ex)}
+                />
+              ))}
+            </Section>
           )}
         </div>
       </SheetContent>
     </Sheet>
+  );
+}
+
+function Chip({
+  active,
+  muted,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  muted?: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`shrink-0 rounded-full border px-3 py-1.5 text-[10px] font-black tracking-widest transition ${
+        active
+          ? muted
+            ? "border-arena bg-arena/15 text-arena"
+            : "border-arena-gold bg-arena-gold text-black"
+          : "border-arena-border bg-arena-surface text-arena-sub"
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="mb-4">
+      <h4 className="mb-2 text-[10px] font-black tracking-widest text-arena-muted">{title}</h4>
+      <ul className="flex flex-col gap-2">{children}</ul>
+    </div>
+  );
+}
+
+function Row({
+  ex,
+  fav,
+  perf,
+  onAdd,
+  onFav,
+}: {
+  ex: LibraryExercise;
+  fav: boolean;
+  perf?: LastPerf;
+  onAdd?: () => void;
+  onFav: () => void;
+}) {
+  const Icon = CATEGORY_ICON[ex.category];
+  const accent = CATEGORY_ACCENT[ex.category];
+  const [imgOk, setImgOk] = useState(true);
+  return (
+    <li className="flex items-center gap-2 rounded-2xl border border-arena-border bg-arena-surface p-2.5">
+      {ex.image_url && imgOk ? (
+        <img
+          src={ex.image_url}
+          alt={ex.name}
+          loading="lazy"
+          onError={() => setImgOk(false)}
+          className="h-12 w-12 shrink-0 rounded-xl border border-arena-border bg-black object-cover"
+        />
+      ) : (
+        <div
+          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl"
+          style={{ background: `${accent}1a`, boxShadow: `0 0 0 1px ${accent}33 inset` }}
+        >
+          <Icon size={20} style={{ color: accent }} />
+        </div>
+      )}
+
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-black text-foreground">{ex.name}</p>
+        <p className="mt-0.5 truncate text-[10px] text-arena-sub">
+          {ex.focus ?? CATEGORY_LABEL[ex.category]} · {EQUIPMENT_LABEL[ex.equipment]}
+          {ex.custom ? " · perso" : ""}
+        </p>
+        {perf && (
+          <p className="mt-0.5 truncate text-[10px] font-bold text-arena">
+            Dernière fois : {perf.weight_kg} kg × {perf.reps}
+          </p>
+        )}
+      </div>
+
+      <button
+        onClick={onFav}
+        aria-label={fav ? "Retirer des favoris" : "Ajouter aux favoris"}
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-arena-muted active:scale-90"
+      >
+        <Star size={17} className={fav ? "fill-arena-gold text-arena-gold" : ""} />
+      </button>
+      {onAdd && (
+        <button
+          onClick={onAdd}
+          aria-label={`Ajouter ${ex.name}`}
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-arena-gold text-black transition active:scale-90"
+        >
+          <Plus size={17} strokeWidth={3} />
+        </button>
+      )}
+    </li>
+  );
+}
+
+function CustomExerciseForm({ onCreated }: { onCreated: (ex: LibraryExercise) => void }) {
+  const [name, setName] = useState("");
+  const [primary, setPrimary] = useState("pectoraux");
+  const [equipment, setEquipment] = useState<Equipment>("halteres");
+  const [saving, setSaving] = useState(false);
+
+  const submit = async () => {
+    if (!name.trim() || saving) return;
+    setSaving(true);
+    const ex = await createCustomExercise({
+      name: name.trim(),
+      primary_muscle: primary,
+      equipment,
+    });
+    setSaving(false);
+    if (!ex) {
+      toast.error("Impossible d'enregistrer. Reconnecte-toi.");
+      return;
+    }
+    setName("");
+    onCreated(ex);
+  };
+
+  return (
+    <div className="border-b border-arena-border bg-arena-surface/50 px-4 py-3">
+      <input
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        placeholder="Nom de l'exercice"
+        className="h-11 w-full rounded-xl border border-arena-border bg-secondary px-3 text-sm text-foreground placeholder:text-arena-muted focus:border-arena focus:outline-none"
+      />
+      <div className="mt-2 grid grid-cols-2 gap-2">
+        <select
+          value={primary}
+          onChange={(e) => setPrimary(e.target.value)}
+          className="h-11 w-full rounded-xl border border-arena-border bg-secondary px-2 text-sm font-bold text-foreground focus:outline-none"
+        >
+          {PRIMARY_OPTIONS.map((o) => (
+            <option key={o.key} value={o.key}>
+              {o.label}
+            </option>
+          ))}
+        </select>
+        <select
+          value={equipment}
+          onChange={(e) => setEquipment(e.target.value as Equipment)}
+          className="h-11 w-full rounded-xl border border-arena-border bg-secondary px-2 text-sm font-bold text-foreground focus:outline-none"
+        >
+          {(Object.keys(EQUIPMENT_LABEL) as Equipment[]).map((k) => (
+            <option key={k} value={k}>
+              {EQUIPMENT_LABEL[k]}
+            </option>
+          ))}
+        </select>
+      </div>
+      <button
+        onClick={submit}
+        disabled={!name.trim() || saving}
+        className="mt-2 flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-arena font-black tracking-widest text-arena-on disabled:opacity-40"
+      >
+        <Check size={15} /> CRÉER
+      </button>
+    </div>
   );
 }

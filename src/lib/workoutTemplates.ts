@@ -1,4 +1,6 @@
-// Templates de séance partagés entre le Training et le WorkoutLogger.
+// Templates de séance et programmes prêts à l'emploi.
+// Les charges sont à 0 par défaut : elles sont préremplies à partir de
+// l'historique réel de l'utilisateur, jamais inventées.
 
 export type SetSpec = { reps: number; weight_kg: number };
 export type WorkoutExercise = { name: string; muscle_groups: string[]; sets: SetSpec[] };
@@ -10,6 +12,13 @@ export type Template = {
   exercises: WorkoutExercise[];
 };
 
+/** Raccourci : n séries de r reps, charge à 0 (préremplie ensuite). */
+const ex = (name: string, muscle_groups: string[], sets: number, reps: number): WorkoutExercise => ({
+  name,
+  muscle_groups,
+  sets: Array.from({ length: sets }, () => ({ reps, weight_kg: 0 })),
+});
+
 export const TEMPLATES: Template[] = [
   {
     id: "push",
@@ -17,15 +26,11 @@ export const TEMPLATES: Template[] = [
     muscle_groups: ["pectoraux", "epaules", "triceps"],
     restSec: 90,
     exercises: [
-      { name: "Bench Press", muscle_groups: ["pectoraux"], sets: [
-        { reps: 8, weight_kg: 60 }, { reps: 8, weight_kg: 60 }, { reps: 8, weight_kg: 60 }, { reps: 6, weight_kg: 65 },
-      ]},
-      { name: "Développé militaire", muscle_groups: ["epaules"], sets: [
-        { reps: 10, weight_kg: 40 }, { reps: 10, weight_kg: 40 }, { reps: 8, weight_kg: 45 },
-      ]},
-      { name: "Dips", muscle_groups: ["triceps", "pectoraux"], sets: [
-        { reps: 10, weight_kg: 0 }, { reps: 10, weight_kg: 0 }, { reps: 8, weight_kg: 0 },
-      ]},
+      ex("Développé couché barre", ["pectoraux", "triceps"], 4, 8),
+      ex("Développé incliné haltères", ["pectoraux", "epaules"], 3, 10),
+      ex("Développé militaire barre", ["epaules", "triceps"], 3, 8),
+      ex("Élévations latérales haltères", ["epaules"], 3, 15),
+      ex("Extension triceps poulie barre", ["triceps"], 3, 12),
     ],
   },
   {
@@ -34,41 +39,113 @@ export const TEMPLATES: Template[] = [
     muscle_groups: ["dos", "biceps"],
     restSec: 90,
     exercises: [
-      { name: "Deadlift", muscle_groups: ["dos", "ischios"], sets: [
-        { reps: 5, weight_kg: 100 }, { reps: 5, weight_kg: 100 }, { reps: 5, weight_kg: 110 },
-      ]},
-      { name: "Tractions", muscle_groups: ["dos"], sets: [
-        { reps: 8, weight_kg: 0 }, { reps: 8, weight_kg: 0 }, { reps: 6, weight_kg: 0 },
-      ]},
-      { name: "Rowing barre", muscle_groups: ["dos"], sets: [
-        { reps: 10, weight_kg: 50 }, { reps: 10, weight_kg: 50 }, { reps: 8, weight_kg: 55 },
-      ]},
-      { name: "Curl barre", muscle_groups: ["biceps"], sets: [
-        { reps: 12, weight_kg: 25 }, { reps: 10, weight_kg: 30 }, { reps: 8, weight_kg: 32 },
-      ]},
+      ex("Tirage vertical prise large", ["dos", "biceps"], 4, 10),
+      ex("Rowing barre buste penché", ["dos", "biceps"], 4, 8),
+      ex("Tirage horizontal poulie", ["dos", "biceps"], 3, 12),
+      ex("Face pull", ["epaules", "dos"], 3, 15),
+      ex("Curl barre", ["biceps"], 3, 10),
     ],
   },
   {
     id: "legs",
     name: "Legs · Jambes / Fessiers",
-    muscle_groups: ["quadriceps", "fessiers", "ischios"],
+    muscle_groups: ["quadriceps", "fessiers", "ischios", "mollets"],
     restSec: 120,
     exercises: [
-      { name: "Squat", muscle_groups: ["quadriceps", "fessiers"], sets: [
-        { reps: 6, weight_kg: 90 }, { reps: 6, weight_kg: 95 }, { reps: 6, weight_kg: 100 }, { reps: 4, weight_kg: 105 },
-      ]},
-      { name: "Fentes bulgares", muscle_groups: ["quadriceps"], sets: [
-        { reps: 10, weight_kg: 20 }, { reps: 10, weight_kg: 20 }, { reps: 10, weight_kg: 20 },
-      ]},
-      { name: "Hip thrust", muscle_groups: ["fessiers"], sets: [
-        { reps: 10, weight_kg: 80 }, { reps: 10, weight_kg: 80 }, { reps: 8, weight_kg: 90 },
-      ]},
-      { name: "Leg curl", muscle_groups: ["ischios"], sets: [
-        { reps: 12, weight_kg: 40 }, { reps: 12, weight_kg: 40 }, { reps: 10, weight_kg: 45 },
-      ]},
+      ex("Squat barre (back squat)", ["quadriceps", "fessiers"], 4, 6),
+      ex("Presse à cuisses", ["quadriceps", "fessiers"], 3, 12),
+      ex("Soulevé de terre roumain", ["ischios", "fessiers"], 3, 10),
+      ex("Leg curl assis", ["ischios"], 3, 12),
+      ex("Mollets debout", ["mollets"], 4, 15),
+    ],
+  },
+  {
+    id: "upper",
+    name: "Upper · Haut du corps",
+    muscle_groups: ["pectoraux", "dos", "epaules", "biceps", "triceps"],
+    restSec: 90,
+    exercises: [
+      ex("Développé couché barre", ["pectoraux", "triceps"], 4, 8),
+      ex("Rowing barre buste penché", ["dos", "biceps"], 4, 8),
+      ex("Développé épaules haltères", ["epaules", "triceps"], 3, 10),
+      ex("Tirage vertical prise large", ["dos", "biceps"], 3, 10),
+      ex("Curl haltères", ["biceps"], 3, 12),
+      ex("Extension triceps corde", ["triceps"], 3, 12),
+    ],
+  },
+  {
+    id: "lower",
+    name: "Lower · Bas du corps",
+    muscle_groups: ["quadriceps", "ischios", "fessiers", "mollets"],
+    restSec: 120,
+    exercises: [
+      ex("Squat barre (back squat)", ["quadriceps", "fessiers"], 4, 8),
+      ex("Hip thrust barre", ["fessiers", "ischios"], 3, 10),
+      ex("Leg extension", ["quadriceps"], 3, 12),
+      ex("Leg curl allongé", ["ischios"], 3, 12),
+      ex("Mollets assis", ["mollets"], 4, 15),
+    ],
+  },
+  {
+    id: "fullbody",
+    name: "Full Body · Corps entier",
+    muscle_groups: ["quadriceps", "pectoraux", "dos", "epaules", "abdos"],
+    restSec: 90,
+    exercises: [
+      ex("Squat barre (back squat)", ["quadriceps", "fessiers"], 3, 8),
+      ex("Développé couché barre", ["pectoraux", "triceps"], 3, 8),
+      ex("Tirage vertical prise large", ["dos", "biceps"], 3, 10),
+      ex("Développé épaules haltères", ["epaules", "triceps"], 3, 10),
+      ex("Gainage planche", ["abdos"], 3, 1),
     ],
   },
 ];
+
+export type Program = {
+  id: string;
+  name: string;
+  subtitle: string;
+  days: { label: string; templateId: string }[];
+};
+
+/** Programmes prêts à l'emploi — chaque jour reste éditable avant démarrage. */
+export const PROGRAMS: Program[] = [
+  {
+    id: "fullbody3",
+    name: "Full Body débutant",
+    subtitle: "3 séances / semaine",
+    days: [
+      { label: "Jour 1", templateId: "fullbody" },
+      { label: "Jour 2", templateId: "fullbody" },
+      { label: "Jour 3", templateId: "fullbody" },
+    ],
+  },
+  {
+    id: "upperlower4",
+    name: "Haut / Bas",
+    subtitle: "4 séances / semaine",
+    days: [
+      { label: "Upper", templateId: "upper" },
+      { label: "Lower", templateId: "lower" },
+      { label: "Upper", templateId: "upper" },
+      { label: "Lower", templateId: "lower" },
+    ],
+  },
+  {
+    id: "ppl",
+    name: "Push Pull Legs",
+    subtitle: "3 à 6 séances / semaine",
+    days: [
+      { label: "Push", templateId: "push" },
+      { label: "Pull", templateId: "pull" },
+      { label: "Legs", templateId: "legs" },
+    ],
+  },
+];
+
+export function templateById(id: string): Template | undefined {
+  return TEMPLATES.find((t) => t.id === id);
+}
 
 /** Normalise les groupes musculaires vers les clés utilisées par recovery.ts. */
 export function normalizeMuscle(g: string): string {
