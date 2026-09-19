@@ -9,10 +9,11 @@ import {
   useState,
 } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { getPaywallProvider } from "@/lib/paywall/provider";
+import { getPaywallProvider, type StorePrices } from "@/lib/paywall/provider";
 import { NO_ENTITLEMENT, type EntitlementStatus } from "@/lib/paywall/entitlement";
 import { isDevPaywallEnabled } from "@/lib/paywall/dev.functions";
-import { missingSetup, paywallMode, type PaywallMode } from "@/lib/paywall/config";
+import { missingSetup, paywallMode, purchasesAvailable, type PaywallMode } from "@/lib/paywall/config";
+import { studentVerificationConfigured } from "@/lib/paywall/eligibility";
 import type { PlanId } from "@/lib/paywall/plans";
 
 type PaywallReason = "coach" | "photo-ia" | "analyse" | "recipes" | "video" | "generic";
@@ -32,6 +33,12 @@ type SubscriptionContextValue = {
   devUnlockEnabled: boolean;
   /** Ce qu'il reste à brancher pour des paiements réels. */
   setupTodo: string[];
+  /** Achats in-app réellement disponibles (app installée + store configuré). */
+  canPurchase: boolean;
+  /** Prix localisés renvoyés par le store (vide tant que non branché). */
+  prices: StorePrices;
+  /** La formule Étudiant est-elle ouverte (vérification branchée) ? */
+  studentOpen: boolean;
   openPaywall: (reason?: PaywallReason) => void;
   closePaywall: () => void;
   purchase: (planId: PlanId) => Promise<void>;
@@ -49,12 +56,20 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   const [paywallReason, setPaywallReason] = useState<PaywallReason>("generic");
   const [mode, setMode] = useState<PaywallMode>("dev");
   const [devUnlockEnabled, setDevUnlockEnabled] = useState(false);
+  const [prices, setPrices] = useState<StorePrices>({});
   const mounted = useRef(true);
 
   const refresh = useCallback(async () => {
     try {
-      const s = await getPaywallProvider().getStatus();
+      const provider = getPaywallProvider();
+      const s = await provider.getStatus();
       if (mounted.current) setStatus(s);
+      provider
+        .getPrices()
+        .then((p) => {
+          if (mounted.current) setPrices(p);
+        })
+        .catch(() => undefined);
     } catch {
       if (mounted.current) setStatus(NO_ENTITLEMENT);
     } finally {
@@ -131,6 +146,9 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       mode,
       devUnlockEnabled,
       setupTodo,
+      canPurchase: purchasesAvailable(),
+      prices,
+      studentOpen: studentVerificationConfigured(),
       openPaywall,
       closePaywall,
       purchase,
@@ -146,6 +164,9 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       mode,
       devUnlockEnabled,
       setupTodo,
+      canPurchase: purchasesAvailable(),
+      prices,
+      studentOpen: studentVerificationConfigured(),
       openPaywall,
       closePaywall,
       purchase,
