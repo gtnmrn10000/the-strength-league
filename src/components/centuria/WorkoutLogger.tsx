@@ -368,9 +368,10 @@ export default function WorkoutLogger({
         : template.exercises;
 
       // Records : on compare aux meilleures charges connues AVANT l'insertion.
-      // Hors ligne, l'historique distant n'est pas joignable : on ne bloque pas
-      // la fin de séance pour autant (les records seront recalculés à la sync).
-      const before = await fetchProgress(120).catch(() => null);
+      // Hors ligne, l'historique distant n'est pas joignable : on saute cet appel
+      // (les records seront recalculés à la synchronisation).
+      const isOffline = typeof navigator !== "undefined" && navigator.onLine === false;
+      const before = isOffline ? null : await fetchProgress(120).catch(() => null);
       const records: NewRecord[] = [];
       let sets = 0;
       let volume = 0;
