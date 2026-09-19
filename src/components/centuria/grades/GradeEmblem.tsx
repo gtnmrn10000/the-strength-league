@@ -155,11 +155,11 @@ function Insignia({ grade, fill, shade, metal, animated, context, compact }: { g
         <Laurel metal={metal} animated={animated} delay={delay + .06} />
         <motion.g initial={animated ? { scaleX: .84, opacity: .35 } : undefined} animate={animated ? { scaleX: [.84, 1.03, 1], opacity: 1 } : undefined} transition={{ delay, duration: .66, ease: "easeOut" }} style={{ transformOrigin: "36px 32px" }}>
           {wing(1)}{wing(-1)}
-          <path d="M36 21c3 0 5 2 5 5l-1 6-1 15-3 13-3-13-1-15-1-6c0-3 2-5 5-5Z" fill={`url(#${fill})`} stroke={metal.accent} strokeWidth="1.1" strokeLinejoin="round" />
-          <Facet d="M36 21c3 0 5 2 5 5l-1 6-1 15-3 13Z" fill={metal.high} opacity={.55} />
-          <path d="m41 25 6 2-6 2.4Z" fill={metal.accent} stroke={metal.edge} strokeWidth=".6" />
-          <circle cx="38.2" cy="25.4" r=".85" fill={metal.shadow} />
-          <path d="m30 50 6 10 6-10-6 4Z" fill={metal.mid} stroke={metal.edge} strokeWidth=".8" strokeLinejoin="round" />
+          <path d="M36 19c3.4 0 5.6 2.4 5.6 5.4 0 2-1 3.4-2.4 4.4l1.6 4.2c1 2.6.6 5.6-1.2 8L36 45l-3.6-4c-1.8-2.4-2.2-5.4-1.2-8l1.6-4.2c-1.4-1-2.4-2.4-2.4-4.4 0-3 2.2-5.4 5.6-5.4Z" fill={`url(#${fill})`} stroke={metal.accent} strokeWidth="1.1" strokeLinejoin="round" />
+          <Facet d="M36 19c3.4 0 5.6 2.4 5.6 5.4 0 2-1 3.4-2.4 4.4l1.6 4.2c1 2.6.6 5.6-1.2 8L36 45Z" fill={metal.high} opacity={.5} />
+          <path d="m41.4 23.4 6 2-6 2.2Z" fill={metal.accent} stroke={metal.edge} strokeWidth=".6" strokeLinejoin="round" />
+          <circle cx="38.4" cy="23.6" r=".85" fill={metal.shadow} />
+          <path d="m31.6 43 4.4 13 4.4-13-4.4 3.6Z" fill={metal.mid} stroke={metal.edge} strokeWidth=".8" strokeLinejoin="round" />
         </motion.g>
         <path d="m29 12 2.5-7 4.5 4.5 4.5-4.5 2.5 7-3 4h-8Z" fill={metal.accent} stroke={metal.edge} strokeWidth=".8" strokeLinejoin="round" />
       </g>;
