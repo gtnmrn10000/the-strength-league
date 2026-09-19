@@ -457,6 +457,12 @@ export type Database = {
           onboarded: boolean
           poids: number | null
           posts_count: number
+          premium_expires_at: string | null
+          premium_product_id: string | null
+          premium_provider: string | null
+          premium_store_user_id: string | null
+          premium_updated_at: string | null
+          premium_will_renew: boolean
           pseudo: string
           sexe: Database["public"]["Enums"]["sexe_type"] | null
           taille: number | null
@@ -481,6 +487,12 @@ export type Database = {
           onboarded?: boolean
           poids?: number | null
           posts_count?: number
+          premium_expires_at?: string | null
+          premium_product_id?: string | null
+          premium_provider?: string | null
+          premium_store_user_id?: string | null
+          premium_updated_at?: string | null
+          premium_will_renew?: boolean
           pseudo: string
           sexe?: Database["public"]["Enums"]["sexe_type"] | null
           taille?: number | null
@@ -505,6 +517,12 @@ export type Database = {
           onboarded?: boolean
           poids?: number | null
           posts_count?: number
+          premium_expires_at?: string | null
+          premium_product_id?: string | null
+          premium_provider?: string | null
+          premium_store_user_id?: string | null
+          premium_updated_at?: string | null
+          premium_will_renew?: boolean
           pseudo?: string
           sexe?: Database["public"]["Enums"]["sexe_type"] | null
           taille?: number | null
@@ -657,6 +675,17 @@ export type Database = {
           xp: number
         }[]
       }
+      get_my_entitlement: {
+        Args: never
+        Returns: {
+          expires_at: string
+          is_premium: boolean
+          product_id: string
+          provider: string
+          updated_at: string
+          will_renew: boolean
+        }[]
+      }
       get_my_profile: {
         Args: never
         Returns: {
@@ -676,6 +705,12 @@ export type Database = {
           onboarded: boolean
           poids: number | null
           posts_count: number
+          premium_expires_at: string | null
+          premium_product_id: string | null
+          premium_provider: string | null
+          premium_store_user_id: string | null
+          premium_updated_at: string | null
+          premium_will_renew: boolean
           pseudo: string
           sexe: Database["public"]["Enums"]["sexe_type"] | null
           taille: number | null
