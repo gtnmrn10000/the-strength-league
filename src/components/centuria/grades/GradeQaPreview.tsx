@@ -32,12 +32,11 @@ export default function GradeQaPreview() {
         ))}
       </div>
 
-      <section className="grid grid-cols-3 gap-x-3 gap-y-6" aria-label="Tous les emblèmes">
+       <section className="flex flex-col" aria-label="Tous les emblèmes">
         {GRADES.map((grade) => (
-          <div key={grade} className="flex min-w-0 flex-col items-center text-center">
-            <GradeEmblem grade={grade} size={82} state={state} context="gallery" animated progress={state === "current" ? 62 : undefined} />
-            <p className="mt-2 truncate text-xs font-bold">{GRADE_LABELS[grade]}</p>
-            <p className="text-[10px] text-arena-muted">{GRADE_XP[grade].toLocaleString()} XP</p>
+           <div key={grade} className="flex min-h-28 min-w-0 items-center gap-5 border-b border-arena-border py-4">
+             <GradeEmblem grade={grade} size={94} state={state} context="gallery" animated progress={state === "current" ? 62 : undefined} />
+             <div><p className="text-base font-bold">{GRADE_LABELS[grade]}</p><p className="mt-1 text-xs text-arena-muted">{GRADE_XP[grade].toLocaleString()} XP</p></div>
           </div>
         ))}
       </section>

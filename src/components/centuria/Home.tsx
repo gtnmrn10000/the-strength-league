@@ -8,6 +8,7 @@ import { GRADE_LABELS, nextGradeInfo, type Grade } from "@/lib/grades";
 import { GradeEmblem } from "./grades/GradeEmblem";
 import { fetchMyProfile } from "@/lib/profileStore";
 import { readActiveSession, type ActiveSessionInfo } from "@/lib/activeSession";
+import { fetchMyXpRanks, type XpRanks } from "@/lib/rankings";
 
 const WEEK_GOAL_KEY = "centuria:week-goal";
 
@@ -32,6 +33,7 @@ export default function Home({
   const [xp, setXp] = useState(0);
   const [weekGoal, setWeekGoal] = useState(3);
   const [loading, setLoading] = useState(true);
+  const [ranks, setRanks] = useState<XpRanks | null>(null);
 
   const [activeSession, setActiveSession] = useState<ActiveSessionInfo | null>(null);
 
@@ -47,7 +49,7 @@ export default function Home({
     let cancelled = false;
     void (async () => {
       setLoading(true);
-      const [p, prof, sessions] = await Promise.all([
+       const [p, prof, sessions, rankData] = await Promise.all([
         fetchProgress(60).catch(() => EMPTY_PROGRESS),
         fetchMyProfile().catch(() => null),
         supabase
@@ -57,6 +59,7 @@ export default function Home({
           .order("completed_at", { ascending: false })
           .limit(40)
           .then((r) => r.data ?? []),
+         fetchMyXpRanks().catch(() => null),
       ]);
       if (cancelled) return;
       setProgress(p);
@@ -73,6 +76,7 @@ export default function Home({
           })),
         ),
       );
+       setRanks(rankData);
       setLoading(false);
     })();
     return () => {
@@ -166,7 +170,7 @@ export default function Home({
       {/* Grade */}
       <section className="border-y border-arena-border py-4">
         <div className="flex items-center gap-3">
-          <GradeEmblem grade={grade} size={36} active progress={gradeInfo.progressPct} context="compact" animated />
+           <GradeEmblem grade={grade} size={52} active progress={gradeInfo.progressPct} context="compact" animated />
           <div className="min-w-0 flex-1">
             <span className="text-sm font-bold text-foreground">{GRADE_LABELS[grade]}</span>
             <p className="mt-0.5 text-xs text-arena-sub">
@@ -179,6 +183,12 @@ export default function Home({
             </span>
           )}
         </div>
+         {ranks && (
+           <div className="mt-3 grid grid-cols-2 divide-x divide-arena-border border-t border-arena-border pt-3 text-center">
+             <div><p className="text-base font-black text-foreground">#{ranks.global_rank}</p><p className="text-[10px] text-arena-sub">rang global</p></div>
+             <div><p className="text-base font-black text-foreground">#{ranks.grade_rank}</p><p className="text-[10px] text-arena-sub">dans ton grade</p></div>
+           </div>
+         )}
       </section>
 
       {/* Récupération */}

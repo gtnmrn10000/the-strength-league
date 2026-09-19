@@ -8,6 +8,7 @@ import { GRADES, GRADE_LABELS, THRESHOLDS, nextGradeInfo, type Grade } from "@/l
 import { GoalIcon } from "@/lib/gradeIcons";
 import { GradeEmblem } from "./grades/GradeEmblem";
 import { fetchNutritionStreak, type NutritionStreak } from "@/lib/foodLogs";
+import { fetchMyXpRanks, type XpRanks } from "@/lib/rankings";
 import GradeGallery from "./GradeGallery";
 import Settings from "./Settings";
 import WeighIns from "./WeighIns";
@@ -46,6 +47,7 @@ export default function Profile() {
   const [weighOpen, setWeighOpen] = useState(false);
   const [streak, setStreak] = useState<NutritionStreak | null>(null);
   const [myId, setMyId] = useState<string | null>(null);
+  const [ranks, setRanks] = useState<XpRanks | null>(null);
 
 
   useEffect(() => {
@@ -55,7 +57,7 @@ export default function Profile() {
       if (!user || cancelled) return;
       setMyId(user.id);
 
-      const [profileRes, prsRes] = await Promise.all([
+       const [profileRes, prsRes, rankData] = await Promise.all([
         supabase.rpc("get_my_profile").maybeSingle(),
         supabase
           .from("prs")
@@ -63,6 +65,7 @@ export default function Profile() {
           .eq("user_id", user.id)
           .eq("status", "verified")
           .order("created_at", { ascending: false }),
+         fetchMyXpRanks().catch(() => null),
       ]);
 
       if (!cancelled) {
@@ -71,6 +74,7 @@ export default function Profile() {
           setVerifiedPRs(prsRes.data as VerifiedPR[]);
           setPrCount(prsRes.data.length);
         }
+         setRanks(rankData);
       }
     })();
     fetchNutritionStreak().then((s) => setStreak(s)).catch(() => {});
@@ -150,11 +154,12 @@ export default function Profile() {
       <h3 className="mb-3 mt-6 text-xs font-black tracking-widest text-arena-muted">PROGRESSION</h3>
       <div className="border-y border-arena-border py-4">
         <div className="flex items-center gap-3">
-          <GradeEmblem grade={grade} size={36} active progress={progressPct} context="compact" animated />
+           <GradeEmblem grade={grade} size={52} active progress={progressPct} context="compact" animated />
           <div className="min-w-0 flex-1">
             <span className="text-sm font-bold text-foreground">{GRADE_LABELS[grade]}</span>
             <p className="mt-0.5 text-xs text-arena-muted"><span className="font-bold text-arena-gold">{xp.toLocaleString()}</span> XP</p>
           </div>
+         {ranks && <p className="mt-3 border-t border-arena-border pt-3 text-center text-xs text-arena-sub">Rang global <strong className="text-foreground">#{ranks.global_rank}</strong> · {GRADE_LABELS[grade]} <strong className="text-foreground">#{ranks.grade_rank}</strong></p>}
           {!isMaxGrade && (
             <span className="flex items-center gap-1 text-xs text-arena-sub">
               <ArrowRight size={12} /> <GradeEmblem grade={nextGrade} size={18} /> {GRADE_LABELS[nextGrade]}
