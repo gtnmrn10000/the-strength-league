@@ -4,6 +4,7 @@ import { Apple, Mail, Lock, Loader2, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { toast } from "sonner";
+import { oauthRedirectUrl } from "@/lib/native";
 
 type Mode = "signup" | "login";
 
