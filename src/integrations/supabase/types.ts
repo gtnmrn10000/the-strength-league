@@ -1128,6 +1128,29 @@ export type Database = {
           total_kg: number
         }[]
       }
+      get_my_xp_ranks: {
+        Args: never
+        Returns: {
+          current_grade: string
+          global_participants: number
+          global_rank: number
+          grade_participants: number
+          grade_rank: number
+          xp: number
+        }[]
+      }
+      get_xp_leaderboard: {
+        Args: { _grade?: string; _limit?: number; _offset?: number }
+        Returns: {
+          avatar_url: string
+          current_grade: string
+          global_rank: number
+          grade_rank: number
+          pseudo: string
+          user_id: string
+          xp: number
+        }[]
+      }
       grade_for_xp: { Args: { _xp: number }; Returns: string }
       has_role: {
         Args: {
