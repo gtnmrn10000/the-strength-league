@@ -15,6 +15,7 @@ import {
   type PostComment,
 } from "@/lib/social";
 import { GRADE_LABELS, type Grade } from "@/lib/grades";
+import { friendlyError } from "@/lib/errors";
 import { GradeIcon } from "@/lib/gradeIcons";
 
 function dateLabel(iso: string) {
@@ -90,10 +91,10 @@ export default function PostDetailSheet({
     setHypeCount((c) => c + (next ? 1 : -1));
     try {
       await toggleHype(post.id, hyped);
-    } catch {
+    } catch (e) {
       setHyped(!next);
       setHypeCount((c) => c + (next ? -1 : 1));
-      toast.error("Action impossible.");
+      toast.error(friendlyError(e, "Action impossible."));
     }
   };
 
@@ -105,7 +106,7 @@ export default function PostDetailSheet({
       setBody("");
       await loadComments(post.id);
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Commentaire impossible.");
+      toast.error(friendlyError(e, "Commentaire impossible."));
     } finally {
       setSending(false);
     }

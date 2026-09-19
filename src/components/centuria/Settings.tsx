@@ -1,13 +1,16 @@
 import { useEffect, useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Globe, Scale as ScaleIcon, Crown, LogOut, Info, Shield, Loader2, ChevronRight, Ban, Bell } from "lucide-react";
+import { Globe, Scale as ScaleIcon, Crown, LogOut, Info, Shield, Loader2, ChevronRight, Ban, Bell, Flag, HelpCircle, Bug, Mail, ChevronDown } from "lucide-react";
 import UserAvatar from "./social/UserAvatar";
 import AccountSection from "./account/AccountSection";
-import { fetchBlockedProfiles, unblockUser } from "@/lib/moderation";
+import { fetchBlockedProfiles, unblockUser, fetchMyReports, REPORT_STATUS_LABELS, type MyReport } from "@/lib/moderation";
 import { supabase } from "@/integrations/supabase/client";
 import { useSubscription } from "@/hooks/useSubscription";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
+import { Link } from "@tanstack/react-router";
+import { APP_VERSION } from "@/lib/appVersion";
+import { SUPPORT_EMAIL, SUPPORT_EMAIL_CONFIGURED, BUG_CATEGORIES, submitBugReport } from "@/lib/support";
 import {
   isPushSupported,
   registerPush,
@@ -16,6 +19,15 @@ import {
   savePushPrefs,
   type NotificationPrefs,
 } from "@/lib/push";
+
+const FAQ_ITEMS: { q: string; a: string }[] = [
+  { q: 'Comment enregistrer une séance ?', a: "Depuis l'onglet Entraînement, choisis un exercice, renseigne poids et répétitions puis valide ta série. La séance se termine automatiquement dans ton historique." },
+  { q: 'Comment un record devient-il « vérifié » ?', a: "Un PR envoyé avec une vidéo est soumis au vote de la communauté (Valide / Douteux). Au-delà d'un seuil de votes valides, il passe automatiquement au statut Vérifié." },
+  { q: "Que comprend l'abonnement Premium ?", a: "Le Coach IA, la reconnaissance de repas par photo et l'analyse avancée de progression. Le suivi de base reste gratuit." },
+  { q: 'Mes données sont-elles privées ?', a: 'Ton e-mail, ton poids, ton alimentation et tes séances restent privés. Seuls pseudo, photo, bio, grade et posts sont visibles des autres membres.' },
+  { q: 'Comment supprimer mon compte ?', a: 'Dans Réglages → Compte, en bas de la section : « Supprimer mon compte ». Cette action est définitive et efface tes contenus.' },
+  { q: 'Un compte me harcèle, que faire ?', a: 'Bloque-le (il disparaît de ton fil, ne peut plus interagir avec toi) et signale-le via le menu « … » sur son contenu.' },
+];
 
 const UNITS_KEY = "centuria_units";
 const LANG_KEY = "centuria_lang";
@@ -45,6 +57,11 @@ export default function Settings({
   const [blockedList, setBlockedList] = useState<
     { user_id: string; pseudo: string; avatar_url: string | null }[]
   >([]);
+  const [myReports, setMyReports] = useState<MyReport[]>([]);
+  const [faqOpen, setFaqOpen] = useState<number | null>(null);
+  const [bugCategory, setBugCategory] = useState(BUG_CATEGORIES[0].value);
+  const [bugMessage, setBugMessage] = useState("");
+  const [bugSending, setBugSending] = useState(false);
 
   const pushSupported = isPushSupported();
   const [prefs, setPrefs] = useState<NotificationPrefs | null>(null);
@@ -54,6 +71,25 @@ export default function Settings({
     if (!open) return;
     void fetchBlockedProfiles().then(setBlockedList);
   }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    void fetchMyReports().then(setMyReports);
+  }, [open]);
+
+  const sendBugReport = async () => {
+    if (!bugMessage.trim() || bugSending) return;
+    setBugSending(true);
+    try {
+      await submitBugReport({ category: bugCategory, message: bugMessage });
+      setBugMessage("");
+      toast.success("Merci, ton rapport a été envoyé.");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Envoi impossible.");
+    } finally {
+      setBugSending(false);
+    }
+  };
 
   useEffect(() => {
     if (!open) return;
@@ -340,13 +376,142 @@ export default function Settings({
             )}
           </Section>
 
+          {/* Mes signalements */}
+          <Section title="MES SIGNALEMENTS">
+            {myReports.length === 0 ? (
+              <p className="px-1 text-[11px] text-arena-muted">
+                Tu n'as encore rien signalé.
+              </p>
+            ) : (
+              <div className="flex flex-col gap-2">
+                {myReports.map((r) => (
+                  <div
+                    key={r.id}
+                    className="flex items-center justify-between rounded-2xl border border-arena-border bg-arena-surface p-3"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate text-xs font-bold text-foreground">
+                        {r.target_type === "post" ? "Post" : r.target_type === "comment" ? "Commentaire" : "Profil"} · {r.reason}
+                      </p>
+                      <p className="text-[10px] text-arena-muted">
+                        {new Date(r.created_at).toLocaleDateString("fr-FR")}
+                      </p>
+                    </div>
+                    <span
+                      className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-black tracking-wider ${
+                        r.status === "actioned"
+                          ? "bg-arena-green/15 text-arena-green"
+                          : r.status === "dismissed"
+                          ? "bg-red-500/15 text-red-400"
+                          : r.status === "reviewed"
+                          ? "bg-arena/15 text-arena"
+                          : "bg-arena-gold/15 text-arena-gold"
+                      }`}
+                    >
+                      {REPORT_STATUS_LABELS[r.status]}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Section>
+
+          {/* Aide */}
+          <Section title="AIDE">
+            <div className="flex flex-col gap-2">
+              {FAQ_ITEMS.map((item, i) => (
+                <div key={item.q} className="rounded-2xl border border-arena-border bg-arena-surface overflow-hidden">
+                  <button
+                    type="button"
+                    onClick={() => setFaqOpen(faqOpen === i ? null : i)}
+                    className="flex w-full items-center justify-between p-3 text-left"
+                  >
+                    <span className="flex items-center gap-2 text-xs font-bold text-foreground">
+                      <HelpCircle size={14} className="text-arena shrink-0" /> {item.q}
+                    </span>
+                    <ChevronDown
+                      size={14}
+                      className={`shrink-0 text-arena-muted transition-transform ${faqOpen === i ? "rotate-180" : ""}`}
+                    />
+                  </button>
+                  {faqOpen === i && (
+                    <p className="px-3 pb-3 text-[11px] leading-relaxed text-arena-sub">{item.a}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-3 rounded-2xl border border-arena-border bg-arena-surface p-3">
+              <p className="flex items-center gap-2 text-xs font-black text-foreground">
+                <Bug size={14} className="text-arena" /> Signaler un bug
+              </p>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {BUG_CATEGORIES.map((c) => (
+                  <button
+                    key={c.value}
+                    type="button"
+                    onClick={() => setBugCategory(c.value)}
+                    className={`rounded-full px-2.5 py-1 text-[10px] font-black tracking-wide transition ${
+                      bugCategory === c.value ? "bg-arena-gold text-black" : "border border-arena-border text-arena-sub"
+                    }`}
+                  >
+                    {c.label}
+                  </button>
+                ))}
+              </div>
+              <textarea
+                value={bugMessage}
+                onChange={(e) => setBugMessage(e.target.value)}
+                maxLength={4000}
+                rows={3}
+                placeholder="Décris le problème rencontré…"
+                className="mt-2 w-full rounded-xl border border-arena-border bg-background px-3 py-2 text-xs text-foreground outline-none focus:border-arena/50"
+              />
+              <button
+                type="button"
+                onClick={sendBugReport}
+                disabled={bugSending || !bugMessage.trim()}
+                className="mt-2 flex items-center gap-1.5 rounded-full bg-arena px-4 py-2 text-[11px] font-black text-arena-foreground disabled:opacity-50"
+              >
+                {bugSending ? <Loader2 size={12} className="animate-spin" /> : <Bug size={12} />}
+                Envoyer le rapport
+              </button>
+            </div>
+
+            <div className="mt-2 flex flex-col gap-2">
+              <LinkRow
+                icon={Mail}
+                label="Contacter le support"
+                value={SUPPORT_EMAIL_CONFIGURED ? SUPPORT_EMAIL : "à configurer"}
+              />
+              <Link
+                to="/legal/rules"
+                className="flex items-center justify-between rounded-xl border border-arena-border bg-arena-surface px-3 py-2.5"
+              >
+                <span className="flex items-center gap-2 text-xs font-bold text-foreground">
+                  <Flag size={14} className="text-arena-sub" /> Règles de la communauté
+                </span>
+                <ChevronRight size={14} className="text-arena-sub" />
+              </Link>
+              <Link
+                to="/legal/support"
+                className="flex items-center justify-between rounded-xl border border-arena-border bg-arena-surface px-3 py-2.5"
+              >
+                <span className="flex items-center gap-2 text-xs font-bold text-foreground">
+                  <Shield size={14} className="text-arena-sub" /> Confidentialité & CGU
+                </span>
+                <ChevronRight size={14} className="text-arena-sub" />
+              </Link>
+            </div>
+          </Section>
+
           {/* Compte, données, légal, suppression */}
           <AccountSection onSignedOut={() => onOpenChange(false)} />
 
           {/* À propos */}
           <Section title="À PROPOS">
             <div className="flex flex-col gap-2">
-              <LinkRow icon={Info} label="Version" value="1.0.0" />
+              <LinkRow icon={Info} label="Version" value={APP_VERSION} />
               <LinkRow icon={Shield} label="Données" value="RGPD" />
             </div>
           </Section>

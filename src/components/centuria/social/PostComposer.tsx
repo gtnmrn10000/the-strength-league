@@ -6,6 +6,8 @@ import { Video, Image as ImageIcon, Trophy, Loader2, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { createPost } from "@/lib/social";
+import { track } from "@/lib/analytics";
+import { friendlyError } from "@/lib/errors";
 
 type Mode = "choice" | "video" | "photo";
 
@@ -81,11 +83,12 @@ export default function PostComposer({
       });
 
       toast.success("Publié.");
+      track("post_created", { media_type: mode === "video" ? "video" : "image" });
       reset();
       onOpenChange(false);
       onPosted?.();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Publication impossible.");
+      toast.error(friendlyError(e, "Publication impossible."));
       setBusy(false);
     }
   };

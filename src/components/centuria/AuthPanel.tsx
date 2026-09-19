@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { toast } from "sonner";
 import { oauthRedirectUrl } from "@/lib/native";
+import { track } from "@/lib/analytics";
 
 type Mode = "signup" | "login";
 
@@ -61,6 +62,7 @@ export default function AuthPanel({
           return;
         }
         toast.success("Compte créé");
+        track("signup_completed", { method: "email" });
         onAuthenticated?.();
       } else {
         const { error: err } = await supabase.auth.signInWithPassword({ email: mail, password });
@@ -103,7 +105,10 @@ export default function AuthPanel({
         redirect_uri: oauthRedirectUrl(),
       });
       if (result.error) throw result.error;
-      if (!("redirected" in result && result.redirected)) onAuthenticated?.();
+      if (!("redirected" in result && result.redirected)) {
+        if (mode === "signup") track("signup_completed", { method: provider });
+        onAuthenticated?.();
+      }
     } catch (e) {
       setError(frError(e instanceof Error ? e.message : String(e)));
     } finally {
@@ -198,7 +203,8 @@ export default function AuthPanel({
         <Link to="/legal/privacy" className="text-arena-sub underline">
           politique de confidentialité
         </Link>
-        . <Link to="/legal/support" className="text-arena-sub underline">Contact</Link>
+        . <Link to="/legal/rules" className="text-arena-sub underline">Règles</Link> ·{" "}
+        <Link to="/legal/support" className="text-arena-sub underline">Contact</Link>
       </p>
     </div>
   );

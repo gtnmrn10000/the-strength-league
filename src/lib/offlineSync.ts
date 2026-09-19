@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types";
+import { awardWorkoutXp } from "@/lib/api";
 
 const QUEUE_KEY = "centuria:pending-sessions";
 const BACKOFF_STEPS_MS = [2000, 5000, 15000, 60000]; // plafond 60s
@@ -140,6 +141,17 @@ async function syncOne(item: QueuedItem): Promise<"ok" | "retry"> {
       .from("workout_sessions")
       .upsert([clean], { onConflict: "id", ignoreDuplicates: false });
     if (error) return "retry";
+
+    // L'XP est attribué côté serveur (fonction Edge award-xp), jamais par le
+    // client. L'attribution est idempotente (contrainte unique user/kind/day
+    // sur xp_events) : la rappeler ici après un flush hors-ligne ne peut donc
+    // jamais dupliquer l'XP, même en cas de retry ou de double flush.
+    try {
+      await awardWorkoutXp(clean.id);
+    } catch (e) {
+      console.warn("[offlineSync] xp award skipped", e);
+    }
+
     return "ok";
   } catch {
     return "retry";

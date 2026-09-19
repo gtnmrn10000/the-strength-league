@@ -26,6 +26,7 @@ import {
   computeGradeForLift,
 } from "@/lib/grades";
 import { GradeIcon } from "@/lib/gradeIcons";
+import { track } from "@/lib/analytics";
 import {
   Sheet,
   SheetContent,
@@ -290,6 +291,7 @@ export default function PRFlow({
       await new Promise((r) => setTimeout(r, 1200));
 
       setUploadProgress(100);
+      track("pr_created", { exercise: exercise.id, reps });
       setStep("victory");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Erreur inconnue";

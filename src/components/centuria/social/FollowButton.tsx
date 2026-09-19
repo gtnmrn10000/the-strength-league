@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { follow, unfollow, isFollowing } from "@/lib/social";
+import { friendlyError } from "@/lib/errors";
+import { toast } from "sonner";
 
 export default function FollowButton({
   targetId,
@@ -40,7 +42,7 @@ export default function FollowButton({
       // rollback
       setFollowing(!next);
       onChange?.(!next);
-      console.error("Follow error", err);
+      toast.error(friendlyError(err, "Action impossible."));
     }
   };
 

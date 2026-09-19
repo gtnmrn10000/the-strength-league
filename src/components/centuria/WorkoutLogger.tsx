@@ -38,10 +38,13 @@ import { fetchProgress, statsFor } from "@/lib/progress";
 import { awardWorkoutXp } from "@/lib/api";
 import { queueSession } from "@/lib/offlineSync";
 import { pushBackHandler } from "@/lib/backButton";
+import { ACTIVE_SESSION_KEY } from "@/lib/activeSession";
+import { track } from "@/lib/analytics";
+import { useAuth } from "@/hooks/useAuth";
 import ExerciseLibrary from "./ExerciseLibrary";
 import SessionSummary, { type NewRecord, type SessionResult } from "./session/SessionSummary";
 
-const DRAFT_KEY = "centuria:active-session";
+const DRAFT_KEY = ACTIVE_SESSION_KEY;
 
 /** Détecte une erreur réseau/hors-ligne (par opposition à une erreur métier/auth). */
 function isNetworkError(e: unknown): boolean {
@@ -125,6 +128,7 @@ export default function WorkoutLogger({
   const [now, setNow] = useState(Date.now());
   const [startedAt, setStartedAt] = useState<number | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const { user: authUser } = useAuth();
   const [saving, setSaving] = useState(false);
   const [perfs, setPerfs] = useState<Record<string, LastPerf>>({});
   const [libOpen, setLibOpen] = useState(false);
@@ -134,7 +138,10 @@ export default function WorkoutLogger({
   const [result, setResult] = useState<SessionResult | null>(null);
   const perfsLoaded = useRef(false);
 
-  // Reprise : une séance en cours survit à un changement d'onglet.
+  // Reprise : une séance en cours survit à un changement d'onglet, à une mise en
+  // arrière-plan et à un plantage/redémarrage de l'app. Le brouillon a TOUJOURS
+  // la priorité sur le modèle proposé : on ne réinitialise jamais une séance
+  // commencée.
   useEffect(() => {
     if (!open) {
       setRestEndsAt(null);
@@ -142,13 +149,23 @@ export default function WorkoutLogger({
       return;
     }
     setResult(null);
-    const draft = !sessionOverride ? readDraft() : null;
+    const draft = readDraft();
     if (draft) {
       setTemplate(draft.template);
       setDone(draft.done ?? {});
       setStartedAt(draft.startedAt ?? Date.now());
       setSessionId(draft.id);
       setRestEndsAt(draft.restEndsAt ?? null);
+      track("workout_resumed", {});
+    } else if (sessionOverride) {
+      setTemplate(applyLastPerfs(cloneTemplate(sessionOverride), perfs));
+      setDone({});
+      setStartedAt(Date.now());
+      setSessionId(crypto.randomUUID());
+      setRestEndsAt(null);
+      track("workout_started", { source: "template" });
+    } else {
+      track("workout_started", { source: "template" });
     }
     void (async () => {
       const p = await fetchLastPerformances();
@@ -158,16 +175,6 @@ export default function WorkoutLogger({
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
-
-  useEffect(() => {
-    if (!open || !sessionOverride) return;
-    setTemplate(applyLastPerfs(cloneTemplate(sessionOverride), perfs));
-    setDone({});
-    setStartedAt(Date.now());
-    setSessionId(crypto.randomUUID());
-    setRestEndsAt(null);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, sessionOverride]);
 
   // Sauvegarde du brouillon à chaque changement — débounce léger (<=300ms)
   // mais toujours suivi d'un flush synchrone à la fermeture/mise en arrière-plan
@@ -315,6 +322,7 @@ export default function WorkoutLogger({
     } else {
       mutate((list) => [...list, fresh]);
     }
+    track("exercise_added", { name: lib.id });
     setLibOpen(false);
   };
 
@@ -337,9 +345,10 @@ export default function WorkoutLogger({
     setConfirmFinish(false);
     setSaving(true);
     try {
-      const { data: userData, error: userErr } = await supabase.auth.getUser();
-      const user = userData?.user;
-      if (userErr || !user) {
+      // Identité : on utilise l'utilisateur déjà en mémoire (contexte auth).
+      // Aucun appel réseau ici, sinon la fin de séance se bloque hors connexion.
+      const user = authUser;
+      if (!user) {
         throw new Error("Session expirée. Reconnecte-toi pour enregistrer ta séance.");
       }
 
@@ -359,7 +368,10 @@ export default function WorkoutLogger({
         : template.exercises;
 
       // Records : on compare aux meilleures charges connues AVANT l'insertion.
-      const before = await fetchProgress(120);
+      // Hors ligne, l'historique distant n'est pas joignable : on saute cet appel
+      // (les records seront recalculés à la synchronisation).
+      const isOffline = typeof navigator !== "undefined" && navigator.onLine === false;
+      const before = isOffline ? null : await fetchProgress(120).catch(() => null);
       const records: NewRecord[] = [];
       let sets = 0;
       let volume = 0;
@@ -370,8 +382,8 @@ export default function WorkoutLogger({
           volume += (s.weight_kg ?? 0) * (s.reps ?? 0);
           if ((s.weight_kg ?? 0) > top.weight_kg) top = { weight_kg: s.weight_kg, reps: s.reps };
         }
-        const prev = statsFor(before, ex.name)?.bestWeight?.weight_kg ?? 0;
-        if (top.weight_kg > 0 && top.weight_kg > prev) {
+        const prev = before ? (statsFor(before, ex.name)?.bestWeight?.weight_kg ?? 0) : null;
+        if (prev !== null && top.weight_kg > 0 && top.weight_kg > prev) {
           records.push({ name: ex.name, weight_kg: top.weight_kg, reps: top.reps });
         }
       }
@@ -388,7 +400,8 @@ export default function WorkoutLogger({
 
       // Hors-ligne : on met la séance en file d'attente sans tenter le réseau,
       // pour ne jamais perdre les kg/reps saisis.
-      if (typeof navigator !== "undefined" && navigator.onLine === false) {
+      if (isOffline) {
+        track("workout_sync_failed", { reason: "offline" });
         queueSession(payload);
         clearDraft();
         setResult({
@@ -417,6 +430,7 @@ export default function WorkoutLogger({
         inserted = data;
       } catch (e) {
         if (isNetworkError(e)) {
+          track("workout_sync_failed", { reason: "network" });
           queueSession(payload);
           clearDraft();
           setResult({
@@ -439,12 +453,21 @@ export default function WorkoutLogger({
         if (inserted?.id) {
           const xp = await awardWorkoutXp(inserted.id);
           xpGained = xp?.gained;
+          if (xp?.leveledUp) {
+            track("grade_unlocked", { grade: xp.grade, previous_grade: xp.previousGrade });
+          }
         }
       } catch (e) {
         console.warn("[WorkoutLogger] xp award skipped", e);
       }
 
       clearDraft();
+      track("workout_completed", {
+        exercises: savedExercises.length,
+        sets,
+        duration_min: durationMin,
+        records: records.length,
+      });
       setResult({
         template,
         durationMin,

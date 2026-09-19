@@ -14,6 +14,96 @@ export type Database = {
   }
   public: {
     Tables: {
+      analytics_events: {
+        Row: {
+          app_version: string | null
+          created_at: string
+          event: string
+          id: string
+          platform: string | null
+          props: Json
+          user_id: string | null
+        }
+        Insert: {
+          app_version?: string | null
+          created_at?: string
+          event: string
+          id?: string
+          platform?: string | null
+          props?: Json
+          user_id?: string | null
+        }
+        Update: {
+          app_version?: string | null
+          created_at?: string
+          event?: string
+          id?: string
+          platform?: string | null
+          props?: Json
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      bug_reports: {
+        Row: {
+          app_version: string | null
+          category: string
+          created_at: string
+          id: string
+          message: string
+          platform: string | null
+          user_id: string | null
+        }
+        Insert: {
+          app_version?: string | null
+          category?: string
+          created_at?: string
+          id?: string
+          message: string
+          platform?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          app_version?: string | null
+          category?: string
+          created_at?: string
+          id?: string
+          message?: string
+          platform?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      client_errors: {
+        Row: {
+          app_version: string | null
+          context: string | null
+          created_at: string
+          id: string
+          message: string
+          platform: string | null
+          user_id: string | null
+        }
+        Insert: {
+          app_version?: string | null
+          context?: string | null
+          created_at?: string
+          id?: string
+          message: string
+          platform?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          app_version?: string | null
+          context?: string | null
+          created_at?: string
+          id?: string
+          message?: string
+          platform?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       coach_conversations: {
         Row: {
           created_at: string

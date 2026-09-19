@@ -5,6 +5,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import UserAvatar from "./UserAvatar";
 import ReportSheet from "./ReportSheet";
 import { fetchComments, addComment, deleteComment, type PostComment } from "@/lib/social";
+import { friendlyError } from "@/lib/errors";
 
 function timeAgo(iso: string): string {
   const diff = (Date.now() - new Date(iso).getTime()) / 1000;
@@ -52,7 +53,7 @@ export default function CommentsSheet({
       setBody("");
       await load();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Commentaire impossible.");
+      toast.error(friendlyError(e, "Commentaire impossible."));
     } finally {
       setSending(false);
     }

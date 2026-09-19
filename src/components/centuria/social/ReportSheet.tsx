@@ -2,6 +2,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { reportContent, REPORT_REASONS, type ReportTarget } from "@/lib/moderation";
+import { friendlyError } from "@/lib/errors";
 
 export default function ReportSheet({
   open,
@@ -28,7 +29,7 @@ export default function ReportSheet({
       onOpenChange(false);
       setDetails("");
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Signalement impossible.");
+      toast.error(friendlyError(e, "Signalement impossible."));
     } finally {
       setSending(false);
     }
