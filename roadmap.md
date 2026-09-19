@@ -56,3 +56,10 @@
 - [x] Home / Profil : micro-reflet compact uniquement
 - [x] Level-up : cérémonies propres à chaque grade élevé
 - [x] Reduced motion et QA 320 / 360 / 375 / 390
+
+## Refonte sculptée finale des emblèmes
+- [x] Neuf silhouettes conformes à la référence client
+- [x] Relief, facettes et textures métalliques lisibles en petit
+- [x] Animations adaptées aux nouvelles formes
+- [x] Galerie et level-up premium sur quatre tailles
+- [x] TypeScript, build et QA visuelle
