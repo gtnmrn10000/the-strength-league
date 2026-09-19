@@ -53,16 +53,21 @@ export default function Settings({
   const handleSignOut = async () => {
     setSigningOut(true);
     try {
-      await supabase.auth.signOut();
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      // Brouillons locaux uniquement — aucune session anonyme n'est recréée.
       localStorage.removeItem("centuria_onboarded");
+      localStorage.removeItem("centuria_profile");
+      localStorage.removeItem("centuria_onboarding");
       toast.success("Déconnecté");
-      window.location.reload();
+      onOpenChange(false);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Impossible de se déconnecter");
     } finally {
       setSigningOut(false);
     }
   };
+
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>

@@ -76,9 +76,11 @@ export default function WorkoutLogger({
     setSaving(true);
     try {
       const { data: userData, error: userErr } = await supabase.auth.getUser();
-      if (userErr) throw userErr;
-      const user = userData.user;
-      if (!user) throw new Error("Non authentifié");
+      const user = userData?.user;
+      if (userErr || !user) {
+        throw new Error("Session expirée. Reconnecte-toi pour enregistrer ta séance.");
+      }
+
       const durationMin = startedAt ? Math.max(1, Math.round((Date.now() - startedAt) / 60000)) : null;
 
       // Ne conserve dans exercises que les séries réellement cochées ;
