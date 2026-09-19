@@ -89,6 +89,42 @@ export type Database = {
         }
         Relationships: []
       }
+      content_reports: {
+        Row: {
+          created_at: string
+          details: string | null
+          id: string
+          reason: string
+          reporter_id: string
+          status: string
+          target_id: string
+          target_type: string
+          target_user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          details?: string | null
+          id?: string
+          reason: string
+          reporter_id: string
+          status?: string
+          target_id: string
+          target_type: string
+          target_user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          details?: string | null
+          id?: string
+          reason?: string
+          reporter_id?: string
+          status?: string
+          target_id?: string
+          target_type?: string
+          target_user_id?: string | null
+        }
+        Relationships: []
+      }
       custom_exercises: {
         Row: {
           created_at: string
@@ -230,6 +266,74 @@ export type Database = {
         }
         Relationships: []
       }
+      notifications: {
+        Row: {
+          actor_id: string | null
+          created_at: string
+          id: string
+          meta: Json
+          post_id: string | null
+          pr_id: string | null
+          read_at: string | null
+          type: string
+          user_id: string
+        }
+        Insert: {
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          meta?: Json
+          post_id?: string | null
+          pr_id?: string | null
+          read_at?: string | null
+          type: string
+          user_id: string
+        }
+        Update: {
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          meta?: Json
+          post_id?: string | null
+          pr_id?: string | null
+          read_at?: string | null
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      post_comments: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_comments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       post_hypes: {
         Row: {
           created_at: string
@@ -259,6 +363,7 @@ export type Database = {
       posts: {
         Row: {
           caption: string | null
+          comment_count: number
           created_at: string
           hype_count: number
           id: string
@@ -271,6 +376,7 @@ export type Database = {
         }
         Insert: {
           caption?: string | null
+          comment_count?: number
           created_at?: string
           hype_count?: number
           id?: string
@@ -283,6 +389,7 @@ export type Database = {
         }
         Update: {
           caption?: string | null
+          comment_count?: number
           created_at?: string
           hype_count?: number
           id?: string
@@ -443,6 +550,24 @@ export type Database = {
         }
         Relationships: []
       }
+      user_blocks: {
+        Row: {
+          blocked_id: string
+          blocker_id: string
+          created_at: string
+        }
+        Insert: {
+          blocked_id: string
+          blocker_id: string
+          created_at?: string
+        }
+        Update: {
+          blocked_id?: string
+          blocker_id?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
       weigh_ins: {
         Row: {
           bodyfat_pct: number | null
@@ -574,6 +699,17 @@ export type Database = {
         }[]
       }
       is_current_user_premium: { Args: never; Returns: boolean }
+      push_notification: {
+        Args: {
+          _actor_id: string
+          _meta: Json
+          _post_id: string
+          _pr_id: string
+          _type: string
+          _user_id: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       activity_level:

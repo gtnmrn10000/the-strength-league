@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import {
@@ -11,9 +11,17 @@ import {
   Utensils,
   ThumbsUp,
   ThumbsDown,
+  MessageCircle,
+  MoreHorizontal,
+  Flag,
+  Ban,
 } from "lucide-react";
 import UserAvatar from "./UserAvatar";
+import CommentsSheet from "./CommentsSheet";
+import ReportSheet from "./ReportSheet";
 import { toggleHype, type FeedPost } from "@/lib/social";
+import { blockUser } from "@/lib/moderation";
+import { supabase } from "@/integrations/supabase/client";
 import { GRADE_LABELS, type Grade } from "@/lib/grades";
 import { GradeIcon } from "@/lib/gradeIcons";
 import { voteOnPR } from "@/lib/prs.functions";
@@ -29,7 +37,23 @@ function timeAgo(iso: string): string {
 export default function PostCard({ post }: { post: FeedPost }) {
   const [hyped, setHyped] = useState(post.hyped_by_me);
   const [count, setCount] = useState(post.hype_count);
+  const [comments, setComments] = useState(post.comment_count ?? 0);
+  const [commentsOpen, setCommentsOpen] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [hidden, setHidden] = useState(false);
+  const [myId, setMyId] = useState<string | null>(null);
   const grade = (post.author?.current_grade || "recruit") as Grade;
+
+  useEffect(() => {
+    let cancelled = false;
+    void supabase.auth.getUser().then(({ data }) => {
+      if (!cancelled) setMyId(data.user?.id ?? null);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const onHype = async () => {
     const next = !hyped;
@@ -43,25 +67,81 @@ export default function PostCard({ post }: { post: FeedPost }) {
     }
   };
 
+  const onBlock = async () => {
+    setMenuOpen(false);
+    try {
+      await blockUser(post.user_id);
+      setHidden(true);
+      toast.success("Utilisateur bloqué.");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Blocage impossible.");
+    }
+  };
+
+  const isMine = myId !== null && myId === post.user_id;
+
+  if (hidden) return null;
+
+
   return (
     <div className="rounded-2xl border border-arena-border bg-arena-surface p-4">
       {/* Header */}
-      <Link
-        to="/profile/$userId"
-        params={{ userId: post.user_id }}
-        className="flex items-center gap-3"
-      >
-        <UserAvatar src={post.author?.avatar_url} pseudo={post.author?.pseudo} size={40} />
-        <div className="flex-1">
-          <div className="flex items-center gap-2">
-            <span className="font-bold text-foreground">{post.author?.pseudo}</span>
-            <span className="inline-flex items-center gap-1 text-[10px] font-black tracking-wider text-arena-gold">
-              <GradeIcon grade={grade} size={10} /> {GRADE_LABELS[grade]?.toUpperCase()}
-            </span>
+      <div className="flex items-center gap-3">
+        <Link
+          to="/profile/$userId"
+          params={{ userId: post.user_id }}
+          className="flex min-w-0 flex-1 items-center gap-3"
+        >
+          <UserAvatar src={post.author?.avatar_url} pseudo={post.author?.pseudo} size={40} />
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2">
+              <span className="truncate font-bold text-foreground">{post.author?.pseudo}</span>
+              <span className="inline-flex shrink-0 items-center gap-1 text-[10px] font-black tracking-wider text-arena-gold">
+                <GradeIcon grade={grade} size={10} /> {GRADE_LABELS[grade]?.toUpperCase()}
+              </span>
+            </div>
+            <span className="text-xs text-arena-sub">{timeAgo(post.created_at)}</span>
           </div>
-          <span className="text-xs text-arena-sub">{timeAgo(post.created_at)}</span>
-        </div>
-      </Link>
+        </Link>
+
+        {!isMine && (
+          <div className="relative shrink-0">
+            <button
+              onClick={() => setMenuOpen((v) => !v)}
+              aria-label="Options du post"
+              className="flex h-9 w-9 items-center justify-center rounded-full text-arena-muted"
+            >
+              <MoreHorizontal size={18} />
+            </button>
+            {menuOpen && (
+              <>
+                <button
+                  aria-label="Fermer le menu"
+                  className="fixed inset-0 z-10 cursor-default"
+                  onClick={() => setMenuOpen(false)}
+                />
+                <div className="absolute right-0 z-20 mt-1 w-44 overflow-hidden rounded-xl border border-arena-border bg-arena-surface shadow-lg">
+                  <button
+                    onClick={() => {
+                      setMenuOpen(false);
+                      setReportOpen(true);
+                    }}
+                    className="flex w-full items-center gap-2 px-3 py-3 text-left text-xs font-semibold text-foreground"
+                  >
+                    <Flag size={14} /> Signaler
+                  </button>
+                  <button
+                    onClick={onBlock}
+                    className="flex w-full items-center gap-2 border-t border-arena-border px-3 py-3 text-left text-xs font-semibold text-red-400"
+                  >
+                    <Ban size={14} /> Bloquer
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+      </div>
 
       {/* Body per type */}
       {post.type === "pr" && <PRBody post={post} />}
@@ -75,19 +155,41 @@ export default function PostCard({ post }: { post: FeedPost }) {
       )}
 
       {/* Actions */}
-      <div className="mt-3 flex items-center gap-4 text-arena-sub">
+      <div className="mt-3 flex items-center gap-5 text-arena-sub">
         <button
           onClick={onHype}
-          className={`flex items-center gap-1.5 text-xs transition-colors ${
+          className={`flex items-center gap-1.5 py-1 text-xs transition-colors ${
             hyped ? "text-arena" : ""
           }`}
         >
           <Flame size={16} className={hyped ? "fill-arena text-arena" : ""} />
           <span className="font-bold">{count}</span>
         </button>
+        <button
+          onClick={() => setCommentsOpen(true)}
+          className="flex items-center gap-1.5 py-1 text-xs"
+        >
+          <MessageCircle size={16} />
+          <span className="font-bold">{comments}</span>
+        </button>
       </div>
+
+      <CommentsSheet
+        open={commentsOpen}
+        onOpenChange={setCommentsOpen}
+        postId={post.id}
+        onCountChange={setComments}
+      />
+      <ReportSheet
+        open={reportOpen}
+        onOpenChange={setReportOpen}
+        targetType="post"
+        targetId={post.id}
+        targetUserId={post.user_id}
+      />
     </div>
   );
+
 }
 
 function PRBadge({ status }: { status: NonNullable<FeedPost["pr"]>["status"] }) {
