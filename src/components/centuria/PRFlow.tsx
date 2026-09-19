@@ -1,8 +1,6 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Camera,
-  FolderOpen,
   Check,
   ChevronLeft,
   ChevronRight,
@@ -10,14 +8,16 @@ import {
   AlertTriangle,
   Flame,
   CheckCircle2,
-  Footprints,
   Dumbbell,
-  Weight,
-  type LucideIcon,
+  Search,
+  Video,
+  FolderOpen,
 } from "lucide-react";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
-import { PR_EXERCISE_IMAGE } from "@/lib/exerciseCatalog";
+import {
+  EXERCISE_LIBRARY,
+  searchExercises,
+  type LibraryExercise,
+} from "@/lib/exerciseCatalog";
 import { supabase } from "@/integrations/supabase/client";
 import { submitPR } from "@/lib/prs.functions";
 import { captureVideo } from "@/lib/nativeMedia";
@@ -32,69 +32,27 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 
-type Exercise = "squat" | "bench" | "deadlift";
 type Step = 1 | 2 | 3 | 4 | "uploading" | "victory";
 
+/** Les trois lifts historiques ouvrent en plus un badge de force (ratio / poids de corps). */
+const STRENGTH_BADGE: Record<string, "squat" | "bench" | "deadlift"> = {
+  squat: "squat",
+  "back-squat": "squat",
+  bench: "bench",
+  deadlift: "deadlift",
+};
 
-const EXERCISES: { id: Exercise; icon: LucideIcon; label: string }[] = [
-  { id: "squat", icon: Footprints, label: "SQUAT" },
-  { id: "bench", icon: Dumbbell, label: "BENCH PRESS" },
-  { id: "deadlift", icon: Weight, label: "DEADLIFT" },
-];
-
-// La vérification est communautaire : les autres athlètes voteront « Valide »
-// ou « Douteux » sur le PR depuis le feed. Le grade / les XP se débloquent
-// dès que le PR atteint le seuil défini côté serveur (voir prs.functions.ts).
-const ANALYSIS_TEXTS = [
-  "Publication du PR...",
-  "Préparation du feed...",
-  "Ouverture aux votes...",
-  "En attente de la communauté...",
+const UPLOAD_TEXTS = [
+  "Envoi de la vidéo…",
+  "Publication dans le feed…",
+  "Ouverture aux votes…",
 ];
 
 const pageVariants = {
-  initial: { opacity: 0, x: 80 },
-  animate: { opacity: 1, x: 0, transition: { duration: 0.35, ease: "easeOut" as const } },
-  exit: { opacity: 0, x: -80, transition: { duration: 0.25 } },
+  initial: { opacity: 0, x: 60 },
+  animate: { opacity: 1, x: 0, transition: { duration: 0.28, ease: "easeOut" as const } },
+  exit: { opacity: 0, x: -60, transition: { duration: 0.2 } },
 };
-
-/* ─── Confetti ─── */
-function Confetti() {
-  const particles = useMemo(
-    () =>
-      Array.from({ length: 30 }, (_, i) => ({
-        id: i,
-        x: Math.random() * 100,
-        delay: Math.random() * 0.5,
-        duration: 1.5 + Math.random() * 2,
-        size: 4 + Math.random() * 6,
-        color: ["#DC2626", "#EAB308", "#F97316", "#FBBF24", "#EF4444"][
-          Math.floor(Math.random() * 5)
-        ],
-      })),
-    []
-  );
-
-  return (
-    <div className="pointer-events-none absolute inset-0 overflow-hidden">
-      {particles.map((p) => (
-        <motion.div
-          key={p.id}
-          initial={{ y: -20, x: `${p.x}vw`, opacity: 1, rotate: 0 }}
-          animate={{ y: "110vh", opacity: 0, rotate: 360 + Math.random() * 360 }}
-          transition={{ duration: p.duration, delay: p.delay, ease: "easeIn" }}
-          style={{
-            position: "absolute",
-            width: p.size,
-            height: p.size,
-            borderRadius: p.size > 7 ? "2px" : "50%",
-            backgroundColor: p.color,
-          }}
-        />
-      ))}
-    </div>
-  );
-}
 
 /* ─── Pulsing loader ─── */
 function PulsingLoader() {
@@ -132,7 +90,8 @@ export default function PRFlow({
   onOpenChange: (open: boolean, prValidated?: boolean) => void;
 }) {
   const [step, setStep] = useState<Step>(1);
-  const [exercise, setExercise] = useState<Exercise | null>(null);
+  const [exercise, setExercise] = useState<LibraryExercise | null>(null);
+  const [exQuery, setExQuery] = useState("");
   const [weight, setWeight] = useState("");
   const [reps, setReps] = useState(1);
   const [videoFile, setVideoFile] = useState<File | null>(null);
@@ -147,7 +106,19 @@ export default function PRFlow({
   const videoInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
-  const canContinueStep2 = weight !== "" && Number(weight) >= 20 && Number(weight) <= 500;
+  const exerciseResults = useMemo(() => {
+    const q = exQuery.trim();
+    if (!q) {
+      const favs = ["bench", "squat", "deadlift", "ohp", "pull-up", "curl-barbell", "hip-thrust", "leg-press"];
+      const picks = favs
+        .map((id) => EXERCISE_LIBRARY.find((e) => e.id === id))
+        .filter((e): e is LibraryExercise => Boolean(e));
+      return picks;
+    }
+    return searchExercises(EXERCISE_LIBRARY, q).slice(0, 25);
+  }, [exQuery]);
+
+  const canContinueStep2 = weight !== "" && Number(weight) >= 1 && Number(weight) <= 600;
   const videoValid = videoFile && !error;
 
   // Reset state when sheet closes
@@ -155,6 +126,7 @@ export default function PRFlow({
     if (!open) {
       setStep(1);
       setExercise(null);
+      setExQuery("");
       setWeight("");
       setReps(1);
       setVideoFile(null);
@@ -193,7 +165,7 @@ export default function PRFlow({
   useEffect(() => {
     if (step !== "uploading" || uploadProgress < 60) return;
     const iv = setInterval(() => {
-      setAnalysisIdx((p) => (p + 1) % ANALYSIS_TEXTS.length);
+      setAnalysisIdx((p) => (p + 1) % UPLOAD_TEXTS.length);
     }, 1000);
     return () => clearInterval(iv);
   }, [step, uploadProgress]);
@@ -264,11 +236,10 @@ export default function PRFlow({
     setError(null);
   }, [videoUrl]);
 
-  const ratio = weight ? (Number(weight) / userBW).toFixed(2) : null;
-  const gradeVise =
-    exercise && weight
-      ? computeGradeForLift(exercise, Number(weight), userBW)
-      : null;
+  const badgeLift = exercise ? STRENGTH_BADGE[exercise.id] : undefined;
+  const ratio = badgeLift && weight ? (Number(weight) / userBW).toFixed(2) : null;
+  const strengthBadge =
+    badgeLift && weight ? computeGradeForLift(badgeLift, Number(weight), userBW) : null;
 
   /* ─── SUBMIT ─── */
   const handleSubmit = async () => {
@@ -289,7 +260,7 @@ export default function PRFlow({
           .toLowerCase()
           .replace(/[^a-z0-9]/g, "")
           .slice(0, 5) || "mp4";
-      const path = `${user.id}/${exercise}/${Date.now()}.${guessedExt}`;
+      const path = `${user.id}/${exercise.id}/${Date.now()}.${guessedExt}`;
 
       setUploadProgress(20);
       const { error: uploadErr } = await supabase.storage
@@ -309,7 +280,8 @@ export default function PRFlow({
       // un post 'pr' dans le feed pour la vérification communautaire.
       await submitPR({
         data: {
-          exercise,
+          exercise: exercise.id,
+          exercise_name: exercise.name,
           weight_kg: Number(weight),
           reps,
           video_url: path,
@@ -335,28 +307,9 @@ export default function PRFlow({
     else if (step === 4) setStep(3);
   };
 
-  useEffect(() => {
-    if (!open) return;
-    console.log("[PRFlow] step changed", { step, exercise });
-  }, [open, step, exercise]);
-
   const handleExerciseContinue = () => {
-    console.log("[PRFlow] continue exercise clicked", {
-      exercise,
-      step,
-      hasExercise: !!exercise,
-    });
-
-    if (!exercise) {
-      console.log("[PRFlow] continue exercise blocked: no exercise selected");
-      return;
-    }
-
-    console.log("[PRFlow] before setStep", { from: step, to: 2 });
-    setStep((previousStep) => {
-      console.log("[PRFlow] setStep updater", { previousStep, nextStep: 2 });
-      return 2;
-    });
+    if (!exercise) return;
+    setStep(2);
   };
 
   const handleClose = (prValidated?: boolean) => {
@@ -416,62 +369,75 @@ export default function PRFlow({
         {/* Content */}
         <div className="flex-1 overflow-y-auto px-5 pb-8">
           <AnimatePresence mode="wait">
-            {/* ═══ STEP 1 — Exercise (RadioGroup natif, plus robuste) ═══ */}
+            {/* ═══ STEP 1 — Exercice (toute la bibliothèque, avec recherche) ═══ */}
             {step === 1 && (
-              <motion.div key="s1" {...pageVariants} className="flex flex-col gap-4 pt-6">
-                <h2 className="text-center font-[Anton] text-[32px] uppercase tracking-wide text-foreground">
-                  QUEL EXERCICE ?
-                </h2>
+              <motion.div key="s1" {...pageVariants} className="flex flex-col gap-3 pt-5">
+                <h2 className="text-center text-2xl font-black text-foreground">Quel exercice ?</h2>
                 <p className="text-center text-sm text-arena-sub">
-                  Choisis l'exercice de ton 1RM
+                  N'importe quel exercice de la bibliothèque.
                 </p>
 
-                <RadioGroup
-                  value={exercise ?? ""}
-                  onValueChange={(v) => {
-                    console.log("[PRFlow] exercise changed", { value: v, previous: exercise, step });
-                    setExercise(v as Exercise);
-                  }}
-                  className="mt-4 flex flex-col gap-3"
-                >
-                  {EXERCISES.map((ex) => {
-                    const selected = exercise === ex.id;
-                    const img = PR_EXERCISE_IMAGE[ex.id];
+                <div className="relative mt-2">
+                  <Search
+                    size={16}
+                    className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-arena-muted"
+                  />
+                  <input
+                    value={exQuery}
+                    onChange={(e) => setExQuery(e.target.value)}
+                    placeholder="Rechercher (curl, hack squat, hip thrust…)"
+                    className="h-12 w-full rounded-2xl border border-[#262626] bg-[#141414] pl-9 pr-3 text-sm text-foreground outline-none focus:border-arena"
+                  />
+                </div>
+
+                <div className="mt-1 flex flex-col gap-2">
+                  {exerciseResults.map((ex) => {
+                    const selected = exercise?.id === ex.id;
                     return (
-                      <Label
+                      <button
                         key={ex.id}
-                        htmlFor={`pr-ex-${ex.id}`}
-                        className={`flex cursor-pointer items-center gap-4 rounded-2xl border p-3 transition-all ${
+                        type="button"
+                        onClick={() => setExercise(ex)}
+                        className={`flex items-center gap-3 rounded-2xl border p-3 text-left transition active:scale-[0.99] ${
                           selected
-                            ? "border-arena bg-arena/10 shadow-[0_0_15px_var(--arena-glow)]"
+                            ? "border-arena bg-arena/10"
                             : "border-[#262626] bg-[#141414]"
                         }`}
                       >
-                        <RadioGroupItem
-                          id={`pr-ex-${ex.id}`}
-                          value={ex.id}
-                          className="border-arena text-arena"
-                        />
-                        <img
-                          src={img}
-                          alt={ex.label}
-                          loading="lazy"
-                          className="h-14 w-14 shrink-0 rounded-xl object-cover border border-[#262626] bg-black"
-                          onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
-                        />
-                        <span className="flex-1 font-[Anton] text-xl uppercase tracking-widest text-foreground">
-                          {ex.label}
+                        {ex.image_url ? (
+                          <img
+                            src={ex.image_url}
+                            alt=""
+                            loading="lazy"
+                            className="h-11 w-11 shrink-0 rounded-xl border border-[#262626] bg-black object-cover"
+                          />
+                        ) : (
+                          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-arena-gold/10">
+                            <Dumbbell size={17} className="text-arena-gold" />
+                          </span>
+                        )}
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate font-bold text-foreground">{ex.name}</span>
+                          <span className="block truncate text-[11px] text-arena-sub">
+                            {ex.focus ?? ex.primary}
+                          </span>
                         </span>
-                      </Label>
+                        {selected && <Check size={18} className="shrink-0 text-arena" />}
+                      </button>
                     );
                   })}
-                </RadioGroup>
+                  {exerciseResults.length === 0 && (
+                    <p className="py-6 text-center text-sm text-arena-sub">
+                      Aucun exercice pour « {exQuery} ».
+                    </p>
+                  )}
+                </div>
 
                 <button
                   type="button"
                   disabled={!exercise}
                   onClick={handleExerciseContinue}
-                  className="mt-6 flex h-14 items-center justify-center gap-2 rounded-2xl bg-arena font-bold text-arena-foreground shadow-[0_0_25px_var(--arena-glow)] disabled:opacity-40 disabled:shadow-none"
+                  className="sticky bottom-2 mt-4 flex h-14 items-center justify-center gap-2 rounded-2xl bg-arena font-black text-arena-foreground disabled:opacity-40"
                 >
                   Continuer <ChevronRight size={16} />
                 </button>
@@ -481,8 +447,8 @@ export default function PRFlow({
             {/* ═══ STEP 2 — Weight ═══ */}
             {step === 2 && (
               <motion.div key="s2" {...pageVariants} className="flex flex-col gap-4 pt-6">
-                <h2 className="text-center font-[Anton] text-[32px] uppercase tracking-wide text-foreground">
-                  COMBIEN ?
+                <h2 className="text-center text-2xl font-black text-foreground">
+                  Combien ?
                 </h2>
                 <p className="text-center text-sm text-arena-sub">
                   Ton 1RM (1 répétition maximale)
@@ -505,8 +471,8 @@ export default function PRFlow({
                   <p className="mb-3 text-center text-xs font-bold uppercase tracking-widest text-arena-muted">
                     Répétitions
                   </p>
-                  <div className="flex justify-center gap-3">
-                    {[1, 2, 3, 4, 5].map((r) => (
+                  <div className="flex flex-wrap justify-center gap-3">
+                    {[1, 2, 3, 5, 8, 10].map((r) => (
                       <motion.button
                         key={r}
                         whileTap={{ scale: 0.9 }}
@@ -544,8 +510,8 @@ export default function PRFlow({
             {/* ═══ STEP 3 — Video ═══ */}
             {step === 3 && (
               <motion.div key="s3" {...pageVariants} className="flex flex-col gap-4 pt-6">
-                <h2 className="text-center font-[Anton] text-[32px] uppercase tracking-wide text-foreground">
-                  FILME TA TENTATIVE
+                <h2 className="text-center text-2xl font-black text-foreground">
+                  Filme ta tentative
                 </h2>
 
                 <div className="mt-4 rounded-2xl border border-arena/30 bg-[#1A0F0F] p-4 text-sm">
@@ -577,7 +543,7 @@ export default function PRFlow({
                       }}
                       className="flex h-16 items-center justify-center gap-3 rounded-2xl bg-arena font-[Anton] text-lg uppercase tracking-wider text-arena-foreground shadow-[0_0_25px_var(--arena-glow)]"
                     >
-                      📹 FILMER MAINTENANT
+                      Filmer maintenant
                     </motion.button>
                     <motion.button
                       whileTap={{ scale: 0.98 }}
@@ -587,7 +553,7 @@ export default function PRFlow({
                       }}
                       className="flex h-16 items-center justify-center gap-3 rounded-2xl border border-[#262626] bg-[#141414] font-[Anton] text-lg uppercase tracking-wider text-arena-sub"
                     >
-                      📁 CHOISIR UNE VIDÉO
+                      Choisir une vidéo
                     </motion.button>
                   </div>
                 ) : (
@@ -638,18 +604,14 @@ export default function PRFlow({
             {/* ═══ STEP 4 — Confirm ═══ */}
             {step === 4 && (
               <motion.div key="s4" {...pageVariants} className="flex flex-col gap-4 pt-6">
-                <h2 className="text-center font-[Anton] text-[32px] uppercase tracking-wide text-foreground">
-                  PRÊT À VALIDER ?
+                <h2 className="text-center text-2xl font-black text-foreground">
+                  Prêt à publier ?
                 </h2>
 
                 <div className="mt-4 rounded-2xl border border-[#262626] bg-[#141414] p-5">
                   <Row label="Exercice">
-                    <span className="flex items-center gap-2 font-bold uppercase text-foreground">
-                      {(() => {
-                        const ex = EXERCISES.find((e) => e.id === exercise);
-                        return ex ? <ex.icon size={16} className="text-arena" /> : null;
-                      })()}
-                      {EXERCISES.find((e) => e.id === exercise)?.label}
+                    <span className="max-w-[190px] truncate text-right font-bold text-foreground">
+                      {exercise?.name}
                     </span>
                   </Row>
                   <Row label="Charge" border>
@@ -668,15 +630,19 @@ export default function PRFlow({
                       </span>
                     </span>
                   </Row>
-                  <Row label="Ratio estimé" border>
-                    <span className="font-bold text-foreground">{ratio}× BW</span>
-                  </Row>
-                  <Row label="Grade visé" border>
-                    <span className="inline-flex items-center gap-1 font-bold text-arena-gold">
-                      {gradeVise && <GradeIcon grade={gradeVise} size={14} />}
-                      {gradeVise && GRADE_LABELS[gradeVise]}
-                    </span>
-                  </Row>
+                  {ratio && (
+                    <Row label="Ratio / poids de corps" border>
+                      <span className="font-bold text-foreground">{ratio}×</span>
+                    </Row>
+                  )}
+                  {strengthBadge && (
+                    <Row label="Badge de force visé" border>
+                      <span className="inline-flex items-center gap-1 font-bold text-arena-gold">
+                        <GradeIcon grade={strengthBadge} size={14} />
+                        {GRADE_LABELS[strengthBadge]}
+                      </span>
+                    </Row>
+                  )}
                 </div>
 
                 {error && <p className="text-sm text-red-500">{error}</p>}
@@ -686,7 +652,7 @@ export default function PRFlow({
                   onClick={handleSubmit}
                   className="mt-6 h-16 w-full rounded-2xl bg-gradient-to-r from-arena to-[#B91C1C] font-[Anton] text-2xl uppercase tracking-wider text-arena-foreground shadow-[0_0_30px_var(--arena-glow)]"
                 >
-                  <span className="inline-flex items-center gap-2"><Flame size={22} /> VALIDER MON PR</span>
+                  <span className="inline-flex items-center gap-2"><Flame size={22} /> Publier mon record</span>
                 </motion.button>
               </motion.div>
             )}
@@ -715,7 +681,7 @@ export default function PRFlow({
                       exit={{ opacity: 0, y: -8 }}
                       className="text-sm text-arena-sub"
                     >
-                      {ANALYSIS_TEXTS[analysisIdx]}
+                      {UPLOAD_TEXTS[analysisIdx]}
                     </motion.p>
                   )}
                 </div>
@@ -738,7 +704,6 @@ export default function PRFlow({
                 animate={{ opacity: 1 }}
                 className="relative flex flex-1 flex-col items-center justify-center gap-6 pt-10"
               >
-                <Confetti />
                 <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-arena/10" />
 
                 <motion.div
@@ -763,21 +728,16 @@ export default function PRFlow({
                       <CheckCircle2 size={56} className="text-arena-gold" strokeWidth={2.2} />
                     </motion.div>
 
-                    <h2 className="font-[Anton] text-3xl uppercase tracking-wider text-foreground">
-                      PR ENVOYÉ
+                    <h2 className="text-2xl font-black text-foreground">
+                      Record publié
                     </h2>
 
-                    <p className="inline-flex items-center gap-2 text-sm text-arena-sub">
-                      {(() => {
-                        const ex = EXERCISES.find((e) => e.id === exercise);
-                        return ex ? <ex.icon size={14} className="text-arena" /> : null;
-                      })()}
-                      {EXERCISES.find((e) => e.id === exercise)?.label} — {weight} kg × {reps} rep
-                      {reps > 1 ? "s" : ""}
+                    <p className="text-center text-sm text-arena-sub">
+                      {exercise?.name} — {weight} kg × {reps} rep{reps > 1 ? "s" : ""}
                     </p>
 
                     {ratio && (
-                      <p className="text-sm text-arena-sub">Ratio : {ratio}× BW</p>
+                      <p className="text-sm text-arena-sub">Ratio : {ratio}× ton poids de corps</p>
                     )}
                   </div>
                 </motion.div>
@@ -794,7 +754,7 @@ export default function PRFlow({
                   <p className="mt-1 text-xs text-arena-sub">
                     Ton PR est publié dans le feed. Il sera vérifié dès qu'il
                     aura reçu <span className="font-bold text-foreground">5 votes « Valide »</span>{" "}
-                    (net). Le grade et les +500 XP se débloquent à ce moment-là.
+                    (net). Le grade et les XP se débloquent à ce moment-là.
                   </p>
                 </motion.div>
 

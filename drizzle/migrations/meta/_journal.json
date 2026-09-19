@@ -57,6 +57,20 @@
       "when": 1789825404474,
       "tag": "0007_restrict_entitlement_rpc_to_authenticated",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1789825711762,
+      "tag": "0008_pr_any_exercise_and_post_media_type",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1789825791652,
+      "tag": "0009_xp_events_and_grade_backfill",
+      "breakpoints": true
     }
   ]
 }

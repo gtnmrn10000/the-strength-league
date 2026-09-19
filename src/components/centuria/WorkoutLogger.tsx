@@ -1,7 +1,29 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Check, Timer, ChevronRight, Dumbbell, Trophy, Loader2, Plus, X, Library } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  Check,
+  Timer,
+  ChevronRight,
+  ChevronUp,
+  ChevronDown,
+  Dumbbell,
+  Loader2,
+  Plus,
+  X,
+  Library,
+  Repeat,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { TEMPLATES, type Template, type WorkoutExercise } from "@/lib/workoutTemplates";
@@ -12,7 +34,25 @@ import {
   pushRecentId,
   type LastPerf,
 } from "@/lib/exerciseUserData";
+import { fetchProgress, statsFor } from "@/lib/progress";
+import { awardWorkoutXp } from "@/lib/xp.functions";
 import ExerciseLibrary from "./ExerciseLibrary";
+import SessionSummary, { type NewRecord, type SessionResult } from "./session/SessionSummary";
+
+const DRAFT_KEY = "centuria:active-session";
+
+type Draft = { template: Template; done: Record<string, boolean>; startedAt: number };
+
+function readDraft(): Draft | null {
+  try {
+    const raw = localStorage.getItem(DRAFT_KEY);
+    if (!raw) return null;
+    const d = JSON.parse(raw) as Draft;
+    return d?.template?.exercises ? d : null;
+  } catch {
+    return null;
+  }
+}
 
 function cloneTemplate(t: Template): Template {
   return {
@@ -63,31 +103,60 @@ export default function WorkoutLogger({
   const [saving, setSaving] = useState(false);
   const [perfs, setPerfs] = useState<Record<string, LastPerf>>({});
   const [libOpen, setLibOpen] = useState(false);
+  const [replaceIdx, setReplaceIdx] = useState<number | null>(null);
+  const [confirmFinish, setConfirmFinish] = useState(false);
+  const [confirmAbandon, setConfirmAbandon] = useState(false);
+  const [result, setResult] = useState<SessionResult | null>(null);
   const perfsLoaded = useRef(false);
 
+  // Reprise : une séance en cours survit à un changement d'onglet.
   useEffect(() => {
     if (!open) {
-      setTemplate(null);
-      setDone({});
       setRestEndsAt(null);
-      setStartedAt(null);
       perfsLoaded.current = false;
       return;
+    }
+    setResult(null);
+    const draft = !sessionOverride ? readDraft() : null;
+    if (draft) {
+      setTemplate(draft.template);
+      setDone(draft.done ?? {});
+      setStartedAt(draft.startedAt ?? Date.now());
     }
     void (async () => {
       const p = await fetchLastPerformances();
       perfsLoaded.current = true;
       setPerfs(p);
-      setTemplate((t) => (t ? applyLastPerfs(t, p) : t));
+      if (!draft) setTemplate((t) => (t ? applyLastPerfs(t, p) : t));
     })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   useEffect(() => {
     if (!open || !sessionOverride) return;
     setTemplate(applyLastPerfs(cloneTemplate(sessionOverride), perfs));
+    setDone({});
     setStartedAt(Date.now());
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, sessionOverride]);
+
+  // Sauvegarde du brouillon à chaque changement.
+  useEffect(() => {
+    if (!template || !startedAt || result) return;
+    try {
+      localStorage.setItem(DRAFT_KEY, JSON.stringify({ template, done, startedAt }));
+    } catch {
+      /* quota — sans gravité */
+    }
+  }, [template, done, startedAt, result]);
+
+  const clearDraft = useCallback(() => {
+    try {
+      localStorage.removeItem(DRAFT_KEY);
+    } catch {
+      /* noop */
+    }
+  }, []);
 
   useEffect(() => {
     if (!restEndsAt) return;
@@ -131,46 +200,72 @@ export default function WorkoutLogger({
       }),
     );
 
-  const removeExercise = (exIdx: number) => {
-    mutate((list) => list.filter((_, i) => i !== exIdx));
+  /** Réindexe la map des séries validées après un déplacement/suppression. */
+  const remapDone = (map: (exIdx: number) => number | null) =>
     setDone((d) => {
       const next: Record<string, boolean> = {};
       for (const [k, v] of Object.entries(d)) {
         const [e, s] = k.split("-").map(Number);
-        if (e === exIdx) continue;
-        next[`${e > exIdx ? e - 1 : e}-${s}`] = v;
+        const target = map(e);
+        if (target === null) continue;
+        next[`${target}-${s}`] = v;
       }
       return next;
     });
+
+  const removeExercise = (exIdx: number) => {
+    mutate((list) => list.filter((_, i) => i !== exIdx));
+    remapDone((e) => (e === exIdx ? null : e > exIdx ? e - 1 : e));
+  };
+
+  const moveExercise = (exIdx: number, dir: -1 | 1) => {
+    const target = exIdx + dir;
+    if (!template || target < 0 || target >= template.exercises.length) return;
+    mutate((list) => {
+      const next = [...list];
+      const [moved] = next.splice(exIdx, 1);
+      next.splice(target, 0, moved);
+      return next;
+    });
+    remapDone((e) => (e === exIdx ? target : e === target ? exIdx : e));
   };
 
   const addExercise = (lib: LibraryExercise) => {
     const p = lastPerfFor(perfs, lib.name);
     pushRecentId(lib.id);
-    mutate((list) => [
-      ...list,
-      {
-        name: lib.name,
-        muscle_groups: lib.muscles,
-        sets: Array.from({ length: 3 }, () => ({
-          reps: p?.reps || 10,
-          weight_kg: p?.weight_kg || 0,
-        })),
-      },
-    ]);
+    const fresh: WorkoutExercise = {
+      name: lib.name,
+      muscle_groups: lib.muscles,
+      sets: Array.from({ length: 3 }, () => ({
+        reps: p?.reps || 10,
+        weight_kg: p?.weight_kg || 0,
+      })),
+    };
+    if (replaceIdx !== null) {
+      const idx = replaceIdx;
+      mutate((list) => list.map((ex, i) => (i === idx ? fresh : ex)));
+      remapDone((e) => (e === idx ? null : e));
+      setReplaceIdx(null);
+    } else {
+      mutate((list) => [...list, fresh]);
+    }
     setLibOpen(false);
   };
 
   const restLeft = restEndsAt ? Math.max(0, Math.ceil((restEndsAt - now) / 1000)) : 0;
 
-  const finish = async () => {
+  const requestFinish = () => {
     if (!template || saving) return;
     if (!allDone && totalSets > 0) {
-      const ok = window.confirm(
-        `Terminer la séance avec ${doneCount}/${totalSets} séries validées ?`,
-      );
-      if (!ok) return;
+      setConfirmFinish(true);
+      return;
     }
+    void save();
+  };
+
+  const save = async () => {
+    if (!template || saving) return;
+    setConfirmFinish(false);
     setSaving(true);
     try {
       const { data: userData, error: userErr } = await supabase.auth.getUser();
@@ -179,7 +274,9 @@ export default function WorkoutLogger({
         throw new Error("Session expirée. Reconnecte-toi pour enregistrer ta séance.");
       }
 
-      const durationMin = startedAt ? Math.max(1, Math.round((Date.now() - startedAt) / 60000)) : null;
+      const durationMin = startedAt
+        ? Math.max(1, Math.round((Date.now() - startedAt) / 60000))
+        : null;
 
       // On enregistre uniquement les séries réellement validées dès qu'il y en a
       // au moins une : jamais de séries non faites (stats et records honnêtes).
@@ -192,6 +289,24 @@ export default function WorkoutLogger({
             .filter((ex) => ex.sets.length > 0)
         : template.exercises;
 
+      // Records : on compare aux meilleures charges connues AVANT l'insertion.
+      const before = await fetchProgress(120);
+      const records: NewRecord[] = [];
+      let sets = 0;
+      let volume = 0;
+      for (const ex of savedExercises) {
+        let top = { weight_kg: 0, reps: 0 };
+        for (const s of ex.sets) {
+          sets += 1;
+          volume += (s.weight_kg ?? 0) * (s.reps ?? 0);
+          if ((s.weight_kg ?? 0) > top.weight_kg) top = { weight_kg: s.weight_kg, reps: s.reps };
+        }
+        const prev = statsFor(before, ex.name)?.bestWeight?.weight_kg ?? 0;
+        if (top.weight_kg > 0 && top.weight_kg > prev) {
+          records.push({ name: ex.name, weight_kg: top.weight_kg, reps: top.reps });
+        }
+      }
+
       const payload = {
         user_id: user.id,
         name: template.name,
@@ -201,12 +316,34 @@ export default function WorkoutLogger({
         completed_at: new Date().toISOString(),
       };
 
-      const { error } = await supabase.from("workout_sessions").insert([payload]);
+      const { data: inserted, error } = await supabase
+        .from("workout_sessions")
+        .insert([payload])
+        .select("id")
+        .single();
       if (error) throw error;
 
-      toast.success("Séance enregistrée");
+      let xpGained: number | undefined;
+      try {
+        if (inserted?.id) {
+          const xp = await awardWorkoutXp({ data: { sessionId: inserted.id } });
+          xpGained = xp?.gained;
+        }
+      } catch (e) {
+        console.warn("[WorkoutLogger] xp award skipped", e);
+      }
+
+      clearDraft();
+      setResult({
+        template,
+        durationMin,
+        exercises: savedExercises.length,
+        sets,
+        volume,
+        records,
+        xpGained,
+      });
       onCompleted?.();
-      onOpenChange(false);
     } catch (e) {
       console.error("[WorkoutLogger] finish failed:", e);
       const msg =
@@ -219,19 +356,45 @@ export default function WorkoutLogger({
     }
   };
 
+  const closeSheet = () => {
+    setTemplate(null);
+    setDone({});
+    setStartedAt(null);
+    setResult(null);
+    onOpenChange(false);
+  };
+
+  const requestClose = (next: boolean) => {
+    if (next) return;
+    if (result) {
+      closeSheet();
+      return;
+    }
+    if (template && doneCount > 0) {
+      setConfirmAbandon(true);
+      return;
+    }
+    if (template) {
+      clearDraft();
+    }
+    closeSheet();
+  };
+
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
+    <Sheet open={open} onOpenChange={requestClose}>
       <SheetContent
         side="bottom"
         className="h-[92dvh] max-w-md mx-auto p-0 flex flex-col overflow-hidden bg-background border-arena-border"
       >
         <SheetHeader className="border-b border-arena-border px-4 py-3">
-          <SheetTitle className="text-sm font-black tracking-widest text-foreground">
-            {template ? "SÉANCE EN COURS" : "CHOISIS TA SÉANCE"}
+          <SheetTitle className="text-sm font-black tracking-wide text-foreground">
+            {result ? "Séance terminée" : template ? "Séance en cours" : "Choisis ta séance"}
           </SheetTitle>
         </SheetHeader>
 
-        {!template ? (
+        {result ? (
+          <SessionSummary result={result} onClose={closeSheet} />
+        ) : !template ? (
           <div className="flex flex-1 flex-col gap-3 overflow-y-auto px-4 py-4">
             <p className="text-xs text-arena-sub">Choisis une séance : tout reste modifiable.</p>
             {TEMPLATES.map((t) => (
@@ -239,6 +402,7 @@ export default function WorkoutLogger({
                 key={t.id}
                 onClick={() => {
                   setTemplate(applyLastPerfs(cloneTemplate(t), perfs));
+                  setDone({});
                   setStartedAt(Date.now());
                 }}
                 className="flex min-h-[56px] items-center justify-between rounded-2xl border border-arena-border bg-arena-surface p-4 text-left transition active:scale-[0.98]"
@@ -267,12 +431,12 @@ export default function WorkoutLogger({
                 <motion.div
                   className="h-full rounded-full bg-arena-gold"
                   animate={{ width: `${progressPct}%` }}
-                  transition={{ duration: 0.3 }}
+                  transition={{ type: "spring", stiffness: 260, damping: 30 }}
                 />
               </div>
             </div>
 
-            <div className="flex flex-1 flex-col gap-3 overflow-y-auto overflow-x-hidden px-4 py-3 pb-24">
+            <div className="flex flex-1 flex-col gap-3 overflow-y-auto overflow-x-hidden px-4 py-3 pb-28">
               {template.exercises.map((ex, exIdx) => {
                 const perf = lastPerfFor(perfs, ex.name);
                 const exDone = ex.sets.filter((_, i) => done[`${exIdx}-${i}`]).length;
@@ -282,7 +446,7 @@ export default function WorkoutLogger({
                     key={`${ex.name}-${exIdx}`}
                     className={`rounded-2xl border p-3 transition ${
                       exDone === ex.sets.length
-                        ? "border-arena-gold/50 bg-arena-gold/5"
+                        ? "border-arena-gold/40 bg-arena-gold/[0.04]"
                         : "border-arena-border bg-arena-surface"
                     }`}
                   >
@@ -310,19 +474,12 @@ export default function WorkoutLogger({
                       <span className="shrink-0 text-[10px] font-bold text-arena-muted">
                         {exDone}/{ex.sets.length}
                       </span>
-                      <button
-                        onClick={() => removeExercise(exIdx)}
-                        aria-label={`Retirer ${ex.name}`}
-                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-arena-border text-arena-muted active:scale-90"
-                      >
-                        <X size={14} />
-                      </button>
                     </div>
 
-                    <div className="mt-3 grid grid-cols-[28px_1fr_1fr_44px] gap-1.5 text-[9px] font-black tracking-widest text-arena-muted">
-                      <span>SÉR.</span>
-                      <span className="text-center">KG</span>
-                      <span className="text-center">REPS</span>
+                    <div className="mt-3 grid grid-cols-[22px_1fr_1fr_44px] gap-1.5 text-[9px] font-bold tracking-wide text-arena-muted">
+                      <span>Sér</span>
+                      <span className="text-center">kg</span>
+                      <span className="text-center">reps</span>
                       <span />
                     </div>
 
@@ -330,50 +487,87 @@ export default function WorkoutLogger({
                       const key = `${exIdx}-${i}`;
                       const isDone = done[key];
                       return (
-                        <div key={i} className="mt-1.5 grid grid-cols-[28px_1fr_1fr_44px] items-center gap-1.5">
+                        <div
+                          key={i}
+                          className="mt-1.5 grid grid-cols-[22px_1fr_1fr_44px] items-center gap-1.5"
+                        >
                           <span className="text-xs font-black text-arena-sub">{i + 1}</span>
                           <NumberField
                             value={s.weight_kg}
                             step={2.5}
                             max={500}
+                            placeholder={perf ? String(perf.weight_kg) : undefined}
                             onChange={(v) => updateSet(exIdx, i, "weight_kg", v)}
                           />
                           <NumberField
                             value={s.reps}
                             step={1}
                             max={99}
+                            placeholder={perf ? String(perf.reps) : undefined}
                             onChange={(v) => updateSet(exIdx, i, "reps", v)}
                           />
-                          <button
+                          <motion.button
+                            whileTap={{ scale: 0.88 }}
                             onClick={() => toggleSet(exIdx, i)}
                             aria-label={`Valider la série ${i + 1}`}
-                            className={`flex h-11 w-11 items-center justify-center rounded-xl border transition active:scale-90 ${
+                            className={`flex h-11 w-11 items-center justify-center rounded-xl border transition ${
                               isDone
                                 ? "border-arena-gold bg-arena-gold text-black"
                                 : "border-arena-border bg-secondary text-arena-muted"
                             }`}
                           >
                             <Check size={18} strokeWidth={3} />
-                          </button>
+                          </motion.button>
                         </div>
                       );
                     })}
 
-                    <button
-                      onClick={() => addSet(exIdx)}
-                      className="mt-2 flex min-h-[40px] w-full items-center justify-center gap-1 rounded-xl border border-dashed border-arena-border text-[11px] font-black tracking-widest text-arena-sub active:scale-[0.98]"
-                    >
-                      <Plus size={12} /> AJOUTER UNE SÉRIE
-                    </button>
+                    <div className="mt-2 flex items-center gap-1.5">
+                      <button
+                        onClick={() => addSet(exIdx)}
+                        className="flex min-h-[40px] flex-1 items-center justify-center gap-1 rounded-xl border border-dashed border-arena-border text-[11px] font-bold text-arena-sub active:scale-[0.98]"
+                      >
+                        <Plus size={12} /> Série
+                      </button>
+                      <IconBtn
+                        label={`Monter ${ex.name}`}
+                        disabled={exIdx === 0}
+                        onClick={() => moveExercise(exIdx, -1)}
+                      >
+                        <ChevronUp size={14} />
+                      </IconBtn>
+                      <IconBtn
+                        label={`Descendre ${ex.name}`}
+                        disabled={exIdx === template.exercises.length - 1}
+                        onClick={() => moveExercise(exIdx, 1)}
+                      >
+                        <ChevronDown size={14} />
+                      </IconBtn>
+                      <IconBtn
+                        label={`Remplacer ${ex.name}`}
+                        onClick={() => {
+                          setReplaceIdx(exIdx);
+                          setLibOpen(true);
+                        }}
+                      >
+                        <Repeat size={14} />
+                      </IconBtn>
+                      <IconBtn label={`Retirer ${ex.name}`} onClick={() => removeExercise(exIdx)}>
+                        <X size={14} />
+                      </IconBtn>
+                    </div>
                   </div>
                 );
               })}
 
               <button
-                onClick={() => setLibOpen(true)}
-                className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-2xl border border-arena/50 bg-arena/10 font-black tracking-widest text-arena active:scale-[0.98]"
+                onClick={() => {
+                  setReplaceIdx(null);
+                  setLibOpen(true);
+                }}
+                className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-2xl border border-arena/40 bg-arena/10 font-bold text-arena active:scale-[0.98]"
               >
-                <Library size={15} /> AJOUTER UN EXERCICE
+                <Library size={15} /> Ajouter un exercice
               </button>
             </div>
 
@@ -384,7 +578,8 @@ export default function WorkoutLogger({
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 12 }}
-                  className="pointer-events-auto absolute inset-x-3 bottom-[76px] z-20 flex items-center gap-2 rounded-2xl border border-arena-gold/50 bg-black/90 px-3 py-2 backdrop-blur"
+                  transition={{ type: "spring", stiffness: 380, damping: 32 }}
+                  className="pointer-events-auto absolute inset-x-3 bottom-[calc(80px+env(safe-area-inset-bottom))] z-20 flex items-center gap-2 rounded-2xl border border-arena-gold/40 bg-black/90 px-3 py-2 backdrop-blur"
                 >
                   <Timer size={16} className="shrink-0 text-arena-gold" />
                   <span className="flex-1 text-sm font-black text-arena-gold">
@@ -392,46 +587,123 @@ export default function WorkoutLogger({
                   </span>
                   <button
                     onClick={() => setRestEndsAt((t) => (t ?? Date.now()) + 30000)}
-                    className="min-h-[36px] rounded-lg border border-arena-gold/50 px-2.5 text-[11px] font-black text-arena-gold active:scale-95"
+                    className="min-h-[36px] rounded-lg border border-arena-gold/40 px-2.5 text-[11px] font-bold text-arena-gold active:scale-95"
                   >
-                    +30s
+                    +30 s
                   </button>
                   <button
                     onClick={() => setRestEndsAt(null)}
-                    className="min-h-[36px] rounded-lg px-2.5 text-[11px] font-black text-arena-muted active:scale-95"
+                    className="min-h-[36px] rounded-lg px-2.5 text-[11px] font-bold text-arena-muted active:scale-95"
                   >
-                    PASSER
+                    Passer
                   </button>
                 </motion.div>
               )}
             </AnimatePresence>
 
-            <div className="border-t border-arena-border p-3">
-              <button
-                onClick={finish}
+            <div className="sticky bottom-0 border-t border-arena-border bg-background/95 p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur">
+              <motion.button
+                whileTap={{ scale: 0.98 }}
+                onClick={requestFinish}
                 disabled={saving}
-                className={`flex min-h-[52px] w-full items-center justify-center gap-2 rounded-xl font-black tracking-widest transition disabled:opacity-40 ${
-                  allDone
-                    ? "bg-arena-gold text-black shadow-[0_0_24px_rgba(212,175,55,0.35)]"
-                    : "bg-arena text-arena-on"
+                className={`flex min-h-[52px] w-full items-center justify-center gap-2 rounded-xl text-base font-black transition disabled:opacity-40 ${
+                  allDone ? "bg-arena-gold text-black" : "bg-arena text-arena-on"
                 }`}
               >
                 {saving ? (
-                  <Loader2 size={16} className="animate-spin" />
-                ) : (
                   <>
-                    <Trophy size={16} />
-                    {allDone ? "TERMINER LA SÉANCE" : `TERMINER (${doneCount}/${totalSets})`}
+                    <Loader2 size={16} className="animate-spin" /> Enregistrement…
                   </>
+                ) : (
+                  `Terminer la séance${allDone ? "" : ` (${doneCount}/${totalSets})`}`
                 )}
-              </button>
+              </motion.button>
             </div>
           </>
         )}
 
-        <ExerciseLibrary open={libOpen} onOpenChange={setLibOpen} onAdd={addExercise} />
+        <ExerciseLibrary
+          open={libOpen}
+          onOpenChange={(v) => {
+            setLibOpen(v);
+            if (!v) setReplaceIdx(null);
+          }}
+          onAdd={addExercise}
+        />
+
+        <AlertDialog open={confirmFinish} onOpenChange={setConfirmFinish}>
+          <AlertDialogContent className="max-w-[20rem] rounded-2xl border-arena-border bg-arena-surface">
+            <AlertDialogHeader>
+              <AlertDialogTitle className="text-foreground">Terminer maintenant ?</AlertDialogTitle>
+              <AlertDialogDescription className="text-arena-sub">
+                {doneCount} série{doneCount > 1 ? "s" : ""} validée{doneCount > 1 ? "s" : ""} sur{" "}
+                {totalSets}. Seules les séries validées seront enregistrées.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter className="gap-2">
+              <AlertDialogCancel className="min-h-[44px] border-arena-border">
+                Continuer la séance
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => void save()}
+                className="min-h-[44px] bg-arena-gold font-black text-black"
+              >
+                Terminer
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        <AlertDialog open={confirmAbandon} onOpenChange={setConfirmAbandon}>
+          <AlertDialogContent className="max-w-[20rem] rounded-2xl border-arena-border bg-arena-surface">
+            <AlertDialogHeader>
+              <AlertDialogTitle className="text-foreground">Quitter la séance ?</AlertDialogTitle>
+              <AlertDialogDescription className="text-arena-sub">
+                Ta séance reste en cours : tu la retrouveras en revenant sur Entraînement.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter className="gap-2">
+              <AlertDialogCancel className="min-h-[44px] border-arena-border">
+                Rester
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => {
+                  setConfirmAbandon(false);
+                  closeSheet();
+                }}
+                className="min-h-[44px] bg-arena font-black text-arena-on"
+              >
+                Mettre en pause
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </SheetContent>
     </Sheet>
+  );
+}
+
+function IconBtn({
+  label,
+  onClick,
+  disabled,
+  children,
+}: {
+  label: string;
+  onClick: () => void;
+  disabled?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      onClick={onClick}
+      disabled={disabled}
+      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-arena-border text-arena-muted transition active:scale-90 disabled:opacity-30"
+    >
+      {children}
+    </button>
   );
 }
 
@@ -440,11 +712,13 @@ function NumberField({
   onChange,
   max = 999,
   step = 1,
+  placeholder,
 }: {
   value: number;
   onChange: (v: number) => void;
   max?: number;
   step?: number;
+  placeholder?: string;
 }) {
   const [text, setText] = useState(String(value));
   useEffect(() => setText(String(value)), [value]);
@@ -454,6 +728,7 @@ function NumberField({
       inputMode="decimal"
       step={step}
       value={text}
+      placeholder={placeholder}
       onChange={(e) => {
         setText(e.target.value);
         const n = Number(e.target.value);

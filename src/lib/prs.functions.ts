@@ -4,10 +4,18 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { insertPR } from "@/server/prs.server";
 import { updateProfileAfterPR } from "@/server/grades.server";
 
+// Un PR peut porter sur n'importe quel exercice de la bibliothèque : on valide
+// un identifiant canonique et un nom lisible, avec des bornes génériques.
 const submitPRSchema = z.object({
-  exercise: z.enum(["squat", "bench", "deadlift"]),
-  weight_kg: z.number().min(20).max(500),
-  reps: z.number().min(1).max(5),
+  exercise: z
+    .string()
+    .trim()
+    .min(2)
+    .max(80)
+    .regex(/^[a-z0-9-]+$/, "identifiant d'exercice invalide"),
+  exercise_name: z.string().trim().min(2).max(80),
+  weight_kg: z.number().min(1).max(600),
+  reps: z.number().int().min(1).max(30),
   video_url: z.string().min(1).max(500),
 });
 
@@ -117,7 +125,7 @@ export const voteOnPR = createServerFn({ method: "POST" })
         const { supabaseAdmin } = await import(
           "@/integrations/supabase/client.server"
         );
-        await updateProfileAfterPR(supabaseAdmin, pr.user_id);
+        await updateProfileAfterPR(supabaseAdmin, pr.user_id, pr.id as string);
       }
     }
 
