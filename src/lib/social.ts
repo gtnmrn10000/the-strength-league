@@ -8,6 +8,7 @@ export interface FeedPost {
   user_id: string;
   type: PostType;
   media_url: string | null;
+  media_type: "image" | "video" | null;
   caption: string | null;
   muscle_groups: string[] | null;
   macros: Record<string, number> | null;
@@ -25,6 +26,7 @@ export interface FeedPost {
   pr?: {
     id: string;
     exercise: string;
+    exercise_name?: string | null;
     weight_kg: number;
     reps: number;
     status: "pending" | "verified" | "contested" | "rejected" | "suspect";
@@ -57,6 +59,7 @@ type PostRow = {
   user_id: string;
   type: PostType;
   media_url: string | null;
+  media_type: "image" | "video" | null;
   caption: string | null;
   muscle_groups: string[] | null;
   macros: Record<string, number> | null;
@@ -77,6 +80,7 @@ type PrPreview = {
   id: string;
   user_id: string;
   exercise: string;
+  exercise_name: string | null;
   weight_kg: number;
   reps: number;
   status: "pending" | "verified" | "contested" | "rejected" | "suspect";
@@ -110,7 +114,7 @@ async function attachFeedRelations(rows: PostRow[], hypedSet = new Set<string>()
     prIds.length > 0
       ? supabase
           .from("prs")
-          .select("id, user_id, exercise, weight_kg, reps, status")
+          .select("id, user_id, exercise, exercise_name, weight_kg, reps, status")
           .in("id", prIds)
       : Promise.resolve({ data: [], error: null }),
     prIds.length > 0
@@ -194,7 +198,7 @@ export async function fetchFeed(): Promise<FeedPost[]> {
 
   const { data: posts, error } = await supabase
     .from("posts")
-    .select("id, user_id, type, media_url, caption, muscle_groups, macros, pr_id, hype_count, comment_count, created_at")
+    .select("id, user_id, type, media_url, media_type, caption, muscle_groups, macros, pr_id, hype_count, comment_count, created_at")
     .order("created_at", { ascending: false })
     .limit(100);
 
@@ -251,7 +255,7 @@ export async function fetchPublicProfile(userId: string): Promise<PublicProfile 
 export async function fetchUserPosts(userId: string): Promise<FeedPost[]> {
   const { data, error } = await supabase
     .from("posts")
-    .select("id, user_id, type, media_url, caption, muscle_groups, macros, pr_id, hype_count, comment_count, created_at")
+    .select("id, user_id, type, media_url, media_type, caption, muscle_groups, macros, pr_id, hype_count, comment_count, created_at")
     .eq("user_id", userId)
     .order("created_at", { ascending: false });
   if (error) throw error;
@@ -374,6 +378,7 @@ export async function toggleHype(postId: string, currentlyHyped: boolean) {
 export async function createPost(input: {
   type: PostType;
   media_url?: string | null;
+  media_type?: "image" | "video" | null;
   caption?: string | null;
   muscle_groups?: string[] | null;
   macros?: Record<string, number> | null;
@@ -387,6 +392,7 @@ export async function createPost(input: {
       user_id: user.id,
       type: input.type,
       media_url: input.media_url ?? null,
+      media_type: input.media_type ?? "image",
       caption: input.caption ?? null,
       muscle_groups: input.muscle_groups ?? null,
       macros: input.macros ?? null,
