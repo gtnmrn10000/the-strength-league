@@ -91,7 +91,7 @@ function TermsPage() {
       <LegalSection title="SANTÉ ET RESPONSABILITÉ">
         <p>
           Centuria est un outil de suivi sportif, pas un service médical. Les programmes, conseils
-          du Coach IA et estimations nutritionnelles sont indicatifs. Demande l'avis d'un
+          du Coach et estimations nutritionnelles sont indicatifs. Demande l'avis d'un
           professionnel de santé avant de commencer ou d'intensifier un entraînement, et arrête en
           cas de douleur.
         </p>
