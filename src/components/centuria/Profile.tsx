@@ -16,6 +16,12 @@ interface DbProfile {
   current_grade: string;
   last_pr_at: string | null;
   poids: number | null;
+  pseudo: string | null;
+  age: number | null;
+  taille: number | null;
+  goal: string | null;
+  followers_count: number | null;
+  following_count: number | null;
 }
 
 interface VerifiedPR {
@@ -26,8 +32,9 @@ interface VerifiedPR {
 }
 
 export default function Profile() {
-  const profile = loadUserProfile();
-  
+  // Supabase = source de vérité ; le localStorage ne sert que de repli
+  // hors-ligne le temps que le profil distant arrive.
+  const draft = loadUserProfile();
 
   const [dbProfile, setDbProfile] = useState<DbProfile | null>(null);
   const [verifiedPRs, setVerifiedPRs] = useState<VerifiedPR[]>([]);
@@ -66,6 +73,14 @@ export default function Profile() {
     return () => { cancelled = true; };
   }, []);
 
+
+  const profile = {
+    pseudo: dbProfile?.pseudo ?? draft?.pseudo ?? "",
+    age: dbProfile?.age != null ? String(dbProfile.age) : (draft?.age ?? ""),
+    taille: dbProfile?.taille != null ? String(dbProfile.taille) : (draft?.taille ?? ""),
+    poids: dbProfile?.poids != null ? String(dbProfile.poids) : (draft?.poids ?? ""),
+    goal: dbProfile?.goal ?? draft?.goal ?? null,
+  };
 
   const grade = (dbProfile?.current_grade || "recruit") as Grade;
   const xp = dbProfile?.xp ?? 0;
@@ -365,7 +380,7 @@ function CombatCard({
   bestPRs,
   bodyweight,
 }: {
-  profile: ReturnType<typeof loadUserProfile>;
+  profile: { pseudo: string; age: string; taille: string; poids: string; goal: string | null };
   grade: Grade;
   xp: number;
   prCount: number;

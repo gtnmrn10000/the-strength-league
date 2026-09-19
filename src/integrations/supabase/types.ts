@@ -520,6 +520,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_leaderboard: {
+        Args: { _limit?: number }
+        Returns: {
+          avatar_url: string
+          current_grade: string
+          pseudo: string
+          user_id: string
+          verified_prs: number
+          verified_total: number
+          xp: number
+        }[]
+      }
       get_my_profile: {
         Args: never
         Returns: {
@@ -552,6 +564,14 @@ export type Database = {
           isOneToOne: false
           isSetofReturn: true
         }
+      }
+      get_my_rank: {
+        Args: never
+        Returns: {
+          participants: number
+          rank: number
+          total_kg: number
+        }[]
       }
       is_current_user_premium: { Args: never; Returns: boolean }
     }

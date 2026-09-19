@@ -1,32 +1,52 @@
-import { useState } from "react";
-import { GRADES, GRADE_LABELS, type Grade } from "@/lib/grades";
+import { useEffect, useState } from "react";
+import { Info, Trophy } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { GRADE_LABELS, type Grade } from "@/lib/grades";
+import { GradeIcon } from "@/lib/gradeIcons";
 
-// Podium généré à partir des vrais grades Centuria (Recrue → Divin).
-// Positions élevées → grades élevés, décroissant vers "Toi".
-const ranking: { pos: number; name: string; grade: Grade; total: string }[] = [
-  { pos: 1, name: "Marius", grade: "divin", total: "820 kg" },
-  { pos: 2, name: "Noah", grade: "legende", total: "755 kg" },
-  { pos: 3, name: "Enzo", grade: "titan", total: "690 kg" },
-  { pos: 12, name: "Lucas", grade: "centurion", total: "612 kg" },
-  { pos: 47, name: "Théo", grade: "gladiateur", total: "548 kg" },
-  { pos: 847, name: "Toi", grade: "spartiate", total: "530 kg" },
-];
-
-// Sanity check à la compilation : tous les grades utilisés existent bien.
-ranking.forEach((r) => {
-  if (!GRADES.includes(r.grade)) {
-    // eslint-disable-next-line no-console
-    console.warn("[Rankings] grade inconnu:", r.grade);
-  }
-});
+type Row = {
+  user_id: string;
+  pseudo: string;
+  avatar_url: string | null;
+  current_grade: string;
+  xp: number;
+  verified_total: number;
+  verified_prs: number;
+};
 
 export default function Rankings() {
-  const [sub, setSub] = useState("Classements");
+  const [sub, setSub] = useState<"Classements" | "Duels">("Classements");
+  const [rows, setRows] = useState<Row[]>([]);
+  const [me, setMe] = useState<string | null>(null);
+  const [myRank, setMyRank] = useState<{ rank: number; participants: number } | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data: userData } = await supabase.auth.getUser();
+      const [lb, rank] = await Promise.all([
+        supabase.rpc("get_leaderboard", { _limit: 50 }),
+        supabase.rpc("get_my_rank").maybeSingle(),
+      ]);
+      if (cancelled) return;
+      setMe(userData?.user?.id ?? null);
+      setRows(((lb.data as Row[] | null) ?? []).map((r) => ({ ...r, verified_total: Number(r.verified_total) })));
+      const rk = rank.data as { rank: number; participants: number } | null;
+      setMyRank(rk ? { rank: rk.rank, participants: rk.participants } : null);
+      setLoading(false);
+    })().catch(() => {
+      if (!cancelled) setLoading(false);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <div className="px-4 pt-2 pb-4">
       <div className="mb-4 flex gap-2">
-        {["Classements", "Duels"].map((x) => (
+        {(["Classements", "Duels"] as const).map((x) => (
           <button
             key={x}
             onClick={() => setSub(x)}
@@ -39,36 +59,79 @@ export default function Rankings() {
 
       {sub === "Classements" && (
         <>
-          <div className="mb-3 flex gap-2 overflow-x-auto scrollbar-hide">
-            {["National", "Total", "-93kg", "-105kg", "+105kg"].map((x) => (
-              <span key={x} className="whitespace-nowrap rounded-full bg-secondary px-3 py-1 text-[10px] font-bold text-arena-sub">{x}</span>
-            ))}
-          </div>
-          <div className="flex flex-col gap-2">
-            {ranking.map(({ pos, name, grade, total }) => (
-              <div key={pos} className="flex items-center gap-3 rounded-2xl border border-arena-border bg-arena-surface p-3">
-                <span className={`text-lg font-black ${pos <= 3 ? "text-arena-gold" : "text-arena-sub"}`}>#{pos}</span>
-                <div className="flex-1">
-                  <p className="font-bold text-foreground">{name}</p>
-                  <p className="text-xs uppercase tracking-widest text-arena-sub">{GRADE_LABELS[grade]}</p>
-                </div>
-                <span className="font-black text-foreground">{total}</span>
-              </div>
-            ))}
-          </div>
-          <p className="mt-3 text-center text-xs text-arena-sub">Tu es #847 sur 47 392 — Top 1,8%</p>
+          <p className="mb-3 flex items-start gap-1.5 rounded-xl border border-arena-border bg-arena-surface px-3 py-2 text-[10px] text-arena-sub">
+            <Info size={12} className="mt-0.5 shrink-0 text-arena" />
+            <span>
+              Total des meilleures charges par mouvement, uniquement sur les PR vérifiés par la
+              communauté.
+            </span>
+          </p>
+
+          {loading && <p className="py-8 text-center text-xs text-arena-muted">Chargement…</p>}
+
+          {!loading && rows.length === 0 && (
+            <div className="rounded-2xl border border-dashed border-arena-border p-6 text-center">
+              <p className="text-sm font-black text-foreground">Pas encore assez de participants</p>
+              <p className="mt-1 text-[11px] text-arena-sub">
+                Le classement s'ouvre dès que des PR sont vérifiés par la communauté.
+              </p>
+            </div>
+          )}
+
+          {!loading && rows.length > 0 && (
+            <div className="flex flex-col gap-2">
+              {rows.map((r, i) => {
+                const pos = i + 1;
+                const grade = r.current_grade as Grade;
+                const isMe = r.user_id === me;
+                return (
+                  <div
+                    key={r.user_id}
+                    className={`flex items-center gap-3 rounded-2xl border p-3 ${isMe ? "border-arena bg-arena/10" : "border-arena-border bg-arena-surface"}`}
+                  >
+                    <span className={`w-9 text-lg font-black ${pos <= 3 ? "text-arena-gold" : "text-arena-sub"}`}>
+                      #{pos}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-bold text-foreground">
+                        {r.pseudo}
+                        {isMe ? " · toi" : ""}
+                      </p>
+                      <p className="flex items-center gap-1 text-xs uppercase tracking-widest text-arena-sub">
+                        <GradeIcon grade={grade} size={11} className="text-arena-gold" />
+                        {GRADE_LABELS[grade] ?? "—"}
+                      </p>
+                    </div>
+                    <span className="shrink-0 font-black text-foreground">
+                      {r.verified_total > 0 ? `${Math.round(r.verified_total)} kg` : "—"}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {!loading && myRank && (
+            <p className="mt-3 text-center text-xs text-arena-sub">
+              Tu es #{myRank.rank} sur {myRank.participants} athlète
+              {myRank.participants > 1 ? "s" : ""} classé{myRank.participants > 1 ? "s" : ""}.
+            </p>
+          )}
+          {!loading && !myRank && rows.length > 0 && (
+            <p className="mt-3 text-center text-xs text-arena-sub">
+              Fais vérifier un PR pour apparaître au classement.
+            </p>
+          )}
         </>
       )}
 
       {sub === "Duels" && (
-        <div className="flex flex-col gap-3">
-          <div className="rounded-2xl border border-arena-border bg-arena-surface p-4">
-            <p className="font-bold text-foreground">Défi vs Lucas</p>
-            <p className="mt-1 text-xs text-arena-sub">Deadline demain · Bench 1RM · Tu mènes +2,5kg</p>
-          </div>
-          <button className="flex h-12 items-center justify-center rounded-2xl border border-arena bg-arena/10 text-sm font-bold text-arena">
-            Lancer un défi
-          </button>
+        <div className="rounded-2xl border border-dashed border-arena-border p-6 text-center">
+          <Trophy size={20} className="mx-auto text-arena-muted" />
+          <p className="mt-2 text-sm font-black text-foreground">Duels bientôt disponibles</p>
+          <p className="mt-1 text-[11px] text-arena-sub">
+            Les défis entre athlètes arrivent avec les fonctionnalités sociales.
+          </p>
         </div>
       )}
     </div>

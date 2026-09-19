@@ -56,10 +56,12 @@ export default function ExerciseLibrary({
   open,
   onOpenChange,
   onAdd,
+  onOpenDetail,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   onAdd?: (ex: LibraryExercise) => void;
+  onOpenDetail?: (name: string) => void;
 }) {
   const [cat, setCat] = useState<(typeof CATEGORIES)[number]>("all");
   const [eq, setEq] = useState<(typeof EQUIPMENTS)[number]>("all");
@@ -192,6 +194,7 @@ export default function ExerciseLibrary({
                   perf={lastPerfFor(perfs, ex.name)}
                   onAdd={onAdd ? () => handleAdd(ex) : undefined}
                   onFav={() => onToggleFav(ex)}
+                  onDetail={onOpenDetail ? () => onOpenDetail(ex.name) : undefined}
                 />
               ))}
             </Section>
@@ -207,6 +210,7 @@ export default function ExerciseLibrary({
                   perf={lastPerfFor(perfs, ex.name)}
                   onAdd={onAdd ? () => handleAdd(ex) : undefined}
                   onFav={() => onToggleFav(ex)}
+                  onDetail={onOpenDetail ? () => onOpenDetail(ex.name) : undefined}
                 />
               ))}
             </Section>
@@ -224,6 +228,7 @@ export default function ExerciseLibrary({
                   perf={lastPerfFor(perfs, ex.name)}
                   onAdd={onAdd ? () => handleAdd(ex) : undefined}
                   onFav={() => onToggleFav(ex)}
+                  onDetail={onOpenDetail ? () => onOpenDetail(ex.name) : undefined}
                 />
               ))}
             </Section>
@@ -276,12 +281,14 @@ function Row({
   perf,
   onAdd,
   onFav,
+  onDetail,
 }: {
   ex: LibraryExercise;
   fav: boolean;
   perf?: LastPerf;
   onAdd?: () => void;
   onFav: () => void;
+  onDetail?: () => void;
 }) {
   const Icon = CATEGORY_ICON[ex.category];
   const accent = CATEGORY_ACCENT[ex.category];
@@ -306,7 +313,13 @@ function Row({
       )}
 
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-black text-foreground">{ex.name}</p>
+        <button
+          onClick={onDetail}
+          disabled={!onDetail}
+          className="block max-w-full truncate text-left text-sm font-black text-foreground disabled:cursor-default"
+        >
+          {ex.name}
+        </button>
         <p className="mt-0.5 truncate text-[10px] text-arena-sub">
           {ex.focus ?? CATEGORY_LABEL[ex.category]} · {EQUIPMENT_LABEL[ex.equipment]}
           {ex.custom ? " · perso" : ""}

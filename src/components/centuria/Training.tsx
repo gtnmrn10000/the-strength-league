@@ -11,6 +11,9 @@ import { TEMPLATES, PROGRAMS, templateById, normalizeMuscle, type Template, type
 import { imageForExerciseName, type LibraryExercise } from "@/lib/exerciseCatalog";
 import { fetchLastPerformances, lastPerfFor, pushRecentId, type LastPerf } from "@/lib/exerciseUserData";
 import { computeRecovery, type MuscleGroup } from "@/lib/recovery";
+import ProgressPanel from "./ProgressPanel";
+import ExerciseDetail from "./ExerciseDetail";
+import { fetchProgress, type ProgressData } from "@/lib/progress";
 
 interface VerifiedPR {
   exercise: string;
@@ -105,9 +108,12 @@ export default function Training({ onPR, refreshKey }: { onPR: () => void; refre
   const [history, setHistory] = useState<WorkoutHistoryRow[]>([]);
   const [planned, setPlanned] = useState<PlannedRow[]>([]);
   const [perfs, setPerfs] = useState<Record<string, LastPerf>>({});
+  const [progress, setProgress] = useState<ProgressData | null>(null);
+  const [detailName, setDetailName] = useState<string | null>(null);
 
   useEffect(() => {
     void fetchLastPerformances().then(setPerfs);
+    void fetchProgress().then(setProgress).catch(() => setProgress(null));
   }, [refreshKey, localTick]);
 
 
@@ -307,6 +313,17 @@ export default function Training({ onPR, refreshKey }: { onPR: () => void; refre
         <ActionCard icon={Sparkles} title="Coach IA" premium onClick={() => setCoachOpen(true)} />
       </div>
 
+      {/* Progression réelle (séances terminées) */}
+      <h3 className="mb-2 text-xs font-black tracking-widest text-arena-muted">PROGRESSION</h3>
+      <div className="mb-5">
+        <ProgressPanel
+          data={progress}
+          onStart={() => setWorkoutOpen(true)}
+          onOpenExercise={(n) => setDetailName(n)}
+        />
+      </div>
+
+
       {/* Diagramme corporel — couleurs = état de récup par muscle */}
       <BodyDiagram recovery={recovery} targets={targetMuscles} />
 
@@ -388,6 +405,7 @@ export default function Training({ onPR, refreshKey }: { onPR: () => void; refre
             onRemoveSet={(sIdx) => removeSet(exIdx, sIdx)}
             onUpdateSet={(sIdx, field, value) => updateSet(exIdx, sIdx, field, value)}
             onRemove={() => removeExercise(exIdx)}
+            onOpenDetail={() => setDetailName(ex.name)}
           />
         ))}
         {session.exercises.length === 0 && (
@@ -428,6 +446,13 @@ export default function Training({ onPR, refreshKey }: { onPR: () => void; refre
         open={libraryOpen}
         onOpenChange={setLibraryOpen}
         onAdd={addExerciseFromLibrary}
+        onOpenDetail={(name) => setDetailName(name)}
+      />
+      <ExerciseDetail
+        open={!!detailName}
+        onOpenChange={(v) => !v && setDetailName(null)}
+        exerciseName={detailName}
+        data={progress}
       />
 
       <SectionTitle>TES PR ACTUELS</SectionTitle>
@@ -572,6 +597,7 @@ function ExerciseCard({
   onRemoveSet,
   onUpdateSet,
   onRemove,
+  onOpenDetail,
 }: {
   ex: WorkoutExercise;
   lastPerf?: LastPerf | null;
@@ -579,6 +605,7 @@ function ExerciseCard({
   onRemoveSet: (setIdx: number) => void;
   onUpdateSet: (setIdx: number, field: "reps" | "weight_kg", value: number) => void;
   onRemove: () => void;
+  onOpenDetail: () => void;
 }) {
   const img = imageForExerciseName(ex.name);
   return (
@@ -599,7 +626,12 @@ function ExerciseCard({
             </div>
           )}
           <div className="min-w-0">
-            <p className="font-black text-foreground truncate">{ex.name}</p>
+            <button
+              onClick={onOpenDetail}
+              className="block max-w-full truncate text-left font-black text-foreground underline decoration-arena/40 underline-offset-2"
+            >
+              {ex.name}
+            </button>
             {lastPerf && (
               <p className="truncate text-[10px] text-arena-sub">
                 Dernière fois : {lastPerf.weight_kg} kg × {lastPerf.reps}

@@ -5,6 +5,9 @@ import PostCard from "./social/PostCard";
 import { fetchFeed, type FeedPost } from "@/lib/social";
 import { loadUserProfile, goalLabel } from "./userProfile";
 import { GoalIcon } from "@/lib/gradeIcons";
+import { supabase } from "@/integrations/supabase/client";
+import { fetchProgress } from "@/lib/progress";
+import { GRADE_LABELS, type Grade } from "@/lib/grades";
 
 export default function Feed({ onCreate }: { onCreate: () => void }) {
   const [posts, setPosts] = useState<FeedPost[]>([]);
@@ -85,13 +88,43 @@ export default function Feed({ onCreate }: { onCreate: () => void }) {
 }
 
 function QuickStats({ goal }: { goal: string | null }) {
+  const [grade, setGrade] = useState<string | null>(null);
+  const [rank, setRank] = useState<number | null>(null);
+  const [weekSessions, setWeekSessions] = useState<number | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const [prof, rk, prog] = await Promise.all([
+        supabase.rpc("get_my_profile").maybeSingle(),
+        supabase.rpc("get_my_rank").maybeSingle(),
+        fetchProgress(60),
+      ]);
+      if (cancelled) return;
+      const g = (prof.data as { current_grade?: string } | null)?.current_grade;
+      setGrade(g ?? null);
+      setRank((rk.data as { rank?: number } | null)?.rank ?? null);
+      setWeekSessions(prog.week.sessions);
+    })().catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const gradeLabel = grade ? (GRADE_LABELS[grade as Grade] ?? "—").toUpperCase() : "—";
+
   return (
     <div className="flex-1">
       <div className="grid grid-cols-3 gap-2">
         {[
-          { icon: Trophy, label: "Rang", value: "#—", color: "text-arena-gold" },
-          { icon: Target, label: "Grade", value: "RECRUE", color: "text-arena" },
-          { icon: Flame, label: "Série", value: "1j", color: "text-arena" },
+          { icon: Trophy, label: "Rang", value: rank ? `#${rank}` : "—", color: "text-arena-gold" },
+          { icon: Target, label: "Grade", value: gradeLabel, color: "text-arena" },
+          {
+            icon: Flame,
+            label: "Séances / sem.",
+            value: weekSessions === null ? "—" : String(weekSessions),
+            color: "text-arena",
+          },
         ].map(({ icon: Icon, label, value, color }) => (
           <div key={label} className="flex flex-col items-center gap-1 rounded-2xl border border-arena-border bg-arena-surface p-2.5">
             <Icon size={14} className={color} />
