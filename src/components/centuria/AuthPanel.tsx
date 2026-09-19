@@ -73,6 +73,25 @@ export default function AuthPanel({
     }
   };
 
+  const sendReset = async () => {
+    const mail = email.trim();
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(mail)) {
+      setError("Entre ton adresse e-mail pour recevoir le lien de réinitialisation.");
+      return;
+    }
+    setError(null);
+    try {
+      const { error: err } = await supabase.auth.resetPasswordForEmail(mail, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (err) throw err;
+      toast.success("E-mail de réinitialisation envoyé. Vérifie tes spams.");
+    } catch (e) {
+      setError(frError(e instanceof Error ? e.message : String(e)));
+    }
+  };
+
+
   const oauth = async (provider: "google" | "apple") => {
     setError(null);
     setBusy(provider);
