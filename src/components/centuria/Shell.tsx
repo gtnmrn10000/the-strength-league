@@ -13,6 +13,7 @@ import Paywall from "./paywall/Paywall";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { fetchMyProfile } from "@/lib/profileStore";
 import { saveUserProfile } from "./userProfile";
+import { initNativeShell } from "@/lib/native";
 
 class TabErrorBoundary extends Component<
   { resetKey: string; children: ReactNode },
@@ -83,6 +84,11 @@ function ShellInner() {
       setProfileState("ready");
     }
   }, []);
+
+  // Plugins natifs (status bar, clavier, splash) + retour OAuth par deep link.
+  useEffect(() => {
+    void initNativeShell(() => void loadProfile());
+  }, [loadProfile]);
 
   useEffect(() => {
     if (!user) {

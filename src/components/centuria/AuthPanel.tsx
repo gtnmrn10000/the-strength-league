@@ -97,7 +97,7 @@ export default function AuthPanel({
     setBusy(provider);
     try {
       const result = await lovable.auth.signInWithOAuth(provider, {
-        redirect_uri: window.location.origin,
+        redirect_uri: oauthRedirectUrl(),
       });
       if (result.error) throw result.error;
       if (!("redirected" in result && result.redirected)) onAuthenticated?.();
