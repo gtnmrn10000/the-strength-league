@@ -181,12 +181,12 @@ function Insignia({ grade, fill, shade, metal, animated, context, compact }: { g
         <circle cx="36" cy="37" r="29.5" fill={dark} stroke={metal.edge} strokeWidth="1.8" />
         <Laurel metal={metal} animated={animated} delay={delay} />
         <motion.g initial={animated ? { opacity: .25, scale: .94 } : undefined} animate={animated ? { opacity: 1, scale: 1 } : undefined} transition={{ delay: delay + .16, duration: .52 }} style={{ transformOrigin: "36px 38px" }}>
-          <g>{mane.map((a, i) => <path key={a} d="M36 38 32.8 22 36 12.5l3.2 9.5Z" fill={i % 2 === 0 ? metal.mid : metal.low} stroke={metal.edge} strokeWidth=".5" strokeLinejoin="round" transform={`rotate(${a + 15} 36 38)`} opacity={.85} />)}</g>
-          <path d="M36 25c7 0 11 4 11 10 0 8-5 13-11 17-6-4-11-9-11-17 0-6 4-10 11-10Z" fill={`url(#${fill})`} stroke={metal.accent} strokeWidth="1.1" strokeLinejoin="round" />
-          <Facet d="M36 25c7 0 11 4 11 10 0 8-5 13-11 17Z" fill={metal.high} opacity={.45} />
-          <path d="m28.5 33 6 2-6 2Zm15 0-6 2 6 2Z" fill={metal.shadow} />
-          <path d="M32 42h8l-2 4-2 1.6-2-1.6Z" fill={metal.shadow} stroke={metal.edge} strokeWidth=".55" strokeLinejoin="round" />
-          <path d="m34.4 41.2 1.6 1.6 1.6-1.6Z" fill={metal.accent} />
+          <g>{mane.map((a, i) => <ellipse key={a} cx="36" cy="21" rx="5.4" ry="7.4" fill={i % 2 === 0 ? metal.mid : metal.low} stroke={metal.edge} strokeWidth=".55" transform={`rotate(${a + 15} 36 38)`} opacity={.92} />)}</g>
+          <path d="M36 25.5c6.5 0 10.5 4 10.5 9.5 0 7.5-4.5 12.5-10.5 16-6-3.5-10.5-8.5-10.5-16 0-5.5 4-9.5 10.5-9.5Z" fill={`url(#${fill})`} stroke={metal.accent} strokeWidth="1.1" strokeLinejoin="round" />
+          <Facet d="M36 25.5c6.5 0 10.5 4 10.5 9.5 0 7.5-4.5 12.5-10.5 16Z" fill={metal.high} opacity={.4} />
+          <path d="m29.5 33.5 6 2.2-6 1.8Zm13 0-6 2.2 6 1.8Z" fill={metal.shadow} />
+          <path d="M32.4 42h7.2l-1.8 3.6L36 47.2 34.2 45.6Z" fill={metal.shadow} stroke={metal.edge} strokeWidth=".55" strokeLinejoin="round" />
+          <path d="m34.6 41.4 1.4 1.4 1.4-1.4Z" fill={metal.accent} />
         </motion.g>
         <motion.path d="m27 13 3-8 6 5 6-5 3 8-3 5H30Z" fill={metal.accent} stroke={metal.edge} strokeWidth="1" strokeLinejoin="round" initial={animated ? { opacity: 0, y: 3 } : undefined} animate={animated ? { opacity: 1, y: 0 } : undefined} transition={{ delay: delay + .38, duration: .35 }} />
       </g>;
