@@ -4,6 +4,7 @@ import { Apple, Mail, Lock, Loader2, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { toast } from "sonner";
+import { oauthRedirectUrl } from "@/lib/native";
 
 type Mode = "signup" | "login";
 
@@ -97,7 +98,7 @@ export default function AuthPanel({
     setBusy(provider);
     try {
       const result = await lovable.auth.signInWithOAuth(provider, {
-        redirect_uri: window.location.origin,
+        redirect_uri: oauthRedirectUrl(),
       });
       if (result.error) throw result.error;
       if (!("redirected" in result && result.redirected)) onAuthenticated?.();
