@@ -63,3 +63,22 @@
 - [x] Animations adaptées aux nouvelles formes
 - [x] Galerie et level-up premium sur quatre tailles
 - [x] TypeScript, build et QA visuelle
+
+## Sprint social + IA PR uniquement
+- [x] Base de données 0018 : reposts, enregistrements, réponses/likes de commentaires, champs repas, état IA des records
+- [x] Feed unique typé (entraînement, record, repas, republication) sans duplication de média
+- [x] Publication « Repas » dans le composeur (photo facultative, nom, macros, légende)
+- [x] Enregistrer / retirer un post + onglet « Enregistrés » au profil
+- [x] Republier / annuler + onglet « Reposts » au profil, compteur et anti-doublon
+- [x] Commentaires premium : réponses à un niveau, likes, suppression, signalement, pagination, composer collé au clavier
+- [x] Barre d'actions type Instagram (hype, commenter, republier, partager natif si dispo, enregistrer)
+- [x] IA retirée du Coach (récup + analyse déterministes) et de la nutrition (analyse photo supprimée)
+- [x] Record officiel limité à squat / développé couché / soulevé de terre, alias FR-EN, refus serveur propre
+- [x] État d'analyse IA des records séparé du vote communauté, jamais de faux résultat
+- [x] Test réel : publication repas, enregistrement, republication, commentaire, compteurs, puis nettoyage complet
+- [x] TypeScript, build web, build natif et synchronisation Android / iOS
+- [ ] Analyse vidéo réelle des records (bloquée : fournisseur externe non branché)
+
+> Règle produit à jour : le **record officiel** ne concerne que le squat, le développé couché
+> et le soulevé de terre. Les autres exercices se publient comme vidéos d'entraînement
+> (les anciennes lignes « PR sur n'importe quel exercice » sont caduques).

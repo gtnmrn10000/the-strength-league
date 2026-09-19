@@ -68,7 +68,7 @@ export default function GoalEditor({
         </SheetHeader>
 
         <p className="mt-2 text-xs text-arena-sub">
-          Ton objectif détermine tes quêtes, ton XP et ton programme IA. Modifiable à tout moment.
+          Ton objectif détermine tes quêtes, ton XP et tes recommandations. Modifiable à tout moment.
         </p>
 
         <div className="mt-4 flex flex-col gap-3">

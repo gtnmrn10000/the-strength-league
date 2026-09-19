@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import {
   EXERCISE_LIBRARY,
-  searchExercises,
+
   type LibraryExercise,
 } from "@/lib/exerciseCatalog";
 import { supabase } from "@/integrations/supabase/client";
@@ -108,15 +108,14 @@ export default function PRFlow({
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
   const exerciseResults = useMemo(() => {
-    const q = exQuery.trim();
-    if (!q) {
-      const favs = ["bench", "squat", "deadlift", "ohp", "pull-up", "curl-barbell", "hip-thrust", "leg-press"];
-      const picks = favs
-        .map((id) => EXERCISE_LIBRARY.find((e) => e.id === id))
-        .filter((e): e is LibraryExercise => Boolean(e));
-      return picks;
-    }
-    return searchExercises(EXERCISE_LIBRARY, q).slice(0, 25);
+    // Un record officiel n'existe que sur les trois mouvements de force.
+    const ids = ["squat", "bench", "deadlift"];
+    const picks = ids
+      .map((id) => EXERCISE_LIBRARY.find((e) => e.id === id))
+      .filter((e): e is LibraryExercise => Boolean(e));
+    const q = exQuery.trim().toLowerCase();
+    if (!q) return picks;
+    return picks.filter((e) => e.name.toLowerCase().includes(q));
   }, [exQuery]);
 
   const canContinueStep2 = weight !== "" && Number(weight) >= 1 && Number(weight) <= 600;
@@ -374,7 +373,8 @@ export default function PRFlow({
               <motion.div key="s1" {...pageVariants} className="flex flex-col gap-3 pt-5">
                 <h2 className="text-center text-2xl font-black text-foreground">Quel exercice ?</h2>
                 <p className="text-center text-sm text-arena-sub">
-                  N'importe quel exercice de la bibliothèque.
+                  Le record officiel porte sur les trois mouvements de force. Pour les autres
+                  exercices, publie une vidéo d'entraînement.
                 </p>
 
                 <div className="relative mt-2">
@@ -385,7 +385,7 @@ export default function PRFlow({
                   <input
                     value={exQuery}
                     onChange={(e) => setExQuery(e.target.value)}
-                    placeholder="Rechercher (curl, hack squat, hip thrust…)"
+                    placeholder="Squat, développé couché, soulevé de terre"
                     className="h-12 w-full rounded-2xl border border-[#262626] bg-[#141414] pl-9 pr-3 text-sm text-foreground outline-none focus:border-arena"
                   />
                 </div>
@@ -428,7 +428,7 @@ export default function PRFlow({
                   })}
                   {exerciseResults.length === 0 && (
                     <p className="py-6 text-center text-sm text-arena-sub">
-                      Aucun exercice pour « {exQuery} ».
+                      Seuls le squat, le développé couché et le soulevé de terre sont éligibles.
                     </p>
                   )}
                 </div>

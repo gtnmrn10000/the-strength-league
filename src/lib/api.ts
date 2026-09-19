@@ -106,18 +106,6 @@ export type PlannedWorkout = {
   scheduled_for: string;
 };
 
-export function coachChat(message: string): Promise<AssistantContent> {
-  return callFunction("coach", { action: "chat", message });
-}
-
-export function coachHistory(): Promise<ChatMsg[]> {
-  return callFunction("coach", { action: "history" });
-}
-
-export function coachClearHistory(): Promise<{ ok: true }> {
-  return callFunction("coach", { action: "clearHistory" });
-}
-
 export function coachRecovery(): Promise<Array<{ muscle_groups: string[]; completed_at: string; name: string }>> {
   return callFunction("coach", { action: "recovery" });
 }
@@ -136,26 +124,6 @@ export function coachSaveWorkoutSession(input: {
   scheduled_for?: string | null;
 }): Promise<{ id: string; completed_at: string | null; scheduled_for: string | null }> {
   return callFunction("coach", { action: "saveWorkoutSession", ...input });
-}
-
-// ================= Food photo =================
-
-export type FoodPhotoResult = {
-  name: string;
-  brand: string | null;
-  estimated_grams: number;
-  nutriments_100g: {
-    energy_kcal_100g: number;
-    proteins_100g: number;
-    carbs_100g: number;
-    fat_100g: number;
-  };
-  confidence: "low" | "medium" | "high";
-  notes?: string;
-};
-
-export function recognizeFoodPhoto(imageDataUrl: string): Promise<FoodPhotoResult> {
-  return callFunction("food-photo", { image_data_url: imageDataUrl });
 }
 
 // ================= Account =================

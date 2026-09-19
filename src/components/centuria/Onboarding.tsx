@@ -379,7 +379,7 @@ function GoalStep({ selected, onSelect }: { selected: string | null; onSelect: (
 
   return (
     <div className="flex flex-col gap-3">
-      <p className="mb-1 text-sm text-arena-sub">Ton objectif détermine tes quêtes, ton XP et ton programme IA.</p>
+      <p className="mb-1 text-sm text-arena-sub">Ton objectif détermine tes quêtes, ton XP et tes recommandations.</p>
       {goals.map((g) => (
         <button
           key={g.id}

@@ -128,6 +128,32 @@ export type Database = {
         }
         Relationships: []
       }
+      comment_likes: {
+        Row: {
+          comment_id: string
+          created_at: string
+          user_id: string
+        }
+        Insert: {
+          comment_id: string
+          created_at?: string
+          user_id: string
+        }
+        Update: {
+          comment_id?: string
+          created_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comment_likes_comment_id_fkey"
+            columns: ["comment_id"]
+            isOneToOne: false
+            referencedRelation: "post_comments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       community_foods: {
         Row: {
           barcode: string | null
@@ -464,6 +490,8 @@ export type Database = {
           created_at: string
           hidden_at: string | null
           id: string
+          like_count: number
+          parent_id: string | null
           post_id: string
           user_id: string
         }
@@ -472,6 +500,8 @@ export type Database = {
           created_at?: string
           hidden_at?: string | null
           id?: string
+          like_count?: number
+          parent_id?: string | null
           post_id: string
           user_id: string
         }
@@ -480,10 +510,19 @@ export type Database = {
           created_at?: string
           hidden_at?: string | null
           id?: string
+          like_count?: number
+          parent_id?: string | null
           post_id?: string
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "post_comments_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "post_comments"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "post_comments_post_id_fkey"
             columns: ["post_id"]
@@ -519,6 +558,32 @@ export type Database = {
           },
         ]
       }
+      post_saves: {
+        Row: {
+          created_at: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_saves_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       posts: {
         Row: {
           caption: string | null
@@ -528,10 +593,17 @@ export type Database = {
           hype_count: number
           id: string
           macros: Json | null
+          meal_carbs_g: number | null
+          meal_fat_g: number | null
+          meal_kcal: number | null
+          meal_name: string | null
+          meal_protein_g: number | null
           media_type: string
           media_url: string | null
           muscle_groups: string[] | null
           pr_id: string | null
+          repost_count: number
+          repost_of: string | null
           type: Database["public"]["Enums"]["post_type"]
           user_id: string
         }
@@ -543,10 +615,17 @@ export type Database = {
           hype_count?: number
           id?: string
           macros?: Json | null
+          meal_carbs_g?: number | null
+          meal_fat_g?: number | null
+          meal_kcal?: number | null
+          meal_name?: string | null
+          meal_protein_g?: number | null
           media_type?: string
           media_url?: string | null
           muscle_groups?: string[] | null
           pr_id?: string | null
+          repost_count?: number
+          repost_of?: string | null
           type: Database["public"]["Enums"]["post_type"]
           user_id: string
         }
@@ -558,10 +637,17 @@ export type Database = {
           hype_count?: number
           id?: string
           macros?: Json | null
+          meal_carbs_g?: number | null
+          meal_fat_g?: number | null
+          meal_kcal?: number | null
+          meal_name?: string | null
+          meal_protein_g?: number | null
           media_type?: string
           media_url?: string | null
           muscle_groups?: string[] | null
           pr_id?: string | null
+          repost_count?: number
+          repost_of?: string | null
           type?: Database["public"]["Enums"]["post_type"]
           user_id?: string
         }
@@ -571,6 +657,13 @@ export type Database = {
             columns: ["pr_id"]
             isOneToOne: false
             referencedRelation: "prs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "posts_repost_of_fkey"
+            columns: ["repost_of"]
+            isOneToOne: false
+            referencedRelation: "posts"
             referencedColumns: ["id"]
           },
         ]
@@ -699,12 +792,16 @@ export type Database = {
       }
       prs: {
         Row: {
+          ai_checked_at: string | null
+          ai_result: Json | null
+          ai_status: string
           created_at: string
           exercise: string
           exercise_id: string | null
           exercise_name: string | null
           hype_count: number
           id: string
+          lift: string | null
           reps: number
           status: string
           user_id: string
@@ -712,12 +809,16 @@ export type Database = {
           weight_kg: number
         }
         Insert: {
+          ai_checked_at?: string | null
+          ai_result?: Json | null
+          ai_status?: string
           created_at?: string
           exercise: string
           exercise_id?: string | null
           exercise_name?: string | null
           hype_count?: number
           id?: string
+          lift?: string | null
           reps?: number
           status?: string
           user_id: string
@@ -725,12 +826,16 @@ export type Database = {
           weight_kg: number
         }
         Update: {
+          ai_checked_at?: string | null
+          ai_result?: Json | null
+          ai_status?: string
           created_at?: string
           exercise?: string
           exercise_id?: string | null
           exercise_name?: string | null
           hype_count?: number
           id?: string
+          lift?: string | null
           reps?: number
           status?: string
           user_id?: string

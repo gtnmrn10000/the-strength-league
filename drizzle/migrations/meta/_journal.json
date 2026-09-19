@@ -127,6 +127,13 @@
       "when": 1789833125083,
       "tag": "0017_make_xp_awards_atomic_per_reference",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1789836032855,
+      "tag": "0018_social_saves_reposts_comment_threads_meal_posts_pr_ai_state",
+      "breakpoints": true
     }
   ]
 }
