@@ -343,15 +343,9 @@ export default function WorkoutLogger({
     setConfirmFinish(false);
     setSaving(true);
     try {
-      // Identité : on lit d'abord la session locale (aucun appel réseau) pour que
-      // la fin de séance fonctionne hors connexion. On ne tente getUser() que si
-      // la session locale est absente ET que l'appareil est en ligne.
-      const { data: sessionData } = await supabase.auth.getSession();
-      let user = sessionData?.session?.user ?? null;
-      if (!user && !(typeof navigator !== "undefined" && navigator.onLine === false)) {
-        const { data: userData } = await supabase.auth.getUser();
-        user = userData?.user ?? null;
-      }
+      // Identité : on utilise l'utilisateur déjà en mémoire (contexte auth).
+      // Aucun appel réseau ici, sinon la fin de séance se bloque hors connexion.
+      const user = authUser;
       if (!user) {
         throw new Error("Session expirée. Reconnecte-toi pour enregistrer ta séance.");
       }
