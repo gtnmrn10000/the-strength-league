@@ -9,9 +9,11 @@ import {
   useState,
 } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { paywallProvider, EntitlementStatus } from "@/lib/paywall/provider";
+import { getPaywallProvider } from "@/lib/paywall/provider";
+import { NO_ENTITLEMENT, type EntitlementStatus } from "@/lib/paywall/entitlement";
+import { isDevPaywallEnabled } from "@/lib/paywall/dev.functions";
+import { missingSetup, paywallMode, type PaywallMode } from "@/lib/paywall/config";
 import type { PlanId } from "@/lib/paywall/plans";
-import { QA_MODE } from "@/lib/qaMode";
 
 type PaywallReason = "coach" | "photo-ia" | "analyse" | "recipes" | "video" | "generic";
 
@@ -24,6 +26,12 @@ type SubscriptionContextValue = {
   purchasing: PlanId | null;
   paywallOpen: boolean;
   paywallReason: PaywallReason;
+  /** "revenuecat" = achats in-app réels ; "dev" = mode dev non production. */
+  mode: PaywallMode;
+  /** Vrai si la server function de mode dev est activée (PAYWALL_DEV_MODE). */
+  devUnlockEnabled: boolean;
+  /** Ce qu'il reste à brancher pour des paiements réels. */
+  setupTodo: string[];
   openPaywall: (reason?: PaywallReason) => void;
   closePaywall: () => void;
   purchase: (planId: PlanId) => Promise<void>;
@@ -33,40 +41,39 @@ type SubscriptionContextValue = {
 
 const SubscriptionContext = createContext<SubscriptionContextValue | null>(null);
 
-const DEFAULT_STATUS: EntitlementStatus = {
-  isPremium: false,
-  activePlan: null,
-  expiresAt: null,
-  willRenew: false,
-  provider: "mock",
-};
-
 export function SubscriptionProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<EntitlementStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [purchasing, setPurchasing] = useState<PlanId | null>(null);
   const [paywallOpen, setPaywallOpen] = useState(false);
   const [paywallReason, setPaywallReason] = useState<PaywallReason>("generic");
+  const [mode, setMode] = useState<PaywallMode>("dev");
+  const [devUnlockEnabled, setDevUnlockEnabled] = useState(false);
   const mounted = useRef(true);
 
   const refresh = useCallback(async () => {
     try {
-      const s = await paywallProvider.getStatus();
+      const s = await getPaywallProvider().getStatus();
       if (mounted.current) setStatus(s);
     } catch {
-      if (mounted.current) setStatus(DEFAULT_STATUS);
+      if (mounted.current) setStatus(NO_ENTITLEMENT);
     } finally {
-      if (mounted.current) setLoading(false);
+      if (mounted.current) {
+        setMode(paywallMode());
+        setLoading(false);
+      }
     }
   }, []);
 
   useEffect(() => {
     mounted.current = true;
     refresh();
+    isDevPaywallEnabled()
+      .then((r) => {
+        if (mounted.current) setDevUnlockEnabled(!!r?.enabled);
+      })
+      .catch(() => undefined);
     const { data: sub } = supabase.auth.onAuthStateChange((event) => {
-      // INITIAL_SESSION fires when the persisted session finishes loading —
-      // the first refresh() runs before that, so without it a signed-in
-      // premium user is briefly (and stickily) shown as free.
       if (
         event === "INITIAL_SESSION" ||
         event === "SIGNED_IN" ||
@@ -84,9 +91,6 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   }, [refresh]);
 
   const openPaywall = useCallback((reason: PaywallReason = "generic") => {
-    // En QA_MODE, aucune fonctionnalité n'est verrouillée — le paywall ne
-    // s'ouvre jamais, même si un call-site l'invoque.
-    if (QA_MODE) return;
     setPaywallReason(reason);
     setPaywallOpen(true);
   }, []);
@@ -95,9 +99,9 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   const purchase = useCallback(async (planId: PlanId) => {
     setPurchasing(planId);
     try {
-      const next = await paywallProvider.purchase(planId);
+      const next = await getPaywallProvider().purchase(planId);
       setStatus(next);
-      setPaywallOpen(false);
+      if (next.isPremium) setPaywallOpen(false);
     } finally {
       setPurchasing(null);
     }
@@ -106,29 +110,48 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   const restore = useCallback(async () => {
     setLoading(true);
     try {
-      const next = await paywallProvider.restore();
+      const next = await getPaywallProvider().restore();
       setStatus(next);
     } finally {
       setLoading(false);
     }
   }, []);
 
+  const setupTodo = useMemo(() => missingSetup(), []);
+
   const value = useMemo<SubscriptionContextValue>(
     () => ({
       status,
-      isPremium: QA_MODE ? true : !!status?.isPremium,
-      isPaid: QA_MODE ? true : !!status?.isPremium,
+      isPremium: !!status?.isPremium,
+      isPaid: !!status?.isPremium,
       loading,
       purchasing,
       paywallOpen,
       paywallReason,
+      mode,
+      devUnlockEnabled,
+      setupTodo,
       openPaywall,
       closePaywall,
       purchase,
       restore,
       refresh,
     }),
-    [status, loading, purchasing, paywallOpen, paywallReason, openPaywall, closePaywall, purchase, restore, refresh]
+    [
+      status,
+      loading,
+      purchasing,
+      paywallOpen,
+      paywallReason,
+      mode,
+      devUnlockEnabled,
+      setupTodo,
+      openPaywall,
+      closePaywall,
+      purchase,
+      restore,
+      refresh,
+    ]
   );
 
   return <SubscriptionContext.Provider value={value}>{children}</SubscriptionContext.Provider>;
