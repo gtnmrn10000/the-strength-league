@@ -208,9 +208,12 @@ export function GradeEmblem({ grade, size = 48, state, locked = false, active = 
   const metal = METALS[grade];
   const tier = GRADES.indexOf(grade);
   const inView = useInView(rootRef, { once: true, amount: .45 });
-  const canAnimate = animated && tier >= 3 && !resolvedLocked && !reduceMotion && inView;
+  const canReveal = animated && !resolvedLocked && !reduceMotion && inView;
+  const canAnimate = canReveal && tier >= 3;
   const animateInsignia = canAnimate && context !== "compact";
-  const allowSweep = canAnimate && (["spartiate", "gladiateur", "centurion", "legende", "divin"] as Grade[]).includes(grade);
+  // micro-reflet pour tous les rangs, intensité croissante
+  const sweepOpacity = tier <= 2 ? .28 + tier * .1 : context === "level-up" ? 1 : .8;
+  const allowSweep = canReveal;
   const compact = size <= 36 || context === "compact";
   const p = Math.max(0, Math.min(100, progress ?? (resolvedActive ? 100 : 0)));
 
