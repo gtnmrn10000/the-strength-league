@@ -2,7 +2,7 @@
 // Server-authoritative: idempotent via the unique (user_id, kind, day) xp_events table.
 import { z } from "npm:zod@3";
 import { handleOptions, errorResponse, jsonResponse } from "../_shared/cors.ts";
-import { requireUser } from "../_shared/authClient.ts";
+import { requireUser, adminClient } from "../_shared/authClient.ts";
 import { GRADES, gradeForXp, type Grade } from "../_shared/grades.ts";
 
 const schema = z.object({ sessionId: z.string().uuid() });
@@ -79,18 +79,39 @@ Deno.serve(async (req) => {
 
   try {
     const { supabase, userId } = await requireUser(req);
+    // Écritures XP réservées au service role : les clients ne peuvent plus
+    // écrire xp_events ni profiles.xp (migration 0013).
+    const admin = adminClient();
     const body = await req.json().catch(() => ({}));
     const { sessionId } = schema.parse(body);
 
     const { data: session, error } = await supabase
       .from("workout_sessions")
-      .select("id, user_id, completed_at, exercises")
+      .select("id, user_id, completed_at, duration_min, exercises")
       .eq("id", sessionId)
       .eq("user_id", userId)
       .maybeSingle();
     if (error) return errorResponse(error.message, 500);
     if (!session) return errorResponse("Séance introuvable", 404);
     if (!session.completed_at) return errorResponse("La séance n'est pas terminée", 400);
+
+    // Anti-farming : aucune série réellement validée ou durée absurde => aucun XP.
+    const sessionExercises = Array.isArray(session.exercises) ? (session.exercises as LoggedExercise[]) : [];
+    const completedSets = sessionExercises.reduce((n: number, ex: LoggedExercise) => {
+      if (!Array.isArray(ex?.sets)) return n;
+      return n + ex.sets.filter((set) => {
+        const s = set as { done?: boolean; completed?: boolean; reps?: number };
+        const done = s.done ?? s.completed ?? true;
+        return done && Number(s.reps ?? 0) > 0;
+      }).length;
+    }, 0);
+    const durationMin = Number((session as { duration_min?: number | null }).duration_min ?? 0);
+    if (completedSets < 1 || durationMin > 360) {
+      return jsonResponse({
+        xp: 0, grade: "recruit", previousGrade: "recruit",
+        leveledUp: false, gained: 0, skipped: true,
+      });
+    }
 
     const day = (session.completed_at as string).slice(0, 10);
     const week = isoWeekMonday(new Date(session.completed_at as string));
