@@ -1,5 +1,4 @@
-import { Component, type ReactNode, useEffect, useState } from "react";
-import { toast } from "sonner";
+import { Component, type ReactNode, useCallback, useEffect, useState } from "react";
 import Onboarding from "./Onboarding";
 import Feed from "./Feed";
 import Training from "./Training";
@@ -11,9 +10,9 @@ import BottomNav from "./BottomNav";
 import HeaderLogo from "./HeaderLogo";
 import { SubscriptionProvider } from "@/hooks/useSubscription";
 import Paywall from "./paywall/Paywall";
-import { supabase } from "@/integrations/supabase/client";
-
-const ONBOARDED_KEY = "centuria_onboarded";
+import { AuthProvider, useAuth } from "@/hooks/useAuth";
+import { fetchMyProfile } from "@/lib/profileStore";
+import { saveUserProfile } from "./userProfile";
 
 class TabErrorBoundary extends Component<
   { resetKey: string; children: ReactNode },
@@ -48,69 +47,72 @@ class TabErrorBoundary extends Component<
   }
 }
 
-export default function Shell() {
-  const [hydrated, setHydrated] = useState(false);
+function Splash() {
+  return <div className="mx-auto flex h-dvh max-w-md items-center justify-center bg-background" />;
+}
+
+function ShellInner() {
+  const { user, loading } = useAuth();
+  const [profileState, setProfileState] = useState<"idle" | "loading" | "ready">("idle");
   const [onboarded, setOnboarded] = useState(false);
-  const [sessionReady, setSessionReady] = useState(false);
   const [tab, setTab] = useState("feed");
   const [showPR, setShowPR] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
-  useEffect(() => {
-    setOnboarded(localStorage.getItem(ONBOARDED_KEY) === "true");
-    setHydrated(true);
-  }, []);
-
-  // Ensure a Supabase session exists (QA mode: anonymous sign-in) so
-  // server functions guarded by requireSupabaseAuth receive a bearer token.
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const { data } = await supabase.auth.getSession();
-        if (!data.session) {
-          const { error } = await supabase.auth.signInAnonymously();
-          if (error) {
-            console.error("[auth] anonymous sign-in failed", error);
-            toast.error("Impossible d'initialiser la session. Recharge la page.");
-          }
-        }
-      } catch (e) {
-        console.error("[auth] session bootstrap error", e);
-      } finally {
-        if (!cancelled) setSessionReady(true);
+  const loadProfile = useCallback(async () => {
+    setProfileState("loading");
+    try {
+      const profile = await fetchMyProfile();
+      if (profile?.onboarded && profile.pseudo) {
+        setOnboarded(true);
+        // Cache local pour les écrans qui lisent encore le profil hors-ligne.
+        saveUserProfile({
+          pseudo: profile.pseudo,
+          age: profile.age != null ? String(profile.age) : "",
+          taille: profile.taille != null ? String(profile.taille) : "",
+          poids: profile.poids != null ? String(profile.poids) : "",
+          goal: profile.goal ?? null,
+        });
+      } else {
+        setOnboarded(false);
       }
-    })();
-    return () => {
-      cancelled = true;
-    };
+    } catch (e) {
+      console.error("[profile] load failed", e);
+      setOnboarded(false);
+    } finally {
+      setProfileState("ready");
+    }
   }, []);
 
-
-  const handleOnboardingDone = () => {
-    localStorage.setItem(ONBOARDED_KEY, "true");
-    setOnboarded(true);
-  };
+  useEffect(() => {
+    if (!user) {
+      setOnboarded(false);
+      setProfileState("idle");
+      return;
+    }
+    void loadProfile();
+  }, [user, loadProfile]);
 
   const handlePROpenChange = (isOpen: boolean, prValidated?: boolean) => {
     setShowPR(isOpen);
-    if (!isOpen && prValidated) {
-      setRefreshKey((k) => k + 1);
-    }
+    if (!isOpen && prValidated) setRefreshKey((k) => k + 1);
   };
 
-  // Render nothing until hydrated + session bootstrapped to avoid 401 on server fns
-  if (!hydrated || !sessionReady) {
-    return <div className="mx-auto flex h-dvh max-w-md items-center justify-center bg-background" />;
-  }
+  if (loading) return <Splash />;
 
-  if (!onboarded) return <Onboarding onDone={handleOnboardingDone} />;
+  // Pas de session → onboarding avec l'étape auth réelle. Aucune session
+  // anonyme n'est recréée automatiquement.
+  if (!user) return <Onboarding authed={false} onDone={() => {}} />;
+
+  if (profileState !== "ready") return <Splash />;
+
+  if (!onboarded) return <Onboarding authed onDone={() => void loadProfile()} />;
 
   return (
     <SubscriptionProvider>
       <div className="relative mx-auto flex h-dvh max-w-md flex-col overflow-hidden bg-background">
         <HeaderLogo />
-        <div className="flex-1 overflow-y-auto scrollbar-hide pb-20">
+        <div className="flex-1 overflow-y-auto scrollbar-hide pb-[calc(5rem+env(safe-area-inset-bottom))]">
           <TabErrorBoundary resetKey={tab}>
             {tab === "feed" && <Feed onCreate={() => setShowPR(true)} />}
             {tab === "training" && <Training onPR={() => setShowPR(true)} refreshKey={refreshKey} />}
@@ -127,3 +129,10 @@ export default function Shell() {
   );
 }
 
+export default function Shell() {
+  return (
+    <AuthProvider>
+      <ShellInner />
+    </AuthProvider>
+  );
+}
