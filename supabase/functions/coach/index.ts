@@ -63,20 +63,6 @@ function sanitizeWorkout(parsed: any, fallbackFocus: string, fallbackDuration: n
   };
 }
 
-// deno-lint-ignore no-explicit-any
-function sanitizeRecipe(parsed: any) {
-  return {
-    name: String(parsed?.name ?? "Recette Coach").slice(0, 80),
-    prep_min: Math.max(1, Math.min(240, Number(parsed?.prep_min) || 15)),
-    kcal: Math.max(0, Math.min(4000, Math.round(Number(parsed?.kcal) || 0))),
-    prot_g: Math.max(0, Math.min(400, Math.round(Number(parsed?.prot_g) || 0))),
-    carbs_g: Math.max(0, Math.min(600, Math.round(Number(parsed?.carbs_g) || 0))),
-    fats_g: Math.max(0, Math.min(300, Math.round(Number(parsed?.fats_g) || 0))),
-    ingredients: Array.isArray(parsed?.ingredients) ? parsed.ingredients.slice(0, 20).map((i: any) => ({ name: String(i?.name ?? "").slice(0, 60), qty: String(i?.qty ?? "").slice(0, 40) })).filter((i: any) => i.name) : [],
-    steps: Array.isArray(parsed?.steps) ? parsed.steps.slice(0, 12).map((s: any) => String(s).slice(0, 300)).filter(Boolean) : [],
-  };
-}
-
 Deno.serve(async (req) => {
   const preflight = handleOptions(req);
   if (preflight) return preflight;
@@ -101,16 +87,6 @@ Deno.serve(async (req) => {
       const recovery = computeRecovery(sessions);
       const recent5 = sessions.slice(0, 5);
 
-      const start = new Date(); start.setHours(0, 0, 0, 0);
-      const { data: foodData } = await supabase
-        .from("food_logs")
-        .select("product_name, calories, proteins_g, carbs_g, fats_g")
-        .eq("user_id", userId)
-        .gte("logged_at", start.toISOString())
-        .order("logged_at", { ascending: false });
-      const logs = foodData ?? [];
-      const totals = logs.reduce((a: any, l: any) => ({ kcal: a.kcal + (l.calories ?? 0), prot: a.prot + (l.proteins_g ?? 0), carbs: a.carbs + (l.carbs_g ?? 0), fats: a.fats + (l.fats_g ?? 0) }), { kcal: 0, prot: 0, carbs: 0, fats: 0 });
-
       const { data: convData } = await supabase.from("coach_conversations").select("id, messages").eq("user_id", userId).maybeSingle();
       const convMessages = Array.isArray(convData?.messages) ? convData!.messages : [];
 
@@ -123,7 +99,7 @@ Deno.serve(async (req) => {
         profile.niveau_activite ? `activité=${profile.niveau_activite}` : null,
         profile.goal ? `objectif=${profile.goal}` : null,
       ].filter(Boolean).join(", ");
-      const stableSystem = `Tu es Coach IA, un coach de musculation FR expérimenté et bienveillant. Tu tutoies, tu es concis (max 6 phrases sauf demande explicite). Tu refuses fermement toute question sur produits dopants/PED et rediriges vers un médecin pour douleurs/blessures.
+      const stableSystem = `Tu es le Coach de musculation CENTURIA, expérimenté et bienveillant. Tu tutoies, tu es concis (max 6 phrases sauf demande explicite). Tu refuses fermement toute question sur produits dopants/PED et rediriges vers un médecin pour douleurs/blessures. Tu ne fournis aucune analyse nutritionnelle, recette ou analyse de photo : tu invites l'utilisateur à utiliser le journal nutritionnel manuel.
 
 PROFIL ATHLÈTE (stable): ${stats || "non renseigné"}.
 
@@ -139,37 +115,21 @@ PLANIFICATION (IMPORTANT)
 - Si "maintenant"/"démarrons", laisse workout.scheduled_for=null.
 
 FORMAT DE RÉPONSE (obligatoire, JSON strict, aucun texte hors JSON)
-{ "type": "text" | "workout" | "recipe", "reply": string, "workout": null OU {...}, "recipe": null OU {...}, "warnings": string[] }`;
+{ "type": "text" | "workout", "reply": string, "workout": null OU {...}, "recipe": null, "warnings": string[] }`;
 
       const undersCovered = recovery.filter((r) => r.percent < 70);
       const recoveryLine = recovery.map((r) => `${MUSCLE_LABEL[r.group]}:${r.percent}%`).join(", ");
       const undersLine = undersCovered.length > 0 ? `Sous-récupérés (<70%): ${undersCovered.map((r) => `${MUSCLE_LABEL[r.group]} ${r.percent}%`).join(", ")}.` : "Aucun groupe sous-récupéré.";
       const sessionsLine = recent5.length > 0 ? `Dernières séances: ${recent5.map((s: any) => `${s.name} [${(s.muscle_groups ?? []).join(",")}] ${new Date(s.completed_at).toLocaleDateString("fr-FR")}`).join(" | ")}.` : "Aucune séance loggée récemment.";
 
-      let goalsLine = "Objectifs macros: non calculables (profil incomplet).";
-      let remainingLine = "";
-      if (profile.age && profile.poids && profile.taille && profile.sexe && profile.niveau_activite) {
-        const activityFactor: Record<string, number> = { sedentaire: 1.2, leger: 1.375, modere: 1.55, intense: 1.725, tres_intense: 1.9 };
-        const base = 10 * profile.poids + 6.25 * profile.taille - 5 * profile.age;
-        const bmr = profile.sexe === "homme" ? base + 5 : base - 161;
-        const kcalGoal = Math.round(bmr * (activityFactor[profile.niveau_activite] ?? 1.55));
-        const protGoal = Math.round((kcalGoal * 0.3) / 4);
-        const carbsGoal = Math.round((kcalGoal * 0.4) / 4);
-        const fatGoal = Math.round((kcalGoal * 0.3) / 9);
-        goalsLine = `Objectifs jour: ${kcalGoal}kcal / ${protGoal}g prot / ${carbsGoal}g gluc / ${fatGoal}g lip.`;
-        remainingLine = `Restant à couvrir aujourd'hui: ${Math.max(0, kcalGoal - Math.round(totals.kcal))}kcal / ${Math.max(0, protGoal - Math.round(totals.prot))}g prot / ${Math.max(0, carbsGoal - Math.round(totals.carbs))}g gluc / ${Math.max(0, fatGoal - Math.round(totals.fats))}g lip.`;
-      }
-      const consumedLine = `Consommé aujourd'hui: ${Math.round(totals.kcal)}kcal / ${Math.round(totals.prot)}g prot / ${Math.round(totals.carbs)}g gluc / ${Math.round(totals.fats)}g lip (${logs.length} entrée${logs.length > 1 ? "s" : ""}).`;
-
       const now = new Date();
       const dateLine = `Aujourd'hui: ${now.toLocaleDateString("fr-FR", { weekday: "long" })} ${now.toISOString().slice(0, 10)}.`;
-      const volatileContext = `${dateLine} Récupération actuelle: ${recoveryLine}. ${undersLine} ${sessionsLine} ${goalsLine} ${consumedLine} ${remainingLine}`.trim();
+      const volatileContext = `${dateLine} Récupération actuelle: ${recoveryLine}. ${undersLine} ${sessionsLine}`.trim();
 
       const historyForModel = convMessages.slice(-20).map((m: any) => {
         let content = m.content;
         if (m.role === "assistant") {
           if (m.workout) content += `\n[séance générée: ${m.workout.name}]`;
-          if (m.recipe) content += `\n[recette générée: ${m.recipe.name}]`;
         }
         return { role: m.role, content };
       });
@@ -196,11 +156,11 @@ FORMAT DE RÉPONSE (obligatoire, JSON strict, aucun texte hors JSON)
       let parsed: any = null;
       try { parsed = JSON.parse(content); } catch { parsed = { type: "text", reply: content?.toString().trim() || "…", workout: null, recipe: null, warnings: [] }; }
 
-      const type = parsed?.type === "workout" ? "workout" : parsed?.type === "recipe" ? "recipe" : "text";
-      const reply = (parsed?.reply ?? "").toString().trim() || (type === "workout" ? "Voici ta séance." : type === "recipe" ? "Voici une recette adaptée." : "…");
+      const type = parsed?.type === "workout" ? "workout" : "text";
+      const reply = (parsed?.reply ?? "").toString().trim() || (type === "workout" ? "Voici ta séance." : "…");
       const warnings = Array.isArray(parsed?.warnings) ? parsed.warnings.slice(0, 10).map((w: any) => String(w).slice(0, 200)) : [];
       const workout = type === "workout" && parsed?.workout ? sanitizeWorkout(parsed.workout, "séance", 60) : null;
-      const recipe = type === "recipe" && parsed?.recipe ? sanitizeRecipe(parsed.recipe) : null;
+      const recipe = null;
 
       const nowIso = new Date().toISOString();
       const newMessages = [...convMessages, { role: "user", content: message, at: nowIso }, { role: "assistant", content: reply, workout, recipe, warnings, at: new Date().toISOString() }];

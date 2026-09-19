@@ -60,7 +60,6 @@ export default function PostCard({ post }: { post: FeedPost }) {
   const [busyRepost, setBusyRepost] = useState(false);
   const [myId, setMyId] = useState<string | null>(null);
   const grade = (post.author?.current_grade || "recruit") as Grade;
-  const canShare = typeof navigator !== "undefined" && typeof navigator.share === "function";
 
   useEffect(() => {
     let cancelled = false;
@@ -125,14 +124,22 @@ export default function PostCard({ post }: { post: FeedPost }) {
   };
 
   const onShare = async () => {
+    const url = `${window.location.origin}/profile/${post.user_id}`;
     try {
-      await navigator.share({
-        title: "CENTURIA",
-        text: post.caption ?? `Publication de ${post.author?.pseudo}`,
-        url: `${window.location.origin}/profile/${post.user_id}`,
-      });
-    } catch {
-      /* partage annulé */
+      if (typeof navigator.share === "function") {
+        await navigator.share({ title: "CENTURIA", text: post.caption ?? `Publication de ${post.author?.pseudo}`, url });
+      } else {
+        await navigator.clipboard.writeText(url);
+        toast.success("Lien copié.");
+      }
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") return;
+      try {
+        await navigator.clipboard.writeText(url);
+        toast.success("Lien copié.");
+      } catch {
+        toast.error("Partage indisponible.");
+      }
     }
   };
 
@@ -255,9 +262,7 @@ export default function PostCard({ post }: { post: FeedPost }) {
           count={repostCount}
           icon={<Repeat2 size={19} className={myRepostId ? "text-arena-green" : ""} />}
         />
-        {canShare && (
-          <ActionButton label="Partager" onClick={onShare} icon={<Share2 size={18} />} />
-        )}
+        <ActionButton label="Partager" onClick={onShare} icon={<Share2 size={18} />} />
         <div className="flex-1" />
         <button
           type="button"

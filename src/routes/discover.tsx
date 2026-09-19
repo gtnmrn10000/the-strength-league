@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { ChevronLeft, Sparkles, Search, X } from "lucide-react";
+import { ChevronLeft, Dumbbell, Search, X } from "lucide-react";
 import { fetchSuggestions, searchProfiles, type PublicProfile } from "@/lib/social";
 import UserAvatar from "@/components/centuria/social/UserAvatar";
 import FollowButton from "@/components/centuria/social/FollowButton";
@@ -83,7 +83,7 @@ function DiscoverPage() {
 
         {!isSearch && (
           <div className="mb-4 flex items-center gap-2 rounded-2xl border border-arena-gold/30 bg-arena-gold/5 p-3">
-            <Sparkles size={16} className="text-arena-gold" />
+            <Dumbbell size={16} className="text-arena-gold" />
             <p className="text-xs text-arena-gold">
               Suis des athlètes pour peupler ton feed avec leurs PR et repas.
             </p>
