@@ -1,4 +1,4 @@
-import centuriaLogo from "@/assets/centuria-logo.png";
+import centuriaLogo from "@/assets/centuria-logo.webp";
 
 const sizes = {
   sm: "h-7 w-7 rounded-lg",
