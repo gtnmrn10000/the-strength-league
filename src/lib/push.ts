@@ -59,7 +59,7 @@ export async function registerPush(): Promise<RegisterResult> {
     removeAllDeliveredNotifications: () => Promise<void>;
     addListener: (
       event: "registration" | "registrationError",
-      cb: (data: { value?: string } | unknown) => void,
+      cb: (data: { value: string }) => void,
     ) => void;
   };
 
@@ -69,9 +69,10 @@ export async function registerPush(): Promise<RegisterResult> {
     // identifiants APNs/FCM ne sont pas prêts côté build natif. Le module
     // n'étant pas une dépendance du projet, on l'importe sans vérification
     // de type et on échoue proprement si absent.
-    const mod: { PushNotifications: PushNotificationsPlugin } = await import(
-      /* @vite-ignore */ "@capacitor/push-notifications"
-    );
+    const specifier = "@capacitor/push-notifications";
+    const mod = (await import(/* @vite-ignore */ specifier)) as {
+      PushNotifications: PushNotificationsPlugin;
+    };
     PushNotifications = mod.PushNotifications;
   } catch {
     return { ok: false, reason: "plugin-missing" };
@@ -90,7 +91,7 @@ export async function registerPush(): Promise<RegisterResult> {
     return await new Promise<RegisterResult>((resolve) => {
       let settled = false;
 
-      PushNotifications.addListener("registration", (token: { value: string }) => {
+      PushNotifications.addListener("registration", (token) => {
         if (settled) return;
         settled = true;
         void supabase
@@ -131,12 +132,13 @@ export async function unregisterPush(): Promise<boolean> {
   try {
     if (isPushSupported()) {
       try {
-        const mod: {
+        const specifier = "@capacitor/push-notifications";
+        const mod = (await import(/* @vite-ignore */ specifier)) as {
           PushNotifications: {
             removeAllDeliveredNotifications: () => Promise<void>;
             unregister: () => Promise<void>;
           };
-        } = await import(/* @vite-ignore */ "@capacitor/push-notifications");
+        };
         await mod.PushNotifications.removeAllDeliveredNotifications();
         await mod.PushNotifications.unregister();
       } catch {

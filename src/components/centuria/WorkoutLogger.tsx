@@ -43,6 +43,21 @@ import SessionSummary, { type NewRecord, type SessionResult } from "./session/Se
 
 const DRAFT_KEY = "centuria:active-session";
 
+/** Détecte une erreur réseau/hors-ligne (par opposition à une erreur métier/auth). */
+function isNetworkError(e: unknown): boolean {
+  if (typeof navigator !== "undefined" && navigator.onLine === false) return true;
+  const msg =
+    e && typeof e === "object" && "message" in e
+      ? String((e as { message: unknown }).message).toLowerCase()
+      : "";
+  return (
+    msg.includes("failed to fetch") ||
+    msg.includes("networkerror") ||
+    msg.includes("network request failed") ||
+    msg.includes("load failed")
+  );
+}
+
 type Draft = { template: Template; done: Record<string, boolean>; startedAt: number };
 
 function readDraft(): Draft | null {

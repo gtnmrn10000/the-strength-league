@@ -14,6 +14,7 @@ import { computeRecovery, type MuscleGroup } from "@/lib/recovery";
 import ProgressPanel from "./ProgressPanel";
 import ExerciseDetail from "./ExerciseDetail";
 import { fetchProgress, type ProgressData } from "@/lib/progress";
+import { useSyncStatus } from "@/lib/offlineSync";
 
 interface VerifiedPR {
   exercise: string;
@@ -98,6 +99,7 @@ export default function Training({ onPR, refreshKey, autoStart }: { onPR: () => 
   const [bodyweight, setBodyweight] = useState<number | null>(null);
   const [coachOpen, setCoachOpen] = useState(false);
   const [workoutOpen, setWorkoutOpen] = useState(false);
+  const { pending, syncing, flush } = useSyncStatus();
   const [goalOpen, setGoalOpen] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(false);
   const [localTick, setLocalTick] = useState(0);
@@ -310,6 +312,20 @@ export default function Training({ onPR, refreshKey, autoStart }: { onPR: () => 
 
   return (
     <div className="px-4 pt-2 pb-6">
+      {pending > 0 && (
+        <button
+          onClick={flush}
+          disabled={syncing}
+          className="mb-3 flex w-full items-center justify-between rounded-xl border border-arena-border bg-arena-surface px-3 py-2 text-left active:scale-[0.99]"
+        >
+          <span className="text-xs font-bold text-arena-sub">
+            À synchroniser ({pending})
+          </span>
+          <span className="text-[10px] font-bold uppercase tracking-wide text-arena-muted">
+            {syncing ? "Envoi…" : "Réessayer"}
+          </span>
+        </button>
+      )}
       {/* Actions rapides */}
       <div className="mb-4 grid grid-cols-2 gap-3">
         <ActionCard icon={Camera} title="Publier un record" glow onClick={onPR} />
