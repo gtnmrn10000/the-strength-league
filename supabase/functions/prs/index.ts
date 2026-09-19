@@ -2,7 +2,6 @@
 import { z } from "npm:zod@3";
 import { handleOptions, errorResponse, jsonResponse } from "../_shared/cors.ts";
 import { requireUser, adminClient } from "../_shared/authClient.ts";
-import { GRADES, gradeForXp, type Grade } from "../_shared/grades.ts";
 
 const submitSchema = z.object({
   action: z.literal("submit"),
