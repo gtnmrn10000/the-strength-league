@@ -1139,6 +1139,17 @@ export type Database = {
           xp: number
         }[]
       }
+      get_user_xp_ranks: {
+        Args: { _user_id: string }
+        Returns: {
+          current_grade: string
+          global_participants: number
+          global_rank: number
+          grade_participants: number
+          grade_rank: number
+          xp: number
+        }[]
+      }
       get_xp_leaderboard: {
         Args: { _grade?: string; _limit?: number; _offset?: number }
         Returns: {
